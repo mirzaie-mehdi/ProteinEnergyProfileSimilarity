@@ -235,7 +235,7 @@ atomtype2num167 <- function(atname,amname){
                                "NH1" = 166,
                                "NH2" = 167,
                                0),
-               )
+               0)
   v
 }
 

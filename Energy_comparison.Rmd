@@ -67,84 +67,24 @@ mythem <- theme_bw(base_line_size = .2)+
         )
 # ************************************
 # *********************************
-my_tuneRF<- function (x, y, mtryStart = if (is.factor(y)) floor(sqrt(ncol(x))) else floor(ncol(x)/3), 
-    ntreeTry = 50, stepFactor = 2, improve = 0.05, trace = TRUE, 
-    plot = TRUE, doBest = FALSE, ...) 
-{
-    if (improve < 0) 
-        stop("improve must be non-negative.")
-    classRF <- is.factor(y)
-    errorOld <- if (classRF) {
-        randomForest(x, y, mtry = mtryStart, ntree = ntreeTry, 
-            keep.forest = FALSE, ...)$err.rate[ntreeTry, 1]
-    }
-    else {
-        randomForest(x, y, mtry = mtryStart, ntree = ntreeTry, 
-            keep.forest = FALSE, ...)$mse[ntreeTry]
-    }
-    if (errorOld < 0) 
-        stop("Initial setting gave 0 error and no room for improvement.")
-    if (trace) {
-        cat("mtry =", mtryStart, " OOB error =", if (classRF) 
-            paste(100 * round(errorOld, 4), "%", sep = "")
-        else errorOld, "\n")
-    }
-    oobError <- list()
-    oobError[[1]] <- errorOld
-    names(oobError)[1] <- mtryStart
-    for (direction in c("left", "right")) {
-        if (trace) 
-            cat("Searching", direction, "...\n")
-        Improve <- 1.1 * improve
-        mtryBest <- mtryStart
-        mtryCur <- mtryStart
-        while (Improve >= improve) {#
-            mtryOld <- mtryCur
-            mtryCur <- if (direction == "left") {
-                max(1, ceiling(mtryCur/stepFactor))
-            }
-            else {
-                min(ncol(x), floor(mtryCur * stepFactor))
-            }
-            if (mtryCur == mtryOld | errorOld<0.01) 
-                break
-            errorCur <- if (classRF) {
-                randomForest(x, y, mtry = mtryCur, ntree = ntreeTry, 
-                  keep.forest = FALSE, ...)$err.rate[ntreeTry, 
-                  "OOB"]
-            }
-            else {
-                randomForest(x, y, mtry = mtryCur, ntree = ntreeTry, 
-                  keep.forest = FALSE, ...)$mse[ntreeTry]
-            }
-            if (trace) {
-                cat("mtry =", mtryCur, "\tOOB error =", if (classRF) 
-                  paste(100 * round(errorCur, 4), "%", sep = "")
-                else errorCur, "\n")
-            }
-            oobError[[as.character(mtryCur)]] <- errorCur
-            Improve <- 1 - errorCur/errorOld
-            cat(Improve, improve, "\n")
-            if (Improve > improve) {
-                errorOld <- errorCur
-                mtryBest <- mtryCur
-            }
-        }
-    }
-    mtry <- sort(as.numeric(names(oobError)))
-    res <- unlist(oobError[as.character(mtry)])
-    res <- cbind(mtry = mtry, OOBError = res)
-    if (plot) {
-        plot(res, xlab = expression(m[try]), ylab = "OOB Error", 
-            type = "o", log = "x", xaxt = "n")
-        axis(1, at = res[, "mtry"])
-    }
-    if (doBest) 
-        res <- randomForest(x, y, mtry = res[which.min(res[, 
-            2]), 1], ...)
-    res
+tm_score3 <- function(x, y){
+  xy = abs(x - y)
+  xy = xy[xy != 0]
+  d = sum(xy)/length(xy)
+  d <- d/max(15,d)
+  return(d)
 }
 ```
+
+## Lenght_dependent
+
+```{r}
+
+```
+
+
+
+
 
 ## 1t56-3loc
 
@@ -1203,7 +1143,7 @@ tm_score3 <- function(x, y){
    d = 1 - (1/(1 + d))
   return(d)
 }
-dis <- proxy::dist(df[,-c(1,2,3)], method = tm_score3)
+dis <- proxy::dist(df[,-c(1,2,3)]/df$length, method = tm_score3)
 dis[is.nan(dis)]<-0
 tree_data <- ape::bionj(dis)
 grp <- list(Bacteri     = rn[1:5],
@@ -2889,6 +2829,7 @@ E210.seq_bacteriocin[i,3:212] <- aa210_p
 E210.seq_bacteriocin[i,2] <- length(seq)
 }
 
+saveRDS(E210.seq_bacteriocin,'Data/rds/E210.seq_bacteriocin.rds')
 
 df = E210.seq_bacteriocin
 df1 <- df[,-seq(1:2)]
@@ -3023,53 +2964,44 @@ ggarrange(g1,g2)
 
 ## fold
 ```{r}
-df <- readRDS("data/rds/E210.astral40.rds")
-df = df[!is.na(df$FL) & df$class %in% c('a','b','c','d',"e","f","g"), ]
+df <- readRDS("Data/rds/E210.astral40.rds")
+df <- df[!is.na(df$FL) & df$class %in% c('a','b','c','d'), ]
 folds <- unique(df$fold)
-tm_score3 <- function(x, y){
-  xy = abs(x - y)
-  xy = xy[xy != 0]
-  d = sum(xy)/length(xy)
-  return(d)
-}
-within <- c()
-for (i in 1:length(folds)) {
-  print(i)
-  x <- df[df$fold %in% folds[i], ]
-  dis <- proxy::dist(x[ ,-c(1:8)],method = tm_score3)
-  within <- c(within,as.vector(dis))
+
+dis <- as.matrix(dist(df[,-c(1:8)],method = tm_score3))
+dis <- data.frame(gr=df$fold, dis)
+fo<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fo)) {  
+  print(i)   
+  x <- fo[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
 }
 
-dis <- as.matrix(proxy::dist(df[ ,-c(1:8)],method = tm_score3))
-dis[lower.tri(dis,diag = T)] <- NA
-dis <- data.frame(fold=df$fold,dis)
-between<-c()
-for (i in 1:length(folds)) {
-  print(i)
-  fo <- folds[i]
-  cl <- substr(fo,1,1)
-  #idxcl <- which(df$class==cl)
-  idx <- which(dis$fold==fo)
-  x <- dis[idx,-c(1,idx+1)]
-  x <- as.vector(as.matrix(x))
-  x <- x[!is.na(x)]
-  between<-c(between,x)
-}
+median(within,na.rm = T)
+median(between,na.rm = T)
 
-quantile(within)
-quantile(between)
-set.seed(7)
 bet<-between[sample(length(between),10000)]
 wit<-within[sample(length(within),10000)]
 t.test(wit,bet)
+
 df_fold <- data.frame(gr=rep(c('within','between'),c(length(wit),length(bet))),
                     distance=c(wit,bet))
-df_fold$score <- 1/(1+(df_fold$distance))
+ggplot(df_fold,aes(gr,distance,fill=gr))+geom_boxplot(alpha=.3)
 
-ggplot(df_fold,aes(gr,score,fill=gr))+geom_boxplot(alpha=.3)
 
 ```
+
 ## cusomize distance
+
 ```{r}
 library(umap)
 data <- matrix(runif(100), ncol = 2)
@@ -3080,6 +3012,58 @@ plot(umap_result$layout,
      n_neighbors = 10,
      min_dist = 0.1, 
      random_state = 123)
+
+```
+
+# Mulidup
+```{r}
+mulidup <- read.delim('~/Desktop/rds/dup/dup.txt')
+
+dis<-rep(0, nrow(mulidup))
+for(i in 1:nrow(mulidup)){
+  print(i)
+  path <- paste0('~/Desktop/rds/dup/', mulidup$Pair.Name[i])
+  pdb1 <- read.pdb(paste0(path ,'/',mulidup$Domain1[i],'.pdb'))
+  pdb2 <- read.pdb(paste0(path ,'/',mulidup$Domain2[i],'.pdb'))
+  ch1 <- unique(pdb1$atom$chain)
+  ch2 <- unique(pdb2$atom$chain)
+  
+  sele1 <- atom.select(pdb1,"protein",type = "ATOM", chain=ch1)
+  sele2 <- atom.select(pdb1, "protein", elety=c("H","OXT"),inverse=TRUE)
+  sele4 <- atom.select(pdb1, "noh")
+  sele <- combine.select(sele1, sele2,sele4, operator="AND")
+  pdb1 <- trim.pdb(pdb1, sele,verbose = FALSE)
+  
+  sele1 <- atom.select(pdb2,"protein",type = "ATOM", chain=ch2)
+  sele2 <- atom.select(pdb2, "protein", elety=c("H","OXT"),inverse=TRUE)
+  sele4 <- atom.select(pdb2, "noh")
+  sele <- combine.select(sele1, sele2,sele4, operator="AND")
+  pdb2 <- trim.pdb(pdb2, sele,verbose = FALSE)
+  
+  E210_2pdb <- data_frame(p1=rep(0,210),p2=rep(0,210))
+  
+  Net_Frame <- NetworkFrame(PDB = pdb1)
+  energy210 <- Energy_PC210(Net_Frame ,energy_dell_dunbrack)
+  E210_2pdb$p1 <- energy210
+  
+  Net_Frame <- NetworkFrame(PDB = pdb2)
+  energy210 <- Energy_PC210(Net_Frame, energy_dell_dunbrack)
+  E210_2pdb$p2 <- energy210
+  
+  df <- data.frame(t(E210_2pdb))
+  d <- dist(df,method = tm_score3)
+  dis[i] <- d
+}
+
+E210.astral40 <- readRDS("Data/rds/E210.astral40.rds") 
+df40 <- E210.astral40[sample(nrow(E210.astral40),1000),]
+dis40 <- as.vector(dist(df40[,-c(1:8)],
+                        method = tm_score3))
+
+
+df <- data.frame(group=rep(c('rend40','mulidup'),c(241,241)),
+                 distance=c(dis40[sample(1000,241)], dis))
+ggplot(df,aes(group,distance,fill=group))+geom_boxplot()
 
 ```
 
