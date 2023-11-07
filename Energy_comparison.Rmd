@@ -71,7 +71,7 @@ tm_score3 <- function(x, y){
   xy = abs(x - y)
   xy = xy[xy != 0]
   d = sum(xy)/length(xy)
-  d <- d/max(15,d)
+  d <- d/max(.5,d)
   return(d)
 }
 ```
@@ -3009,6 +3009,7 @@ plot(umap_result$layout,
 mulidup <- read.delim('~/Desktop/rds/dup/dup.txt')
 
 dis<-rep(0, nrow(mulidup))
+len <- data.frame(len1=rep(0,nrow(mulidup)), len2=rep(0,nrow(mulidup)))
 for(i in 1:nrow(mulidup)){
   print(i)
   path <- paste0('~/Desktop/rds/dup/', mulidup$Pair.Name[i])
@@ -3029,6 +3030,9 @@ for(i in 1:nrow(mulidup)){
   sele <- combine.select(sele1, sele2,sele4, operator="AND")
   pdb2 <- trim.pdb(pdb2, sele,verbose = FALSE)
   
+  len[i,1] <- length(unique(pdb1$atom$resno))
+  len[i,2] <- length(unique(pdb2$atom$resno))
+  
   E210_2pdb <- data_frame(p1=rep(0,210),p2=rep(0,210))
   
   Net_Frame <- NetworkFrame(PDB = pdb1)
@@ -3040,13 +3044,19 @@ for(i in 1:nrow(mulidup)){
   E210_2pdb$p2 <- energy210
   
   df <- data.frame(t(E210_2pdb))
-  d <- dist(df,method = tm_score3)
-  dis[i] <- d
+  df <- df/c(len$len1[i], len$len2[i])
+  dis[i] <- dist(df,method = tm_score3)
 }
 
-E210.astral40 <- readRDS("Data/rds/E210.astral40.rds") 
+len$mean<-(len$len1+len$len2)/2
+len$min <- apply(len[,1:2],1,min)
+len$max <- apply(len[,1:2],1,max)
+len$diff <- len$max-len$min
+
+
+E210.astral40 <- readRDS("Data/rds/E210.seq_astral40.rds") 
 df40 <- E210.astral40[sample(nrow(E210.astral40),1000),]
-dis40 <- as.vector(dist(df40[,-c(1:8)],
+dis40 <- as.vector(dist(df40[,-c(1:8)]/df40$length,
                         method = tm_score3))
 
 
@@ -3054,5 +3064,13 @@ df <- data.frame(group=rep(c('rend40','mulidup'),c(241,241)),
                  distance=c(dis40[sample(1000,241)], dis))
 ggplot(df,aes(group,distance,fill=group))+geom_boxplot()
 
+
+tm_score3 <- function(x, y){
+  xy = abs(x - y)
+  xy = xy[xy != 0]
+  d = sum(xy)/length(xy)
+  d <- d/max(.5,d)
+  return(d)
+}
 ```
 
