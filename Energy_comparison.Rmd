@@ -532,7 +532,7 @@ saveRDS(E210.seqPDB_astral95,file = "Data/rds/E210.seqPDB_astral_95.rds")
 
 ```{r}
 df <- readRDS("data/rds/E210.astral40.rds")
-dfs <- df[df$class %in% c("a","b")& df$length > 80 & !is.na(df$FF),]
+dfs <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
 df1<-dfs[,-c(1:5,7:8)]
 df1[,-1] <- df1[,-1]/dfs$length
 #df1$total = rowSums(df1[,-c(1,2)])
@@ -548,14 +548,14 @@ tm_score3 <- function(x, y){
   xy = abs(x - y)
   xy = xy[xy != 0]
   d = sum(xy)/length(xy)
-  #  d = 1 / (1 + d)
+    d =  1 - 1 / (1 + d)
   return(d)
 }
 
 dis <- as.matrix(proxy::dist(df1[,-c(1,2)], method = tm_score3))
 #dis = 1 - dis/ max(dis)
-ump <- umap(d = dis,
-            n_neighbors = 30,
+  ump <- umap(d = dis,
+            n_neighbors = 20,
             min_dist = 0.1,
             input="dist")
 ump_df <- data.frame(df1[,1:2],
@@ -1200,6 +1200,7 @@ tm_score3 <- function(x, y){
   xy = abs(x - y)
   xy = xy[xy != 0]
   d = sum(xy)/length(xy)
+   d = 1 - (1/(1 + d))
   return(d)
 }
 dis <- proxy::dist(df[,-c(1,2,3)], method = tm_score3)
@@ -1464,7 +1465,7 @@ um.E_PC_abcd <- ggplot(umap.df.E_PC_abcd,aes(UMAP1, UMAP2, color= sf, shape = sh
 E210.seq_spike200 <- readRDS("Data/rds/E210.seq_spike200.rds")
 E210_spike200 <- readRDS("Data/rds/E210_spike200.rds")
 #-----------close
-df = E210_spike200
+df = E210.seq_spike200
 df = df[!is.na(df$length),]
 df = df[df$conformation == "Close",]
 
