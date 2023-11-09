@@ -67,14 +67,96 @@ mythem <- theme_bw(base_line_size = .2)+
         )
 # ************************************
 # *********************************
-tm_score3 <- function(x, y){
+manhat_norm <- function(X, Y){
+  x = X[-1];y = Y[-1]
   xy = abs(x - y)
   xy = xy[xy != 0]
   d = sum(xy)/length(xy)
-  d <- d/max(.5,d)
+  Lmax = max(X[1], Y[1])
+  d = d / (0.3 * (Lmax^0.6))
   return(d)
 }
 ```
+
+## Lenght_dependent
+
+```{r}
+pc25 <- read.csv("Data/csv/cullpdb_pc25.0_res0.0-1.5_noBrks_len40-10000_R0.25_Xray_d2023_10_23_chains3040", sep="")
+pc25 <- pc25[nchar(pc25$PDBchain)<6,]
+rownames(pc25) <- pc25$PDBchain
+pairs <- data.frame(t(combn(pc25$PDBchain, 2)))
+pairs$len1 <- pc25[pairs$X1,'len']
+pairs$len2 <- pc25[pairs$X2,'len']
+pairs$min_len <- apply(pairs[,3:4],1,min)
+pairs$max_len <- apply(pairs[,3:4],1,max)
+pairs$mean_len <- apply(pairs[,3:4],1,mean)
+
+set.seed(123)
+pairs_random <- pairs %>%
+  group_by(max_len) %>%
+  sample_n(1) %>%
+  ungroup()
+
+energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
+energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
+source("Functions/amacid2num.R")
+source("Functions/atomtype2num167.R")
+source("Functions/Energy_PC210.R")
+source("Functions/NetworkFrame.R")
+
+pairs_random$dis <- 0
+for(i in 179:nrow(pairs_random)){
+  print(i)
+  pdb1 <- read.cif(substr(pairs_random$X1[i],1,4))
+  pdb2 <- read.cif(substr(pairs_random$X2[i],1,4))
+  ch1 <- unique(substr(pairs_random$X1[i],5,5))
+  ch2 <- unique(substr(pairs_random$X2[i],5,5))
+  
+  sele1 <- atom.select(pdb1,"protein",type = "ATOM", chain=ch1)
+  sele2 <- atom.select(pdb1, "protein", elety=c("H","OXT"),inverse=TRUE)
+  sele4 <- atom.select(pdb1, "noh")
+  sele <- combine.select(sele1, sele2,sele4, operator="AND")
+  pdb1 <- trim.pdb(pdb1, sele,verbose = FALSE)
+  
+  sele1 <- atom.select(pdb2,"protein",type = "ATOM", chain=ch2)
+  sele2 <- atom.select(pdb2, "protein", elety=c("H","OXT"),inverse=TRUE)
+  sele4 <- atom.select(pdb2, "noh")
+  sele <- combine.select(sele1, sele2,sele4, operator="AND")
+  pdb2 <- trim.pdb(pdb2, sele,verbose = FALSE)
+  
+  E210_2pdb <- data_frame(p1=rep(0,210),p2=rep(0,210))
+  
+  Net_Frame <- NetworkFrame(PDB = pdb1)
+  energy210 <- Energy_PC210(Net_Frame ,energy_dell_dunbrack)
+  E210_2pdb$p1 <- energy210
+  
+  Net_Frame <- NetworkFrame(PDB = pdb2)
+  energy210 <- Energy_PC210(Net_Frame, energy_dell_dunbrack)
+  E210_2pdb$p2 <- energy210
+  
+  df <- data.frame(t(E210_2pdb))
+  pairs_random$dis[i] <- dist(df,method = manhat_norm)
+}
+
+lm(log10(dis)~log10(max_len),pairs_random)
+ggplot(pairs_random[pairs_random$max_len>80,],aes(max_len,dis))+geom_point()+
+    scale_y_log10()+scale_x_log10()+
+  geom_smooth(method = 'lm')+
+  stat_cor(col='red')
+lm(log10(dis)~log10(max_len),pairs_random[pairs_random$max_len>80,])
+
+#step <- 5
+#sel_pairs_random <- pairs_random[pairs_random$max_len %in% seq(40, nrow(pairs_random), by = step), ]
+
+pairs_random$adj <- apply(pairs_random[,c(6,8)],1,function(x){return(x[2]/(.30*x[1]^0.60))})
+ggplot(pairs_random[pairs_random$max_len>80,],aes(max_len,adj))+geom_point()+
+    scale_y_log10()+scale_x_log10()+
+  geom_smooth(method = 'lm')+
+  stat_cor(col='red')
+
+```
+
+
 
 ## 1t56-3loc
 
@@ -458,13 +540,13 @@ saveRDS(E210.seq_astral95,file = "Data/rds/E210.seq_astral_95.rds")
 saveRDS(E210.seqPDB_astral95,file = "Data/rds/E210.seqPDB_astral_95.rds")
 ```
 
-## UMAP_tm_3
+## UMAP_manhat_norm
 
 ```{r}
 df <- readRDS("data/rds/E210.astral40.rds")
-dfs <- df[df$class %in% c("a","b")& df$length > 80 & !is.na(df$FF),]
-df1<-dfs[,-c(1:5,7:8)]
-df1[,-1] <- df1[,-1]/dfs$length
+dfs <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
+df1<-dfs[,-c(1:2,4:5,7:8)]
+df1[,-1] <- df1[,-1]
 #df1$total = rowSums(df1[,-c(1,2)])
 df1<-data.frame(class=substr(df1$fold,1,1),df1)
 #df1 = df1[c(sample(2743:5697,500),sample(2642,500),sample(5698:10159,500)),]
@@ -474,19 +556,10 @@ df1<-data.frame(class=substr(df1$fold,1,1),df1)
 #df1 = df1 %>% group_by(fold) %>% 
 #  dplyr::summarise(across(colnames(df1)[-c(1,2)], mean))
 #df1<-data.frame(class=substr(df1$fold,1,1),df1)
-tm_score3 <- function(x, y){
-  xy = abs(x - y)
-  xy = xy[xy != 0]
-  d = sum(xy)/length(xy)
-  #  d = 1 / (1 + d)
-  return(d)
-}
-
-dis <- as.matrix(proxy::dist(df1[,-c(1,2)], method = tm_score3))
-#dis = 1 - dis/ max(dis)
+dis <- as.matrix(proxy::dist(df1[,-c(1,3)], method = manhat_norm))
 ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
+            n_neighbors = 50,
+            min_dist = 0.01,
             input="dist")
 ump_df <- data.frame(df1[,1:2],
                      UMAP1 = ump$layout[, 1],
@@ -1126,13 +1199,7 @@ df <- E210_ferritin
 df <- df[with(df, order(df$group)), ]
 row.names(df) <- df[,1]
 rn <- df[,1]
-tm_score3 <- function(x, y){
-  xy = abs(x - y)
-  xy = xy[xy != 0]
-  d = sum(xy)/length(xy)
-  return(d)
-}
-dis <- proxy::dist(df[,-c(1,2,3)], method = tm_score3)
+dis <- proxy::dist(df[,-c(1,3)], method = manhat_norm)
 dis[is.nan(dis)]<-0
 tree_data <- ape::bionj(dis)
 grp <- list(Bacteri     = rn[1:5],
@@ -1399,9 +1466,9 @@ df = df[!is.na(df$length),]
 df = df[df$conformation == "Close",]
 
 rownames(df) = df$pdbID
-x = df[,-c(1:4)]/df$length
+x = df[,-c(1,3:4)]
 x  <- as.matrix(x) 
-hc <- x %>% proxy::dist(method = tm_score3)
+hc <- x %>% proxy::dist(method = manhat_norm)
 hc[is.nan(hc)] <- 0
 hc <- hc%>% hclust(method = "ward.D2")
 dend <- hc %>% as.dendrogram
@@ -2819,22 +2886,11 @@ E210.seq_bacteriocin[i,2] <- length(seq)
 }
 
 saveRDS(E210.seq_bacteriocin,'Data/rds/E210.seq_bacteriocin.rds')
-
+E210.seq_bacteriocin = readRDS("Data/rds/E210.seq_bacteriocin.rds")
 df = E210.seq_bacteriocin
-df1 <- df[,-seq(1:2)]
+df1 <- df[,-seq(1:1)]
 
-tm_score3 <- function(x, y){
-  xy = abs(x - y)
-  xy = xy[xy != 0]
-  d = sum(xy)/length(xy)
-  return(d)
-}
-tm_score1 <- function(x, y){
-  z= abs(x - y)
-    d <- sum(1/(1 + z))
-  return(d)
-}
-dis <- as.matrix(proxy::dist(df1, method = tm_score3))
+dis <- as.matrix(proxy::dist(df1, method = manhat_norm))
 ump <- umap(d = dis,
             n_neighbors = 40,
             min_dist = 0.01,
@@ -2883,8 +2939,8 @@ inset = c(-.15, -.1), # place outside
 col = unique(group_cols),horiz = FALSE,xpd = TRUE)
 #------------boxplot
 df = E210.seq_bacteriocin
-x = df[,-c(1:2)]
-hc <- as.matrix(x %>% dist(method = 'manhattan'))
+x = df[,-c(1:1)]
+hc <- as.matrix(x %>% dist(method = manhat_norm))
 class1 = hc[1:499,1:499]
 class1=class1[lower.tri(class1)]
 class2 = hc[500:728,500:728]
@@ -3006,7 +3062,11 @@ plot(umap_result$layout,
 
 # Mulidup
 ```{r}
+<<<<<<< HEAD
 mulidup <- read.delim('Data/dup/dup.txt')
+=======
+mulidup <- read.delim('Data/rds/dup/dup.txt')
+>>>>>>> ed520a71366a498e8e0ec4a1bf975f10e187a025
 
 dis<-rep(0, nrow(mulidup))
 len <- data.frame(len1=rep(0,nrow(mulidup)),
