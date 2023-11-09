@@ -67,6 +67,14 @@ mythem <- theme_bw(base_line_size = .2)+
         )
 # ************************************
 # *********************************
+manhat <- function(X, Y){
+  x = X[-1];y = Y[-1]
+  xy = abs(x - y)
+  xy = xy[xy != 0]
+  d = sum(xy)/length(xy)
+  return(d)
+}
+# ********
 manhat_norm <- function(X, Y){
   x = X[-1];y = Y[-1]
   xy = abs(x - y)
@@ -3062,13 +3070,12 @@ plot(umap_result$layout,
 
 # Mulidup
 ```{r}
-<<<<<<< HEAD
 mulidup <- read.delim('Data/dup/dup.txt')
-=======
-mulidup <- read.delim('Data/rds/dup/dup.txt')
->>>>>>> ed520a71366a498e8e0ec4a1bf975f10e187a025
+mulidup_tm <- read.delim('Data/dup/dup_tm.csv')
 
-dis<-rep(0, nrow(mulidup))
+
+dis_old <- rep(0, nrow(mulidup))
+dis_new <- rep(0, nrow(mulidup))
 len <- data.frame(len1=rep(0,nrow(mulidup)),
                   len2=rep(0,nrow(mulidup)))
 for(i in 1:nrow(mulidup)){
@@ -3106,22 +3113,25 @@ for(i in 1:nrow(mulidup)){
   energy210 <- Energy_PC210(Net_Frame, energy_dell_dunbrack)
   E210_2pdb$p2 <- energy210
   
-  df <- data.frame(t(E210_2pdb))
-  d <- dist(df,method = tm_score3)
-  dis[i] <- d/log(min(c(len1, len2)))
+  df <- data.frame(length=c(len1,len2),t(E210_2pdb))
+  d <- dist(df,method = manhat)
+  dis_old[i] <- d
+  d <- dist(df,method = manhat_norm)
+  dis_new[i] <- d
 }
 
 len$mean<-(len$len1+len$len2)/2
 len$min <- apply(len[,1:2],1,min)
 len$max <- apply(len[,1:2],1,max)
 len$diff <- len$max-len$min
+mulidup_tm <- data.frame(mulidup_tm,dis_old,dis_new)
 
 plot(dis, len$diff)
 
 E210.astral40 <- readRDS("Data/rds/E210.seq_astral40.rds") 
 df40 <- E210.astral40[sample(nrow(E210.astral40),1000),]
-dis40 <- as.vector(dist(df40[,-c(1:8)]/df40$length,
-                        method = tm_score3))
+dis40 <- as.vector(dist(df40[,-c(1:2,4:8)],
+                        method = manhat_norm))
 
 
 df <- data.frame(group=rep(c('rend40','mulidup'),c(241,241)),
@@ -3129,11 +3139,5 @@ df <- data.frame(group=rep(c('rend40','mulidup'),c(241,241)),
 ggplot(df,aes(group,distance,fill=group))+geom_boxplot()
 
 
-tm_score3 <- function(x, y){
-  xy = abs(x - y)
-  xy = xy[xy != 0]
-  d = sum(xy)/length(xy)
-  return(d)
-}
 ```
 
