@@ -3013,7 +3013,7 @@ df <- readRDS("Data/rds/E210.astral40.rds")
 df <- df[!is.na(df$FL) & df$class %in% c('a','b','c','d'), ]
 folds <- unique(df$fold)
 
-dis <- as.matrix(dist(df[,-c(1:8)],method = tm_score3))
+dis <- as.matrix(dist(df[,-c(1:2,4:8)],method = manhat_norm))
 dis <- data.frame(gr=df$fold, dis)
 fo<-unique(dis$gr)
 
@@ -3062,18 +3062,14 @@ plot(umap_result$layout,
 
 # Mulidup
 ```{r}
-<<<<<<< HEAD
 mulidup <- read.delim('Data/dup/dup.txt')
-=======
-mulidup <- read.delim('Data/rds/dup/dup.txt')
->>>>>>> ed520a71366a498e8e0ec4a1bf975f10e187a025
 
 dis<-rep(0, nrow(mulidup))
 len <- data.frame(len1=rep(0,nrow(mulidup)),
                   len2=rep(0,nrow(mulidup)))
 for(i in 1:nrow(mulidup)){
   print(i)
-  path <- paste0('~/Desktop/rds/dup/', mulidup$Pair.Name[i])
+  path <- paste0('Data/dup/', mulidup$Pair.Name[i])
   pdb1 <- read.pdb(paste0(path ,'/',mulidup$Domain1[i],'.pdb'))
   pdb2 <- read.pdb(paste0(path ,'/',mulidup$Domain2[i],'.pdb'))
   ch1 <- unique(pdb1$atom$chain)
@@ -3106,9 +3102,10 @@ for(i in 1:nrow(mulidup)){
   energy210 <- Energy_PC210(Net_Frame, energy_dell_dunbrack)
   E210_2pdb$p2 <- energy210
   
-  df <- data.frame(t(E210_2pdb))
-  d <- dist(df,method = tm_score3)
-  dis[i] <- d/log(min(c(len1, len2)))
+  df <- data.frame(length=c(len1,len2), t(E210_2pdb))
+  d <- dist(df,method = manhat_norm)
+#  dis[i] <- d/log(min(c(len1, len2)))
+  dis[i] <- d
 }
 
 len$mean<-(len$len1+len$len2)/2
@@ -3120,11 +3117,11 @@ plot(dis, len$diff)
 
 E210.astral40 <- readRDS("Data/rds/E210.seq_astral40.rds") 
 df40 <- E210.astral40[sample(nrow(E210.astral40),1000),]
-dis40 <- as.vector(dist(df40[,-c(1:8)]/df40$length,
-                        method = tm_score3))
+dis40 <- as.vector(dist(df40[,-c(1:2,4:8)],
+                        method = manhat_norm))
 
 
-df <- data.frame(group=rep(c('rend40','mulidup'),c(241,241)),
+df <- data.frame(group=rep(c('rand40','mulidup'),c(241,241)),
                  distance=c(dis40[sample(1000,241)], dis))
 ggplot(df,aes(group,distance,fill=group))+geom_boxplot()
 
@@ -3136,4 +3133,34 @@ tm_score3 <- function(x, y){
   return(d)
 }
 ```
+
+## TM-align
+
+```{r}
+calculate_tm_score <- function(pdb_file1, pdb_file2) {
+  # Define the path to the TMalign executable
+  tmalign_path <- "/path/to/TMalign"  # Replace with the actual path
+
+  # Run TMalign externally
+  tmalign_cmd <- sprintf("%s %s %s", tmalign_path, pdb_file1, pdb_file2)
+  tmalign_output <- system2(command = tmalign_cmd, stdout = TRUE)
+
+  # Extract TM-score from the output
+  tm_score <- as.numeric(strsplit(tmalign_output[grepl("TM-score", tmalign_output)], ":")[[1]][2])
+
+  return(tm_score)
+}
+
+# Example usage
+pdb_file1 <- "path/to/your/protein1.pdb"
+pdb_file2 <- "path/to/your/protein2.pdb"
+
+tm_score <- calculate_tm_score(pdb_file1, pdb_file2)
+
+# Print the TM-score
+cat("TM-Score:", tm_score, "\n")
+
+```
+
+
 
