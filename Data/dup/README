@@ -1,0 +1,73 @@
+The whole MALIDUP database can be extracted from the file "dup.tar".
+
+I. ABOUT THE "DUP.TXT" FILE
+
+The tab-delimited text file "dup.txt" provides basic information about the duplicated domain pairs in this database.
+The information includes: pair name, domain names, domain ranges, SCOP ID, and SCOP classification.
+Pair name is generally the SCOP ID of the first domain in that pair.
+Domain name is PDB ID followed by an underscore, followed by the chain ID, followed by a number (e.g. 1abc_A1.pdb and 1abc_A2.pdb).
+
+
+II. ABOUT THE FOLDERS
+
+There is one folder for each domain pair. The folder name is the same as the pair name. Each folder contains:
+1. Two PDB files for the two duplicates (e.g. 1abc_A1.pdb and 1abc_A2.pdb).
+2. DALI alignment (*.dali.ali) and superposition (*.dali.pdb)
+3. FAST alignment (*.fast.ali) and superposition (*.fast.pdb)
+4. TM-align alignment (*.tm.ali) and superposition (*.tm.pdb)
+5. Manual alignment (*.manual.ali) and superposition (*.manual.pdb)
+Three pairs have an alternative manual alignment named *.manual2.ali: d1ahua1, d1efud4, and d1i31a_.
+
+
+III. ABOUT THE PDB FILES
+
+The two PDB files for the two duplicates are extracted from the original PDB file and then pre-processed in the following ways:
+1. The chain ID is changed to A regardless of the original chain ID;
+2. The residues are numbered continuously (starting from 1) regardless of the original numbering;
+3. If the two duplicates are circularly permuted relative to each other, one of them is re-arranged so that they have the same sequential order of secondary structure elements;
+4. If an atom has alternative positions, only the first one will be kept;
+5. Chemically modified amino acids are changed to their standard names, e.g. MSE is replaced by MET
+
+
+IV. ABOUT THE SUPERPOSITION FILES
+
+The superposition files (*.dali.pdb, *.fast.pdb, *.tm.pdb, and *.manual.pdb) are re-constructed from the corresponding alignments (*.dali.ali, *.fast.ali, *.tm.ali, and *.manual.ali) by minimizing the overall RMSD.
+In a superposition file, the first duplicate is represented by chain S and the second duplicate is represented by chain A.
+The coordinates of the first duplicate are transformed while the coordinates of the second duplicate are the same as in the PDB file.
+
+
+V. ABOUT THE FORMAT OF THE ALIGNMENTS
+
+A *.*.ali file has 2 lines, one for each domain. Two upper-case letters indicate an aligned position. 
+Positions with two small letters, or one small letter and one gap, or one large letter and one gap are NOT aligned.
+A domain's sequence in the *.*.ali file matches exactly the CA atoms in its pre-processed PDB file.
+
+
+VI. ABOUT THE "NOTE.DOC" FILE
+
+The "note.doc" file records the sequence, structure, and functional features found in some difficult pairs.
+The manual alignments for these pairs were based on these features.
+
+
+VII. ABOUT THE REMOVED SUPERFAMILIES
+
+The following superfamilies were removed either because we could not define and align the two structural repeats confidently or because we doubted that the two structural repeats were indeed duplicates:
+Phospholipase C/P1 nuclease	(d1ah7__)
+Lipase/lipooxygenase domain (PLAT/LH2 domain)	(d1ca1_2)
+Fe-only hydrogenase	(d1c4aa1)
+Pre-protein crosslinking domain of SecA	(d1m6na1)
+Ypt/Rab-GAP domain of gyp1p	(d1fkma1)
+Heme oxygenase-like	(d1dvea_)
+
+The following superfamilies containing very short structural repeats were also removed:
+WW domain	(d1o6wa1)
+Zn2/Cys6 DNA-binding domain	(d1d66a1)
+Bromelain inhibitor VI (cysteine protease inhibitor)	(d2bi6h1)
+C2H2 and C2HC zinc fingers	(d1bbo_1)
+Glucocorticoid receptor-like (DNA-binding domain)	(d1ctl_1)
+Heparin-binding domain from vascular endothelial growth factor	(d2vgh__)
+L domain-like	(d1a9nc_)
+Metallothionein	(d2mhu__)
+RNI-like	(d2bnh__)
+Retrovirus zinc finger-like domains	(d1eska_)
+Trimeric LpxA-like enzymes	(d1krra_)

@@ -3006,7 +3006,7 @@ plot(umap_result$layout,
 
 # Mulidup
 ```{r}
-mulidup <- read.delim('~/Desktop/rds/dup/dup.txt')
+mulidup <- read.delim('Data/dup/dup.txt')
 
 dis<-rep(0, nrow(mulidup))
 len <- data.frame(len1=rep(0,nrow(mulidup)),
