@@ -67,6 +67,14 @@ mythem <- theme_bw(base_line_size = .2)+
         )
 # ************************************
 # *********************************
+manhat <- function(X, Y){
+  x = X[-1];y = Y[-1]
+  xy = abs(x - y)
+  xy = xy[xy != 0]
+  d = sum(xy)/length(xy)
+  return(d)
+}
+# ********
 manhat_norm <- function(X, Y){
   x = X[-1];y = Y[-1]
   xy = abs(x - y)
@@ -76,6 +84,26 @@ manhat_norm <- function(X, Y){
   d = d / (0.3 * (Lmax^0.6))
   return(d)
 }
+manhat_norm_diff <- function(X, Y){
+  x = X[-1];y = Y[-1]
+  xy = abs(x - y)
+  xy = xy[xy != 0]
+  d = sum(xy)/length(xy)
+  Lmax = abs(X[1]- Y[1]) + 1
+  d = d / (0.1 * (Lmax^0.86))
+  return(d)
+}
+
+manhat_norm_min <- function(X, Y){
+  x = X[-1];y = Y[-1]
+  xy = abs(x - y)
+  xy = xy[xy != 0]
+  d = sum(xy)/length(xy)
+  Lmin = min(X[1], Y[1])
+  d = d / (0.4 * (Lmin^0.6))
+  return(d)
+}
+
 ```
 
 ## Lenght_dependent
@@ -90,10 +118,10 @@ pairs$len2 <- pc25[pairs$X2,'len']
 pairs$min_len <- apply(pairs[,3:4],1,min)
 pairs$max_len <- apply(pairs[,3:4],1,max)
 pairs$mean_len <- apply(pairs[,3:4],1,mean)
-
+pairs$diff <- abs(pairs$len1 - pairs$len2)
 set.seed(123)
 pairs_random <- pairs %>%
-  group_by(max_len) %>%
+  group_by(diff) %>%
   sample_n(1) %>%
   ungroup()
 
@@ -105,7 +133,7 @@ source("Functions/Energy_PC210.R")
 source("Functions/NetworkFrame.R")
 
 pairs_random$dis <- 0
-for(i in 179:nrow(pairs_random)){
+for(i in 1:nrow(pairs_random)){
   print(i)
   pdb1 <- read.cif(substr(pairs_random$X1[i],1,4))
   pdb2 <- read.cif(substr(pairs_random$X2[i],1,4))
@@ -135,15 +163,15 @@ for(i in 179:nrow(pairs_random)){
   E210_2pdb$p2 <- energy210
   
   df <- data.frame(t(E210_2pdb))
-  pairs_random$dis[i] <- dist(df,method = manhat_norm)
+  pairs_random$dis[i] <- dist(df,method = manhat)
 }
 
-lm(log10(dis)~log10(max_len),pairs_random)
-ggplot(pairs_random[pairs_random$max_len>80,],aes(max_len,dis))+geom_point()+
+lm(log10(dis)~log10(diff),pairs_random)
+ggplot(pairs_random[pairs_random$diff>10,],aes(diff,dis))+geom_point()+
     scale_y_log10()+scale_x_log10()+
   geom_smooth(method = 'lm')+
   stat_cor(col='red')
-lm(log10(dis)~log10(max_len),pairs_random[pairs_random$max_len>80,])
+lm(log10(dis)~log10(diff),pairs_random[pairs_random$diff>10,])
 
 #step <- 5
 #sel_pairs_random <- pairs_random[pairs_random$max_len %in% seq(40, nrow(pairs_random), by = step), ]
@@ -3063,8 +3091,13 @@ plot(umap_result$layout,
 # Mulidup
 ```{r}
 mulidup <- read.delim('Data/dup/dup.txt')
+#mulidup_tm <- read.delim('Data/dup/dup_tm.csv')
+mulidup_tm <- read.csv("Data/dup/dup_tm.csv", header=T)
 
-dis<-rep(0, nrow(mulidup))
+dis_old <- rep(0, nrow(mulidup))
+dis_old_diff = dis_old
+dis_new_min = dis_old
+dis_new <- rep(0, nrow(mulidup))
 len <- data.frame(len1=rep(0,nrow(mulidup)),
                   len2=rep(0,nrow(mulidup)))
 for(i in 1:nrow(mulidup)){
@@ -3105,8 +3138,19 @@ for(i in 1:nrow(mulidup)){
   df <- data.frame(length=c(len1,len2), t(E210_2pdb))
   d <- dist(df,method = manhat_norm)
 #  dis[i] <- d/log(min(c(len1, len2)))
-  dis[i] <- d
+#  dis[i] <- d
+  df <- data.frame(length=c(len1,len2),t(E210_2pdb))
+  d <- dist(df,method = manhat)
+  dis_old[i] <- d
+  d <- dist(df,method = manhat_norm_diff)
+  dis_old_diff[i] <- d
+  d <- dist(df,method = manhat_norm)
+  dis_new[i] <- d
+  d <- dist(df,method = manhat_norm_min)
+  dis_new_min[i] <- d
+  
 }
+mulidup_tm <- data.frame(mulidup_tm,dis_old,dis_new,dis_old_diff,dis_new_min)
 
 len$mean<-(len$len1+len$len2)/2
 len$min <- apply(len[,1:2],1,min)
@@ -3125,13 +3169,6 @@ df <- data.frame(group=rep(c('rand40','mulidup'),c(241,241)),
                  distance=c(dis40[sample(1000,241)], dis))
 ggplot(df,aes(group,distance,fill=group))+geom_boxplot()
 
-
-tm_score3 <- function(x, y){
-  xy = abs(x - y)
-  xy = xy[xy != 0]
-  d = sum(xy)/length(xy)
-  return(d)
-}
 ```
 
 ## TM-align
