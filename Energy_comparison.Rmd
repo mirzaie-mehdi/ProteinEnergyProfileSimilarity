@@ -72,6 +72,7 @@ manhat <- function(X, Y){
   xy = abs(x - y)
   xy = xy[xy != 0]
   d = sum(xy)/length(xy)
+  #d = d/(abs(X[1]-Y[1])+1)
   return(d)
 }
 # ********
@@ -121,7 +122,7 @@ pairs$mean_len <- apply(pairs[,3:4],1,mean)
 pairs$diff <- abs(pairs$len1 - pairs$len2)
 set.seed(123)
 pairs_random <- pairs %>%
-  group_by(diff) %>%
+  group_by(max_len) %>%
   sample_n(1) %>%
   ungroup()
 
@@ -166,8 +167,8 @@ for(i in 1:nrow(pairs_random)){
   pairs_random$dis[i] <- dist(df,method = manhat)
 }
 
-lm(log10(dis)~log10(diff),pairs_random)
-ggplot(pairs_random[pairs_random$diff>10,],aes(diff,dis))+geom_point()+
+lm(log10(dis)~log10(max_len),pairs_random)
+ggplot(pairs_random[pairs_random$max_len>10,],aes(max_len,dis))+geom_point()+
     scale_y_log10()+scale_x_log10()+
   geom_smooth(method = 'lm')+
   stat_cor(col='red')
@@ -3089,6 +3090,7 @@ plot(umap_result$layout,
 ```
 
 # Mulidup
+
 ```{r}
 mulidup <- read.delim('Data/dup/dup.txt')
 #mulidup_tm <- read.delim('Data/dup/dup_tm.csv')
@@ -3165,37 +3167,113 @@ dis40 <- as.vector(dist(df40[,-c(1:2,4:8)],
                         method = manhat_norm))
 
 
-df <- data.frame(group=rep(c('rand40','mulidup'),c(241,241)),
-                 distance=c(dis40[sample(1000,241)], dis))
+df <- data.frame(group=rep(c('rand40','mulidup','tm'),c(241,241,241)),
+                 distance=c(dis40[sample(1000,241)], dis_new, mulidup_tm$tm_norm_chain1))
 ggplot(df,aes(group,distance,fill=group))+geom_boxplot()
 
 ```
 
-## TM-align
+## Mulisam
 
 ```{r}
-calculate_tm_score <- function(pdb_file1, pdb_file2) {
-  # Define the path to the TMalign executable
-  tmalign_path <- "/path/to/TMalign"  # Replace with the actual path
+# malisam
+mulisam <- read.csv('Data/mulisam/analogs/mulisam.csv')
 
-  # Run TMalign externally
-  tmalign_cmd <- sprintf("%s %s %s", tmalign_path, pdb_file1, pdb_file2)
-  tmalign_output <- system2(command = tmalign_cmd, stdout = TRUE)
 
-  # Extract TM-score from the output
-  tm_score <- as.numeric(strsplit(tmalign_output[grepl("TM-score", tmalign_output)], ":")[[1]][2])
-
-  return(tm_score)
+find.pdb <- function(x){
+  if(length(x)>1){
+  z <- c()
+  z <- c(z,grep('tm.pdb',x))
+  z <- c(z,grep('manual.pdb',x))
+  z <- c(z,grep('fast.pdb',x))
+  z <- c(z,grep('dali.pdb',x))
+  x <- x[-z]
+  }
+  return(x)
 }
 
-# Example usage
-pdb_file1 <- "path/to/your/protein1.pdb"
-pdb_file2 <- "path/to/your/protein2.pdb"
+dis_old <- rep(0, nrow(mulisam)/2)
+dis_old_diff = dis_old
+dis_new_min = dis_old
+dis_new <- dis_old
+len <- data.frame(len1=rep(0,nrow(mulisam)/2),
+                  len2=rep(0,nrow(mulisam)/2))
+k <- 1
+for(i in seq(1,260,2)){
+  print(i)
+  path <- paste0('Data/mulisam/analogs/', mulisam$PAIR[i])
+  p1 <- paste0(substr(mulisam$SCOPid[i],2,5),'_')
+  p1 <- list.files(path = path,pattern = p1)
+  p1 <- p1[grep('.pdb',p1)]
+  p1 <- find.pdb(p1)
+  p2<-paste0(substr(mulisam$SCOPid[i+1],2,5),'_')
+  p2 <- list.files(path = path,pattern = p2)
+  p2 <- p2[grep('.pdb',p2)]
+  p2 <- find.pdb(p2)
+  pdb1 <- read.pdb(paste0(path ,'/',p1))
+  pdb2 <- read.pdb(paste0(path ,'/',p2))
+  ch1 <- unique(pdb1$atom$chain)
+  ch2 <- unique(pdb2$atom$chain)
+  
+  sele1 <- atom.select(pdb1,"protein",type = "ATOM", chain=ch1)
+  sele2 <- atom.select(pdb1, "protein", elety=c("H","OXT"),inverse=TRUE)
+  sele4 <- atom.select(pdb1, "noh")
+  sele <- combine.select(sele1, sele2,sele4, operator="AND")
+  pdb1 <- trim.pdb(pdb1, sele,verbose = FALSE)
+  
+  sele1 <- atom.select(pdb2,"protein",type = "ATOM", chain=ch2)
+  sele2 <- atom.select(pdb2, "protein", elety=c("H","OXT"),inverse=TRUE)
+  sele4 <- atom.select(pdb2, "noh")
+  sele <- combine.select(sele1, sele2,sele4, operator="AND")
+  pdb2 <- trim.pdb(pdb2, sele,verbose = FALSE)
+  
+  len1 <- length(unique(pdb1$atom$resno))
+  len2 <- length(unique(pdb2$atom$resno))
+  len[k,1] <- len1
+  len[k,2] <- len2
+  
+  E210_2pdb <- data_frame(p1=rep(0,210),p2=rep(0,210))
+  
+  Net_Frame <- NetworkFrame(PDB = pdb1)
+  energy210 <- Energy_PC210(Net_Frame ,energy_dell_dunbrack)
+  E210_2pdb$p1 <- energy210
+  
+  Net_Frame <- NetworkFrame(PDB = pdb2)
+  energy210 <- Energy_PC210(Net_Frame, energy_dell_dunbrack)
+  E210_2pdb$p2 <- energy210
+  
+  df <- data.frame(length=c(len1,len2), t(E210_2pdb))
+  d <- dist(df,method = manhat_norm)
+#  dis[i] <- d/log(min(c(len1, len2)))
+#  dis[i] <- d
+  df <- data.frame(length=c(len1,len2),t(E210_2pdb))
+  d <- dist(df,method = manhat)
+  dis_old[k] <- d
+  d <- dist(df,method = manhat_norm_diff)
+  dis_old_diff[k] <- d
+  d <- dist(df,method = manhat_norm)
+  dis_new[k] <- d
+  d <- dist(df,method = manhat_norm_min)
+  dis_new_min[k] <- d
+  k <- k+1
+}
+mulisam_dis <- data.frame(dis_old,dis_new,dis_old_diff,dis_new_min)
 
-tm_score <- calculate_tm_score(pdb_file1, pdb_file2)
+len$mean<-(len$len1+len$len2)/2
+len$min <- apply(len[,1:2],1,min)
+len$max <- apply(len[,1:2],1,max)
+len$diff <- len$max-len$min
 
-# Print the TM-score
-cat("TM-Score:", tm_score, "\n")
+
+E210.astral40 <- readRDS("Data/rds/E210.seq_astral40.rds") 
+df40 <- E210.astral40[sample(nrow(E210.astral40),1000),]
+dis40 <- as.vector(dist(df40[,-c(1:2,4:8)],
+                        method = manhat_norm))
+
+
+df <- data.frame(group=rep(c('rand40','mulisam'),c(130,130)),
+                 distance=c(dis40[sample(1000,130)], dis_new))
+ggplot(df,aes(group,distance,fill=group))+geom_boxplot()
 
 ```
 

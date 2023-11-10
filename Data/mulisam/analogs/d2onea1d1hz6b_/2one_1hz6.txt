@@ -1,0 +1,2 @@
+The ubiquitin motif in 2one is a hybrid consisting of the first TIM strand, an inserted antiparallel strand, and a reversed helix.
+It is analogous to real ubiquibin-like core motifs like the one in 1hz6.

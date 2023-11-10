@@ -1,0 +1,3 @@
+The motif in 1j22: From the paper for 1j22, in Fig. 2, d1j22a_ have similar catalytic residues as Hjc (d1gefa_). Thus,  d1j22a_ IS
+an endonuclease superfamily member. Therefore, one strand and one helix in the motif are insertion. In other families, the insertion adopts
+different conformations, e.g. d1ckqa_. So this hybrid motif is analogous to thioredoxin.

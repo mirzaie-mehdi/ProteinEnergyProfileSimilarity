@@ -1,0 +1,2 @@
+comparing d1gc5a_ & d1rkd__ (other family, but sure homolog to d1gc5a_, since they are very similar, including an inserted domain). The insertion
+that forms part of the DCoH motif is absent in d1rkd__. So the motif in d1gc5a_ is a hybrid.

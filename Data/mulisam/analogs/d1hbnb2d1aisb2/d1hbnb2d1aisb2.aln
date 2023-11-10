@@ -1,0 +1,13 @@
+$1hbn_Bh=d1hbnb2(B49-B60,B73-B100,B117-B163);1ais_Bc=d1aisb2(B1200-B1220,B1221-B1242,B1243-B1300)$
+
+1hbn_Bh    49             |NLEGIENALK|TA    60
+                          |.********.|
+1ais_Bc  1200  TPKKLFVKPTD|YVNKFADELG|    1220
+
+1hbn_Bh    73  ELDL|DIVGNAESIAAAAKEMIQV|TEDDD   100
+                   |.....*************.|
+1ais_Bc  1221      |LSEKVRRRAIEILDEAYKR|GLT    1242
+
+1hbn_Bh  117   PSARFDVAAEYSAAPL|VTATAFVQAIINEFDVS--MYDANMVKAAVL|GR                         163
+                               |.*************.      .********.|
+1ais_Bc  1243               SGK|SPAGLVAAALYIASLLEGEKRTQREVAEVAR|VTEVTVRNRYKELVEKLKIKVPIA  1300

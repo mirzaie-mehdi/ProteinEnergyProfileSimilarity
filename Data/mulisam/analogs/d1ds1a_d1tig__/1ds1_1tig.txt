@@ -1,0 +1,2 @@
+Comparing d1ds1a_ and d1e5sa_ (same superfamily, different family), one strand and one helix are insertions.
+Thus the IF3-like motif in d1ds1a_ is a hybrid.

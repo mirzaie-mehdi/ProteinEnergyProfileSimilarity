@@ -1,0 +1,3 @@
+In 1izn, the 4-helix bundle uses corresponding parts in the two chains. interface motif. Note that the two chains are not identical, but they are in
+the same superfamily in SCOP.
+In 1kek, the 4-helix bundle is an individual subdomain inserted in the Rossmann structure.

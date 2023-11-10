@@ -1,0 +1,2 @@
+The motif in 2gaw: one strand is insertion, compared to d1pmab_ (d2gaw.1 is circularly permuted). This motif can be analog to motifs in
+SCOP all beta class, like NusG.

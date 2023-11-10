@@ -1,0 +1,3 @@
+The motif in 1ac5: 2nd and 3rd helices are insertion, other elements belong to the Rossmann core. hybrid motif;
+The motif in 1vk0: 1st strand and 1st helix are insertion, other elements belong to the RNaseH core. hybrid motif;
+Basically, insertion in RNaseH is aligned to core elements in Rossmann, and insertion in Rossmann is aligned to core elements in RNaseH.

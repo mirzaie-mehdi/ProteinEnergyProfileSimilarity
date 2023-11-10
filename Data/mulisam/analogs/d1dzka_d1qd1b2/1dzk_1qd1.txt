@@ -1,0 +1,2 @@
+The motif in 1dzk: the last strand and the helix come from C-termianl extension, and the remaining part comes from the lipocalin core.
+Hybrid motif.

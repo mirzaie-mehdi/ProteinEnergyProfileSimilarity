@@ -1,0 +1,3 @@
+1gxj (Smc hinge domain) appears to have two duplicates. Each duplicate has three strands linked by two helices. The two duplicates swap the
+helix between strand 1 and strand 2. So, although the SCOP fold "Smc hinge domain" only has one protein, I think its core is different from 1p5d,
+which is apparently a mini-Rossmann. Thus these two motifs are analogs.

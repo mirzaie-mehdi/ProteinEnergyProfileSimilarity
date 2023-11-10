@@ -1,0 +1,3 @@
+d1a2za_ hits d1nc3a_ (other superfamily) with Dali Z 13.3, and d2pth__ (othersuperfamily) hits d1nc3a_ with Z 9.5, thus d1a2za_ and d2pth__
+are homologs (the Z score between these two is 7.6, less than 9). In addition, the superposition of 1a2z and 2pth has some details suggesting
+homology between them. Compare d1a2za_ and d2pth__, one strand and one helix in the motif are insertions. So this is a hybrid motif.

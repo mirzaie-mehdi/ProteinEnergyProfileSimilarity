@@ -1,0 +1,3 @@
+The motif in 1ce8 uses one strand from the ATP-grasp core and two strands and one helix from C-terminal extension. Comparing d1ce8a6 with d1gsa_2
+(different family same superfamily), the C-terminal extension is not present in d1gsa_2. So this is a hybrid motif. And it is analogous to real
+dsRBD domains.

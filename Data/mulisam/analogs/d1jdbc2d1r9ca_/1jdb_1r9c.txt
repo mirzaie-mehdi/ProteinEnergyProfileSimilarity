@@ -1,0 +1,2 @@
+Comparing d1jdbc2 with d1gg9a1 and d1g2ia_, they are homologs (same SCOP superfamily but different family). Note the angle of the helix after strand
+4. The motif in 1jdb is a hybrid because two strands in it do not belong to the flavodoxin core.

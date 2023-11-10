@@ -1,0 +1,2 @@
+The motif in 1lwd: the 4-helix bundle uses the first and the last helices in the core structure, the other two helices come from
+C-terminal extension. So this is a hybrid motif, but the topology is down-down-up-down.

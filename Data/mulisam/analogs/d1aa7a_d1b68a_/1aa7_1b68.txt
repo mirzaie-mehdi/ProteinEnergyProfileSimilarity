@@ -1,0 +1,4 @@
+The motif in 1aa7 uses helices from the two different domains and the linker helix, and is an interface motif.
+Although the first domain in 1aa7_A is also a 4-helix up-and-down bundle, this bundle cannot be homologous to the 4-helix
+bundle in 1b68, because they are mirror images, i.e. superimpose helix 1 and 2 in 1b68 and 1aa7, helix 3 and 4 are on
+different sides of the plane formed by helix 1 and 2.

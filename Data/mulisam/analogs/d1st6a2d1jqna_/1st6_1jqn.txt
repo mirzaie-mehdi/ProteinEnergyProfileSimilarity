@@ -1,0 +1,4 @@
+The motif in 1st6: the 4-helix bundle uses corresponding parts in two duplicates. This is an interface motif. Each duplicate is also a 4-helix
+bundle, but is mirror image to the interface motif. 1st6 is in the Four-helical up-and-down bundle fold in SCOP. So I cannot use
+anything in this fold as analog to the hybrid motif, since it may bear homologous part to the interface motif. 1jqn is in "TIM
+beta/alpha-barrel" fold.

@@ -1,0 +1,3 @@
+The motif in 1rwh: This protein has two all-beta domains: Hyaluronate lyase-like (H) and Supersandwich (S). All proteins containing H have
+S, but not vice versa. Since H and S are two separate domains, this motif is an interface motif, using some strands in H and some in S.
+The motif in 1n67: uses immunoglobulin core elements as well as a C-terminal extension, hybrid.

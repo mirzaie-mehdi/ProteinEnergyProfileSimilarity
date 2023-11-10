@@ -1,0 +1,4 @@
+The motif in 1r2j: the 3-helix bundle uses one helix from the C_terminal Bromodomain-like domain and two helices from the N-terminal
+all-alpha domain. The N-terminal all-alpha domain is basically a superhelix arrangement while the C-terminal Bromodomain-like domain is a
+up-and-down arrangement. So these are TWO domains instead of one big all-alpha domain. Therefore, the query motif is an interface motif using
+elements from both domains.

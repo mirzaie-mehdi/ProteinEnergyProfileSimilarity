@@ -1,0 +1,4 @@
+The motif in 1i9e: two strands don't belong to the Ig core; hybrid motif.
+Although 1mzk is also Ig-like (the first strand in Ig fold is the 5th strand in 1mzk, according to SCOP's 11 strands numbering), the motif
+in 1i9e and the motif in 1mzk can not be homologs: if strands in Ig fold is counted from 1 to 7, all other strands are labeled as i
+(insertion), the motif in 1i9e is 34ii56 while the motif in 1mzk is iii127. So no homologous elements are superimposed.

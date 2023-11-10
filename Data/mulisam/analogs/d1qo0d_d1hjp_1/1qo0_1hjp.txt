@@ -1,0 +1,3 @@
+In 1qo0, the motif uses one helix from the flavodoxin core in the first monomer, one helix from the N-terminal extension from the second monomer,
+and one helix from the flavodoxin core in the second monomer. This is an interface as well as hybrid motif and is analogous to real RuvA C-like
+left-handed 3-helix bundles.

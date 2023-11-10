@@ -1,0 +1,2 @@
+The motif in 1a7j: comparing d1a7j__ and 1uj2 (same SCOP family), three strands and one helix in the motif in 1a7j are absent in 1uj2. So
+this is a hybrid motif.

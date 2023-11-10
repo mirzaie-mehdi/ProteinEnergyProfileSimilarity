@@ -1,0 +1,2 @@
+The motif in 1ukf: compare d1qmya_ and 1ukf, the two helices in the reverse-ferredoxin motif in 1ukf are absent in d1qmya_. So this is a hybrid motif. 
+This cysteine proteinase superfamily is very diverged in structures.

@@ -1,0 +1,3 @@
+The motif in 1iho: comparing d1ihoa_ with d1coza_ (different family same superfamily, note the split between the first and the fourth strands). The
+insertion is one strand and one helix, which is absent in d1coza_.
+The motif in 1ep7: one strand and one helix are N-terminal extension to the thioredoxin fold. hybrid motif.

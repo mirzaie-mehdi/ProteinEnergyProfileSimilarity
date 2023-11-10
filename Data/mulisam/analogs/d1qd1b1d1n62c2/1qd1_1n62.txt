@@ -1,0 +1,2 @@
+The motif in 1qd1: uses the last strand in ferredoxin and the C-terminal extensions, hybrid. Compare the two duplicates.
+The motif in 1n62: stand-along, core motif.

@@ -1,0 +1,3 @@
+The motif in 1dzt: comparing d1dzta_ and 2phla1 (different family same superfamily, since domain arrangement in 2phla1 is the same as subunit
+arrangement in d1dzta_ and the curvature of the beta-sheets are very similar in these two proteins), the insertion is in different position relative to the core
+structure. Hybrid motif.

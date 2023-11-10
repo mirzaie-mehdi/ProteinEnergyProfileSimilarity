@@ -1,0 +1,261 @@
+#,PAIR,SCOPid,RANGE,SCOP CLASS,SCOP SUPERFAMILY
+1,d1a2za_d1ghha_,d1a2za_,"A74-A81,A114-A138,A159-A220",a/b,Pyrrolidone carboxyl peptidase (pyroglutamate aminopeptidase)
+,,d1ghha_,"A1-A12,A13-A46,A47-A81",a+b,DNA damage-inducible protein DinI
+2,d1a2za_d1u9da_,d1a2za_,"A75-A81,A114-A138,A159-A220,A61-A74",a/b,Pyrrolidone carboxyl peptidase (pyroglutamate aminopeptidase)
+,,d1u9da_,"A1-A9,A10-A48,A49-A84,A85-A107",a+b,Tautomerase/MIF
+3,d1a7j__d1kafa_,d1a7j__,203-279,a/b,P-loop containing nucleoside triphosphate hydrolases
+,,d1kafa_,A104-A211,a+b,DNA-binding C-terminal domain of the transcription factor MotA
+4,d1a7j__d2if1__,d1a7j__,203-279,a/b,P-loop containing nucleoside triphosphate hydrolases
+,,d2if1__,1-126,a+b,eIF1-like
+5,d1ac5__d1jroa3,d1ac5__,407-483,a/b,alpha/beta-Hydrolases
+,,d1jroa3,A346-A462,a+b,CO dehydrogenase flavoprotein C-terminal domain-like
+6,d1ac5__d1vk0a_,d1ac5__,373-446,a/b,alpha/beta-Hydrolases
+,,d1vk0a_,A1-A206,a/b,Ribonuclease H-like
+7,d1adja2d1drw_2,d1adja2,"A134-A167,A229-A289",a+b,Class II aaRS and biotin synthetases
+,,d1drw_2,"131-163,164-240",a+b,"Glyceraldehyde-3-phosphate dehydrogenase-like, C-terminal domain"
+8,d1b05a_d1lc0a2,d1b05a_,"A9-A24,A31-A46,A188-A207,A217-A227",a/b,Periplasmic binding protein-like II
+,,d1lc0a2,"A129-A159,A160-A180,A181-A207,A208-A246",a+b,"Glyceraldehyde-3-phosphate dehydrogenase-like, C-terminal domain"
+9,d1b05a_d1nkia_,d1b05a_,"A9-A24,A31-A46,A188-A207,A217-A227",a/b,Periplasmic binding protein-like II
+,,d1nkia_,"A1-A13,A14-A25,A26-A43,A44-A57",a+b,Glyoxalase/Bleomycin resistance protein/Dihydroxybiphenyl dioxygenase
+10,d1b0pa2d1k0da2,d1b0pa2,"A1034-A1078,A1095-A1120",a/b,Thiamin diphosphate-binding fold (THDP-binding)
+,,d1k0da2,"A109-A161,A162-A200",a/b,Thioredoxin-like
+11,d1b62a2d1i6pa_,d1b62a2,"A39-A50,A162-A216",a+b,ATPase domain of HSP90 chaperone/DNA topoisomerase II/histidine kinase
+,,d1i6pa_,"A90-A137,A138-A215",a/b,"beta-carbonic anhydrase, cab"
+12,d1ce8a6d1di2a_,d1ce8a6,"A243-A255,A352-A402",a+b,Glutathione synthetase ATP-binding domain-like
+,,d1di2a_,"A112-A140,A141-A180",a+b,dsRNA-binding domain-like
+13,d1chma1d1g62a_,d1chma1,A62-A118,a/b,Creatinase/prolidase N-terminal domain
+,,d1g62a_,A12-A100,a+b,Pentein
+14,d1cs1a_d1q8ia1,d1cs1a_,"A68-A88,A190-A233",a/b,PLP-dependent transferases
+,,d1q8ia1,"A39-A60,A61-A109",a/b,Ribonuclease H-like
+15,d1d7ba_d1svb_2,d1d7ba_,A38-A128,all b,CBD9-like
+,,d1svb_2,1-302,membrane,"Viral glycoprotein, central and dimerisation domains"
+16,d1dc1a_d1nf2a_,d1dc1a_,A135-A206,a/b,Restriction endonuclease-like
+,,d1nf2a_,A81-A189,a/b,HAD-like
+17,d1dc1a_d1rblm_,d1dc1a_,"A135-A164,A165-A206",a/b,Restriction endonuclease-like
+,,d1rblm_,"M2-M51,M64-M122",a+b,"RuBisCO, small subunit"
+18,d1dmza_d1hdha_,d1dmza_,"A596-A605,A615-A654,A666-A674,A706-A730",all b,SMAD/FHA domain
+,,d1hdha_,"A447-A462,A463-A479,A480-A493,A494-A527",a/b,Alkaline phosphatase-like
+19,d1ds1a_d1tig__,d1ds1a_,"A2-A8,A43-A105,A153-A166,A265-A275",all b,Clavaminate synthase-like
+,,d1tig__,"83-94,95-145,146-158,159-170",a+b,"Translation initiation factor IF3, C-terminal domain"
+20,d1dzka_d1qd1b2,d1dzka_,"A10-A25,A96-A157",all b,Lipocalins
+,,d1qd1b2,"B2181-B2210,B2211-B2326",a+b,Formiminotransferase domain of formiminotransferase-cyclodeaminase.
+21,d1dzta_d1kpf__,d1dzta_,"A1-A46,A67-A79,A107-A116",all b,RmlC-like cupins
+,,d1kpf__,"16-89,90-106,107-126",a+b,HIT-like
+22,d1e3pa3d1gpqa_,d1e3pa3,"A3-A57,A116-A151",a+b,Ribosomal protein S5 domain 2-like
+,,d1gpqa_,"A2-A89,A90-A128",a+b,"Inhibitor of vertebrate lysozyme, Ivy"
+23,d1e3pa3d1tis__,d1e3pa3,"A3-A44,A128-A151,A221-A253",a+b,Ribosomal protein S5 domain 2-like
+,,d1tis__,"134-178,179-204,105-133",a+b,Thymidylate synthase/dCMP hydroxymethylase
+24,d1ecfa2d1unnc_,d1ecfa2,A1-A75,a+b,N-terminal nucleophile aminohydrolases (Ntn hydrolases)
+,,d1unnc_,C241-C351,a+b,"Lesion bypass DNA polymerase (Y-family), little finger domain"
+25,d1efdn_d1d1ra_,d1efdn_,N174-N241,a/b,"""Helical backbone"" metal receptor"
+,,d1d1ra_,A29-A111,a+b,eIF1-like
+26,d1efdn_d1r0va3,d1efdn_,N174-N241,a/b,"""Helical backbone"" metal receptor"
+,,d1r0va3,A140-A214,a+b,tRNA-intron endonuclease N-terminal domain-like
+27,d1ert__d1jr3d2,d1ert__,1-61,a/b,Thioredoxin-like
+,,d1jr3d2,D17-D117,a/b,P-loop containing nucleoside triphosphate hydrolases
+28,d1fbxa_d1o08a_,d1fbxa_,"A1-A22,A74-A87,A133-A169",a+b,Tetrahydrobiopterin biosynthesis enzymes-like
+,,d1o08a_,"A1014-A1035,A1036-A1046,A1047-A1092",a/b,HAD-like
+29,d1fy2a_d1qmha1,d1fy2a_,"A1-A31,A114-A120,A192-A209",a/b,Class I glutamine amidotransferase-like
+,,d1qmha1,"A185-A218,A219-A231,A232-A279",a/b,"RNA 3'-terminal phosphate cyclase, RPTC, insert domain"
+30,d1g99a1d1gqyb3,d1g99a1,A11-A80,a/b,Actin-like ATPase domain
+,,d1gqyb3,B244-B321,a/b,"MurD-like peptide ligases, catalytic domain"
+31,d1g99a1d1izna_,d1g99a1,A1-A80,a/b,Actin-like ATPase domain
+,,d1izna_,A117-A281,multi,Subunits of heterodimeric actin filament capping protein Capz
+32,d1gc5a_d1omha_,d1gc5a_,"A346-A389,A423-A467",a/b,Ribokinase-like
+,,d1omha_,"A2-A132,A133-A293",a+b,"Origin of replication-binding domain, RBD-like"
+33,d1gx3a_d1epaa_,d1gx3a_,A85-A185,a+b,Cysteine proteinases
+,,d1epaa_,A3-A162,all b,Lipocalins
+34,d1gx3a_d1pbya5,d1gx3a_,A85-A185,a+b,Cysteine proteinases
+,,d1pbya5,A166-A273,all b,"Quinohemoprotein amine dehydrogenase A chain, domain 3"
+35,d1h0hb_d1hz6b_,d1h0hb_,"B1-B14,B157-B214",a+b,4Fe-4S ferredoxins
+,,d1hz6b_,"B2-B13,B14-B64",a+b,Immunoglobulin-binding domains
+36,d1h6da2d1kjka_,d1h6da2,"A213-A229,A337-A367",a+b,"Glyceraldehyde-3-phosphate dehydrogenase-like, C-terminal domain"
+,,d1kjka_,"A40-A59,A11-A39",a+b,DNA-binding domain
+37,d1hbnb2d1aisb2,d1hbnb2,"B49-B60,B73-B100,B117-B163",a+b,Methyl-coenzyme M reductase subunits
+,,d1aisb2,"B1200-B1220,B1221-B1242,B1243-B1300",all a,Cyclin-like
+38,d1hi9a_d1rpua_,d1hi9a_,"A119-A145,A210-A225,A245-A274",a/b,Dipeptide transport protein
+,,d1rpua_,"A55-A104,A105-A118,A119-A152",a+b,"Tombusvirus P19 core protein, VP19"
+39,d1hrda1d1rp3a3,d1hrda1,"A195-A226,A369-A424",a/b,NAD(P)-binding Rossmann-fold domains
+,,d1rp3a3,"A1-A36,A37-A87",all a,Sigma2 domain of RNA polymerase sigma factors
+40,d1htjf_d1gnla_,d1htjf_,"F335-F375,F465-F487",all a,"Regulator of G-protein signaling, RGS"
+,,d1gnla_,"A1-A79,A80-A135",multi,Prismane protein-like
+41,d1htjf_d1nhua_,d1htjf_,"F320-F352,F441-F487",all a,"Regulator of G-protein signaling, RGS"
+,,d1nhua_,"A386-A477,A478-A563",multi,DNA/RNA polymerases
+42,d1i9ea_d1mzka_,d1i9ea_,A28-A96,all b,Immunoglobulin
+,,d1mzka_,A177-A298,all b,SMAD/FHA domain
+43,d1i9ea_d1nppa1,d1i9ea_,A28-A96,all b,Immunoglobulin
+,,d1nppa1,A51-A131,all b,"N-utilization substance G protein NusG, insert domain"
+44,d1ihoa_d1ep7a_,d1ihoa_,"A1-A23,A49-A57,A71-A95",a/b,Nucleotidylyl transferase
+,,d1ep7a_,"A1-A24,A25-A35,A36-A112",a/b,Thioredoxin-like
+45,d1is8a_d1umwa1,d1is8a_,"A115-A151,A189-A201,A211-A241",a+b,Tetrahydrobiopterin biosynthesis enzymes-like
+,,d1umwa1,"A407-A438,A439-A446,A447-A500",a+b,Polo-box domain
+46,d1j22a_d1m2aa_,d1j22a_,"A5-A50,A116-A135",a/b,Restriction endonuclease-like
+,,d1m2aa_,"A1-A77,A78-A103",a/b,Thioredoxin-like
+47,d1jdbc2d1r9ca_,d1jdbc2,"C262-C280,C322-C356",a/b,Class I glutamine amidotransferase-like
+,,d1r9ca_,"A1-A27,A28-A65",a+b,Glyoxalase/Bleomycin resistance protein/Dihydroxybiphenyl dioxygenase
+48,d1jnwa_d1ew4a_,d1jnwa_,"A47-A57,A99-A116,A186-A218,A19-A46",all b,FMN-binding split barrel
+,,d1ew4a_,"A1-A36,A37-A56,A57-A82,A83-A106",a+b,Frataxin-like
+49,d1k2fa_d1svb_2,d1k2fa_,"A152-A231,A269-A282",all b,TRAF domain-like
+,,d1svb_2,"1-269,270-302",membrane,"Viral glycoprotein, central and dimerisation domains"
+50,d1l6ra_d1ir6a_,d1l6ra_,"A36-A82,A148-A164",a/b,HAD-like
+,,d1ir6a_,"A329-A402,A403-A433",a/b,DHH phosphoesterases
+51,d1l6ra_d1nrva_,d1l6ra_,"A36-A82,A148-A164",a/b,HAD-like
+,,d1nrva_,"A429-A502,A503-A533",a+b,SH2 domain
+52,d1lci__d1lla_1,d1lci__,"83-99,20-41,52-74",multi,Acetyl-CoA synthetase-like
+,,d1lla_1,"30-68,69-84,85-109",all a,"Hemocyanin, N-terminal domain"
+53,d1lwda_d1a5t_1,d1lwda_,"A17-A36,A328-A373,A393-A413",a/b,Isocitrate/Isopropylmalate dehydrogenase-like
+,,d1a5t_1,"208-237,238-305,306-329",all a,"DNA polymerase III clamp loader subunits, C-terminal domain"
+54,d1miwa2d1gyfa_,d1miwa2,"A20-A27,A36-A47,A102-A131",a+b,Nucleotidyltransferase
+,,d1gyfa_,"A25-A33,A34-A47,A48-A86",a+b,GYF domain
+55,d1n7va_d1izna_,d1n7va_,A353-A418,all b,Adsorption protein p2
+,,d1izna_,A117-A281,multi,Subunits of heterodimeric actin filament capping protein Capz
+56,d1nf2a_d1ptma_,d1nf2a_,"A99-A127,A128-A153",a/b,HAD-like
+,,d1ptma_,"A146-A202,A258-A289",a/b,Isocitrate/Isopropylmalate dehydrogenase-like
+57,d1nkta3d1ldja1,d1nkta3,"A106-A123,A57-A96",a/b,P-loop containing nucleoside triphosphate hydrolases
+,,d1ldja1,"A687-A724,A725-A776",all a,"""Winged helix"" DNA-binding domain"
+58,d1o02a_d1ihna_,d1o02a_,"A20-A31,A54-A73,A186-A224",a/b,ALDH-like
+,,d1ihna_,"A9-A52,A53-A69,A70-A121",a/b,Hypothetical protein MT938 (MTH938)
+59,d1o17d2d1ir6a_,d1o17d2,"D182-D248,D280-D303",a/b,Nucleoside phosphorylase/phosphoribosyltransferase catalytic domain
+,,d1ir6a_,"A329-A403,A404-A433",a/b,DHH phosphoesterases
+60,d1o17d2d1jyra_,d1o17d2,"D182-D248,D280-D303",a/b,Nucleoside phosphorylase/phosphoribosyltransferase catalytic domain
+,,d1jyra_,"A56-A120,A121-A151",a+b,SH2 domain
+61,d1ogqa_d1fjgc1,d1ogqa_,A1-A87,a/b,L domain-like
+,,d1fjgc1,C2-C106,a+b,Prokaryotic type KH domain (KH-domain type II)
+62,d1ogsa2d1dq3a4,d1ogsa2,"A1-A20,A97-A116,A400-A415",a/b,(Trans)glycosidases
+,,d1dq3a4,"A227-A264,A265-A280,A281-A335",a+b,Homing endonucleases
+63,d1ogsa2d1is1a_,d1ogsa2,"A1-A20,A97-A116,A400-A415",a/b,(Trans)glycosidases
+,,d1is1a_,"A29-A70,A71-A86,A87-A105",a+b,"Ribosome recycling factor, RRF"
+64,d1ovma1d1914_2,d1ovma1,"A185-A210,A302-A341",a/b,DHS-like NAD/FAD-binding domain
+,,d1914_2,"2001-2023,2024-2097",a+b,"Signal recognition particle alu RNA binding heterodimer, SRP9/14"
+65,d1p5gx1d1xppa_,d1p5gx1,"X9-X48,X99-X142",a/b,"Phosphoglucomutase, first 3 domains"
+,,d1xppa_,"A7-A44,A45-A105",a+b,RBP11-like subunits of RNA polymerase
+66,d1pdz_1d1b66a_,d1pdz_1,145-250,a/b,Enolase C-terminal domain-like
+,,d1b66a_,A7-A144,a+b,Tetrahydrobiopterin biosynthesis enzymes-like
+67,d1pdz_1d1irum_,d1pdz_1,145-250,a/b,Enolase C-terminal domain-like
+,,d1irum_,M33-M116,a+b,N-terminal nucleophile aminohydrolases (Ntn hydrolases)
+68,d1piea1d1nxha_,d1piea1,"A96-A119,A131-A180",a+b,Ribosomal protein S5 domain 2-like
+,,d1nxha_,"A107-A126,A3-A106",all a,Hypothetical protein MTH393
+69,d1piea1d1q0qa1,d1piea1,"A96-A119,A131-A180",a+b,Ribosomal protein S5 domain 2-like
+,,d1q0qa1,"A371-A398,A301-A370",all a,"1-deoxy-D-xylulose-5-phosphate reductoisomerase, C-terminal domain"
+70,d1qd1b1d1itwa_,d1qd1b1,B2083-B2180,a+b,Formiminotransferase domain of formiminotransferase-cyclodeaminase.
+,,d1itwa_,A166-A379,a/b,Isocitrate/Isopropylmalate dehydrogenase-like
+71,d1qd1b1d1n62c2,d1qd1b1,B2083-B2180,a+b,Formiminotransferase domain of formiminotransferase-cyclodeaminase.
+,,d1n62c2,C1-C61,a+b,FAD-binding domain
+72,d1qh4a2d1ekga_,d1qh4a2,"A137-A179,A207-A269",a+b,Glutamine synthetase/guanido kinase
+,,d1ekga_,"A90-A129,A130-A208",a+b,Frataxin-like
+73,d1qnia1d1k4za_,d1qnia1,"A472-A524,A565-A581",all b,Cupredoxins
+,,d1k4za_,"A1368-A1406,A1407-A1524",all b,C-terminal domain of adenylylcyclase associated protein
+74,d1slca_d1sq9a_,d1slca_,A24-A115,all b,Concanavalin A-like lectins/glucanases
+,,d1sq9a_,A286-A395,all b,WD40 repeat-like
+75,d1st6a8d1gvna_,d1st6a8,"A875-A942,A1007-A1065",all a,alpha-catenin/vinculin
+,,d1gvna_,"A3-A60,A61-A89",all a,"Plasmid maintenance system epsilon/zeta, antidote epsilon subunit"
+76,d1st6a8d1r5id_,d1st6a8,"A875-A942,A1007-A1065",all a,alpha-catenin/vinculin
+,,d1r5id_,"D1-D94,D95-D128",all a,Superantigen MAM
+77,d1tv8a_d1nbwb_,d1tv8a_,"A13-A67,A265-A314",a/b,Radical SAM enzymes
+,,d1nbwb_,"B5-B58,B59-B117",a/b,B12-dependent dehydatase associated subunit
+78,d1tv8a_d1t3ea3,d1tv8a_,A160-A259,a/b,Radical SAM enzymes
+,,d1t3ea3,A499-A653,a/b,Molybdenum cofactor biosynthesis proteins
+79,d1ukfa_d1gsa_2,d1ukfa_,A166-A268,a+b,Cysteine proteinases
+,,d1gsa_2,123-206,a+b,Glutathione synthetase ATP-binding domain-like
+80,d1uoua1d1fs1b1,d1uoua1,"A65-A104,A187-A227",all a,Nucleoside phosphorylase/phosphoribosyltransferase N-terminal domain
+,,d1fs1b1,"B43-B95,B96-B140",all a,Skp1 dimerisation domain-like
+81,d1ur3m_d1k87a1,d1ur3m_,"M215-M255,M263-M297",a/b,NAD(P)-linked oxidoreductase
+,,d1k87a1,"A138-A199,A200-A261",all a,N-terminal domain of bifunctional PutA protein
+82,d1uyra1d1vkka_,d1uyra1,"A1529-A1628,A1795-A1817",a/b,ClpP/crotonase
+,,d1vkka_,"A6-A127,A128-A142",a+b,Actin depolymerizing proteins
+83,d1uyrb1d1a79a1,d1uyrb1,B1484-B1628,a/b,ClpP/crotonase
+,,d1a79a1,A83-A179,a/b,tRNA-intron endonuclease catalytic domain-like
+84,d1vaoa2d1no5a_,d1vaoa2,"A6-A41,A71-A95,A117-A123",a+b,FAD-binding domain
+,,d1no5a_,"A6-A40,A41-A74,A75-A105",a+b,Nucleotidyltransferase
+85,d1vk3a3d1lbu_2,d1vk3a3,"A167-A186,A239-A267,A306-A325",a+b,PurM C-terminal domain-like
+,,d1lbu_2,"157-166,167-189,190-213",a+b,Hedgehog/DD-peptidase
+86,d1vk3a3d1w2ia_,d1vk3a3,"A167-A186,A239-A267,A306-A325",a+b,PurM C-terminal domain-like
+,,d1w2ia_,"A2-A16,A17-A40,A41-A91",a+b,Acylphosphatase-like
+87,d2csta_d1j4wa1,d2csta_,"A74-A124,A247-A298",a/b,PLP-dependent transferases
+,,d1j4wa1,"A1-A33,A34-A74",a+b,Eukaryotic type KH-domain (KH-domain type I)
+88,d2gaw.1d1nppa1,d2gaw.1,"A3-A12,B152-B205,B248-B290",a+b,N-terminal nucleophile aminohydrolases (Ntn hydrolases)
+,,d1nppa1,"A51-A59,A60-A80,A81-A131",all b,"N-utilization substance G protein NusG, insert domain"
+89,d2onea1d1hz6b_,d2onea1,A142-A219,a/b,Enolase C-terminal domain-like
+,,d1hz6b_,B2-B64,a+b,Immunoglobulin-binding domains
+90,d3pmga1d1e8ca1,d3pmga1,"A54-A89,A167-A190",a/b,"Phosphoglucomutase, first 3 domains"
+,,d1e8ca1,"A3-A67,A68-A103",a/b,MurE/MurF N-terminal domain
+91,d6mhta_d1vm0b_,d6mhta_,A71-A176,a/b,S-adenosyl-L-methionine-dependent methyltransferases
+,,d1vm0b_,B20-B122,a+b,AlbA-like
+92,d1a05a_d1dgsa3,d1a05a_,"A82-A110,A126-A136,A241-A280",a/b,Isocitrate/Isopropylmalate dehydrogenase-like
+,,d1dgsa3,"A89-A118,A249-A259,A260-A314",a+b,"DNA ligase/mRNA capping enzyme, catalytic domain"
+93,d1a05a_d1j71a_,d1a05a_,"A100-A110,A126-A137,A241-A281",a/b,Isocitrate/Isopropylmalate dehydrogenase-like
+,,d1j71a_,"A192-A205,A206-A221,A222-A334",all b,Acid proteases
+94,d1a05a_d1rblm_,d1a05a_,"A82-A110,A126-A137,A241-A281",a/b,Isocitrate/Isopropylmalate dehydrogenase-like
+,,d1rblm_,"M2-M51,M64-M77,M78-M122",a+b,"RuBisCO, small subunit"
+95,d1aa7a_d1b68a_,d1aa7a_,"A51-A88,A120-A158",all a,Influenza virus matrix protein M1
+,,d1b68a_,"A23-A85,A86-A162",all a,Apolipoprotein
+96,d1aa7a_d1qkra_,d1aa7a_,"A1-A16,A51-A88,A120-A158",all a,Influenza virus matrix protein M1
+,,d1qkra_,"A881-A914,A915-A973,A974-A1061",all a,alpha-catenin/vinculin
+97,d1aora2d1dkza2,d1aora2,"A54-A97,A155-A188",a+b,"Aldehyde ferredoxin oxidoreductase, N-terminal domain"
+,,d1dkza2,"A389-A464,A465-A506",all b,"Heat shock protein 70kD (HSP70), peptide-binding domain"
+98,d1axn__d1nkta3,d1axn__,"77-110,269-284",all a,Annexin
+,,d1nkta3,"A1-A56,A57-A82",a/b,P-loop containing nucleoside triphosphate hydrolases
+99,d1axn__d1sf9a_,d1axn__,"77-110,269-284",all a,Annexin
+,,d1sf9a_,"A11-A55,A56-A80",all b,Hypothetical protein YfhH
+100,d1b3qa2d1bia_2,d1b3qa2,"A540-A572,A607-A640",all b,CheW-like
+,,d1bia_2,"271-294,295-317",all b,C-terminal domain of transcriptional repressors
+101,d1b6ra1d1k8kd1,d1b6ra1,"A178-A196,A278-A287,A313-A339,A340-A355",all b,Rudiment single hybrid motif
+,,d1k8kd1,"D26-D51,D52-D89,D90-D120,D1-D25",a+b,Arp2/3 complex subunits
+102,d1b6ra1d1v97a4,d1b6ra1,"A178-A196,A278-A287,A313-A355",all b,Rudiment single hybrid motif
+,,d1v97a4,"A415-A444,A445-A459,A460-A528",a+b,CO dehydrogenase flavoprotein C-terminal domain-like
+103,d1eg3a1d1paqa_,d1eg3a1,"A121-A144,A195-A250",all a,EF-hand
+,,d1paqa_,"A544-A582,A583-A704",all a,ARM repeat
+104,d1gxja_d1p5dx3,d1gxja_,"A527-A539,A615-A658",a+b,Smc hinge domain
+,,d1p5dx3,"X258-X276,X277-X356",a/b,"Phosphoglucomutase, first 3 domains"
+105,d1h5wa_d2cbla2,d1h5wa_,"A126-A158,A201-A229,B126-B158,B201-B229",multi,Upper collar protein gp10 (connector protein)
+,,d2cbla2,"A47-A77,A78-A104,A105-A143,A144-A177",all a,N-terminal domain of cbl (N-cbl)
+106,d1izna_d1keka2,d1izna_,"A7-A42,B2-B33",multi,Subunits of heterodimeric actin filament capping protein Capz
+,,d1keka2,"A868-A918,A919-A955",a/b,Thiamin diphosphate-binding fold (THDP-binding)
+107,d1k9ka_d1abv__,d1k9ka_,"A2-A28,A69-A90,B2-B28,B69-B90",all a,EF-hand
+,,d1abv__,"1-22,23-50,51-84,85-105",all a,N-terminal domain of the delta subunit of the F1F0-ATP synthase
+108,d1knza_d1rp3a3,d1knza_,"A7-A58,B7-B58",multi,NSP3 homodimer
+,,d1rp3a3,"A1-A58,A59-A86",all a,Sigma2 domain of RNA polymerase sigma factors
+109,d1knza_d1vola1,d1knza_,"A7-A58,B7-B58",multi,NSP3 homodimer
+,,d1vola1,"A113-A151,A152-A207",all a,Cyclin-like
+110,d1m9na2d1j27a_,d1m9na2,"A235-A278,A412-A439,A440-A450",a/b,Cytidine deaminase-like
+,,d1j27a_,"A16-A62,A63-A98,A1-A15",a+b,Hypothetical protein TT1725
+111,d1mk5a_d1efub2,d1mk5a_,"A66-A99,A100-A116,B66-B99,B100-B116",all b,Avidin/streptavidin
+,,d1efub2,"B55-B85,B123-B139,B140-B164,B245-B269",a+b,"Elongation factor Ts (EF-Ts), dimerisation domain"
+112,d1mw5a_d1bco_1,d1mw5a_,"A13-A19,A118-A130,A141-A153,B13-B19,B118-B130,B141-B153",a+b,Hypothetical protein HI1480
+,,d1bco_1,"481-499,500-509,510-526,527-539,540-550,551-560",all b,"mu transposase, C-terminal domain"
+113,d1n00a_d1aa7a_,d1n00a_,"A88-A118,A246-A280",all a,Annexin
+,,d1aa7a_,"A1-A35,A36-A74",all a,Influenza virus matrix protein M1
+114,d1okra_d1m98a1,d1okra_,"A92-A123,B92-B122",all a,"""Winged helix"" DNA-binding domain"
+,,d1m98a1,"A17-A52,A131-A164",all a,"Orange carotenoid protein, N-terminal domain"
+115,d1okra_d1v9da_,d1okra_,"A73-A108,B73-B108",all a,"""Winged helix"" DNA-binding domain"
+,,d1v9da_,"A829-A865,A866-A960",all a,Formin homology 2 domain (FH2 domain)
+116,d1omoa_d1i7b.1,d1omoa_,"A34-A47,A48-A59,A60-A76,B34-B47,B48-B59,B60-B76",a/b,NAD(P)-binding Rossmann-fold domains
+,,d1i7b.1,"B4-B23,A103-A119,A153-A166,A171-A185,A276-A289,A316-A328",a+b,S-adenosylmethionine decarboxylase
+117,d1izna_d1gkza1,d1izna_,"A7-A42,B2-B33",multi,Subunits of heterodimeric actin filament capping protein Capz
+,,d1gkza1,"A64-A104,A127-A174",all a,"alpha-ketoacid dehydrogenase kinase, N-terminal domain"
+118,d1ps6a_d1f9za_,d1ps6a_,"A112-A123,A133-A156,A280-A299",a/b,Isocitrate/Isopropylmalate dehydrogenase-like
+,,d1f9za_,"A1-A14,A15-A36,A37-A69",a+b,Glyoxalase/Bleomycin resistance protein/Dihydroxybiphenyl dioxygenase
+119,d1qo0d_d1hjp_1,d1qo0d_,"D87-D102,E2-E13,E108-E130",a/b,CheY-like
+,,d1hjp_1,"158-172,173-187,188-203",all a,"DNA helicase RuvA subunit, C-terminal domain"
+120,d1r2ja2d1ecmb_,d1r2ja2,"A49-A89,A207-A251",multi,Acyl-CoA dehydrogenase NM domain-like
+,,d1ecmb_,"B6-B67,B68-B100",all a,Chorismate mutase II
+121,d1rwha2d1n67a2,d1rwha2,"A462-A526,A642-A709",all b,"Hyaluronate lyase-like, C-terminal domain"
+,,d1n67a2,"A370-A499,A500-A560",all b,Bacterial adhesins
+122,d1smta_d1b7ta4,d1smta_,"A28-A59,A101-A121,B28-B59,B101-B120",all a,"""Winged helix"" DNA-binding domain"
+,,d1b7ta4,"A323-A364,A371-A402,A410-453,A591-A624",a/b,P-loop containing nucleoside triphosphate hydrolases
+123,d1st6a2d1jqna_,d1st6a2,"A183-A253,A652-A717",all a,alpha-catenin/vinculin
+,,d1jqna_,"A256-A340,A341-A391",a/b,Phosphoenolpyruvate/pyruvate domain
+124,d1izna_d2gsca_,d1izna_,"A7-A42,B2-B33",multi,Subunits of heterodimeric actin filament capping protein Capz
+,,d2gsca_,"A9-A63,A68-A125",,
+125,d1lq7a_d1gqea_,d1lq7a_,A1-A67,design,Designed single chain three-helix bundle
+,,d1gqea_,A4-A117,multi,Release factor
+126,d1oi2a_d1uw1a_,d1oi2a_,A20-A87,a/b,DAK1/DegV-like
+,,d1uw1a_,A7-A73,design,In vitro evolution products
+127,d1pqsa_d1i7la2,d1pqsa_,A778-A854,a+b,CAD & PB1 domains
+,,d1i7la2,A246-A312,a+b,Glutathione synthetase ATP-binding domain-like
+128,d1pqsa_d1poh__,d1pqsa_,A778-A854,a+b,CAD & PB1 domains
+,,d1poh__,1-85,a+b,HPr-like
+129,d1qysa_d1i7b.1,d1qysa_,"A3-A13,A14-A94",design,New fold designs
+,,d1i7b.1,"B4-B23,A74-A166",a+b,S-adenosylmethionine decarboxylase
+130,d1uw1a_d1q9ua_,d1uw1a_,A7-A73,design,In vitro evolution products
+,,d1q9ua_,A1-A127,a+b,TT1751-like

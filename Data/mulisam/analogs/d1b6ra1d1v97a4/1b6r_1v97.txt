@@ -1,0 +1,2 @@
+The motif in 1b6r: motif occurs at the interface of the ATP-grasp fold and 'Barrel-sandwich hybrid' fold.
+The motif in 1v97: stand-along, core motif.

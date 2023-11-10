@@ -1,0 +1,2 @@
+The motif in 1b62: compare d1b62a2 and d1amw__ (same superfamily), one strand and one helix is insertion. Hybrid motif. second helix too far away.
+The core of this fold looks like a circularly permuted ferredoxin. The motif uses one edge strand of the ferredoxin core and the C-terminal extensions.

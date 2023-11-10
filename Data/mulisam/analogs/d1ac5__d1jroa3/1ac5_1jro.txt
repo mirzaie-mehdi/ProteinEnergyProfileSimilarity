@@ -1,0 +1,2 @@
+The motif in 1ac5: four strands are insertions to the Rossmann core, while one strand and the helix belong to the Rossmann core. Hybrid
+motif, but the b-a-b connection in this motif is left-handed.

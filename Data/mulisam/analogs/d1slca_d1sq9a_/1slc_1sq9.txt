@@ -1,0 +1,4 @@
+The motif in 1slc: it uses strands 3456789. Although it is not a hybrid motif because all these seven strands are present in other
+homologs of this family, this structure appears to be Ig-like: switch the positions of the very first and very last strands, then the very
+first strand is strand 1 in Ig fold, there are two strands inserted after strand 4 in Ig and two strands inserted after strand 5 in Ig.
+The motif in 1sq9: uses core elements in the propeller.

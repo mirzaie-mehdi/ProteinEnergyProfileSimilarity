@@ -1,0 +1,3 @@
+In 1nkt, the 3-helix bundle uses one helix in the N-terminal extra all-alpha subdomain, one helix before the first strand in the
+Rossmann-like fold (this helix can be considered as part of the Rossmann fold), and one helix after the P-loop. This is a hybrid motif, but
+the topology is up-down-down. So we make a circular permutation.

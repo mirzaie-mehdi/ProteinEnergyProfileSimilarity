@@ -1,0 +1,1 @@
+Compare 1uyr and d1tyfa_ (different SCOP family, same superfamily), A N-terminal beta-hairpin is insertion. So the motif in 1uyr is a hybrid.

@@ -1,0 +1,3 @@
+The motif in 1mk5: it uses corresponding core elements in two monomers and is an interface motif.
+The motif in 1efu: it uses corresponding core elements in two duplicates and is an interface motif. 
+The two motifs are analogous because 1mk5 is a barrel but 1efu is a a+b structure.

@@ -1,0 +1,3 @@
+The babbb motif in 1b05: a hybrid motif, because a beta-hairpin is absent in the majority of homologs in this superfamily and therefore is an insertion. Other parts of the motif come from the core of this superfamily.
+The babbb motif in 1nki: a core motif.
+Thus, these two motifs are analogs.

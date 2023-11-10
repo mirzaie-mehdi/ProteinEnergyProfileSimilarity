@@ -1,0 +1,2 @@
+The motif in 1h6d: compared to d1lc0a2 (same superfamily), two strands are insertion. Hybrid. See d1drw_2 for the consensus of this fold as described
+in SCOP.

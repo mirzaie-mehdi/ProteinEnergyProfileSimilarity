@@ -1,0 +1,2 @@
+In 1a05, motif occurs at the interface of the two duplicates.
+In 1dgs, the motif is a circularly permuted reverse-ferredoxin core.
