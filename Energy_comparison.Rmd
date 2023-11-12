@@ -81,7 +81,7 @@ manhat_norm <- function(X, Y){
   xy = xy[xy != 0]
   d = sum(xy)/length(xy)
   Lmax = max(X[1], Y[1])
-  d = d / (0.3 * (Lmax^0.6))
+  d = d / (0.5 * (Lmax^0.6))
   return(d)
 }
 manhat_norm_diff <- function(X, Y){
@@ -91,6 +91,8 @@ manhat_norm_diff <- function(X, Y){
   d = sum(xy)/length(xy)
   Lmax = abs(X[1]- Y[1]) + 1
   d = d / (0.1 * (Lmax^0.86))
+  d = d / (1.1 * (Lmax^0.50))
+
   return(d)
 }
 
@@ -119,9 +121,9 @@ pairs$min_len <- apply(pairs[,3:4],1,min)
 pairs$max_len <- apply(pairs[,3:4],1,max)
 pairs$mean_len <- apply(pairs[,3:4],1,mean)
 pairs$diff <- abs(pairs$len1 - pairs$len2)
-set.seed(123)
+set.seed(1234)
 pairs_random <- pairs %>%
-  group_by(diff) %>%
+  group_by(max_len) %>%
   sample_n(1) %>%
   ungroup()
 
@@ -176,7 +178,7 @@ lm(log10(dis)~log10(diff),pairs_random[pairs_random$diff>10,])
 #step <- 5
 #sel_pairs_random <- pairs_random[pairs_random$max_len %in% seq(40, nrow(pairs_random), by = step), ]
 
-pairs_random$adj <- apply(pairs_random[,c(6,8)],1,function(x){return(x[2]/(.30*x[1]^0.60))})
+pairs_random$adj <- apply(pairs_random[,c(6,9)],1,function(x){return(x[2]/(.50*x[1]^0.57))})
 ggplot(pairs_random[pairs_random$max_len>80,],aes(max_len,adj))+geom_point()+
     scale_y_log10()+scale_x_log10()+
   geom_smooth(method = 'lm')+
