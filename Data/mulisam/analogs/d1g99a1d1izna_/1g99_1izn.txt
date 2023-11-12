@@ -1,0 +1,2 @@
+The motif in 1g99: compared to d1ig8a1 (same superfamily), two strands are insertion to the RNaseH core. hybrid motif.
+The motif in 1izn is the dimerization domain.

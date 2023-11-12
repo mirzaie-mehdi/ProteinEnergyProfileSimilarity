@@ -1,0 +1,1 @@
+The motif in 1ur3: helix 1 and 4 are insertions while helix 2 and 3 are TIM barrel helices. So this is a hybrid motif.

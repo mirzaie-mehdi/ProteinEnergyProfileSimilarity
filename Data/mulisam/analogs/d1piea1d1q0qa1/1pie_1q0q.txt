@@ -1,0 +1,2 @@
+The motif in 1pie: two helices come from the "Ribosomal protein S5 domain 2-like" core and the third helix comes from C-terminal
+extension. hybrid motif.

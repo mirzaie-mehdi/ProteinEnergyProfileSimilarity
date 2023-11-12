@@ -1,0 +1,2 @@
+The motif in 1miw: compare 1miw to d1fa0a4 (different family, same superfamily), a C-terminal beta-hairpin is insertion. 
+The motif in 1gyf: core motif.

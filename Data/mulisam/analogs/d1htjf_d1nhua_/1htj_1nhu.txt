@@ -1,0 +1,3 @@
+From the 1htj paper, the last three helices (helix 10-12) are an integral extension of the RGS fold with many hydrophobic interactions.
+These three helices are absent in other RGS, so they are insertions. The 4-helix motif is a hybrid, using 2 helices from the RGS core and 
+2 helices from the insertion.

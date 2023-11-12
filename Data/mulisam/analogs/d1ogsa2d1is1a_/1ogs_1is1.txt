@@ -1,0 +1,1 @@
+The motif in 1ogs: first two strands come from N-terminal extension, helix belongs to TIM-barrel, last two strands are insertion to TIM-barrel. Hybrid.

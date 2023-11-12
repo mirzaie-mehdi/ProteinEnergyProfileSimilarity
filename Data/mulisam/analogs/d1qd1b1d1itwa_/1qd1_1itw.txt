@@ -1,0 +1,4 @@
+The motif in 1qd1: uses the last strand in ferredoxin and the C-terminal extensions, hybrid. Compare the two duplicates.
+The motif in 1itw: Each duplicate in Isocitrate dehydrogenase has five strands, 1~5. The rudimant ICDH fold, or the large insertion as described in
+SCOP, uses strands 5, 1, 3. So this is a core motif. Note that the dimerization strands are after strand 5 in both the complete and the rudiment ICDH
+subunits.

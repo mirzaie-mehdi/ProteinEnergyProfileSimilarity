@@ -1,0 +1,1 @@
+The motif in 1knz: 4-helix bundle uses corresponding parts from the two monomers, so it is an interface motif.

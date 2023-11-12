@@ -1,0 +1,2 @@
+The motif in 1fbx:  3-helix bundle uses a N-terminal inserted helix and the two core helices in the T-fold, so this is a hybrid motif. I
+kept the loop with the one-turn helix to make the topology up-and-down. Actually, this motif is more like a 4-helix bundle.

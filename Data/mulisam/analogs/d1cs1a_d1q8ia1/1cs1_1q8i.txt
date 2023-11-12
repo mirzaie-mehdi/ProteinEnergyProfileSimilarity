@@ -1,0 +1,3 @@
+The motif in 1cs1: Although each family in the PLP-dependent transferases superfamily has this motif, this is a hybrid, because PLP-dependent
+transferases superfamily is homologous to some flavodoxin proteins. So this motif is a hybrid between the Rossmann-like core and the insertions, and
+is therefore analogous to ancient folds like ferredoxin.

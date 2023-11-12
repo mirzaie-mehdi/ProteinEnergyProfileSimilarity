@@ -1,0 +1,2 @@
+The motif in 1smt: it comes from a dimer interface, so it is an interface motif. 
+As long as the DALI hits are not DNA/RNA-binding 3-helix bundle, they can be used as analogs to the interface motif.

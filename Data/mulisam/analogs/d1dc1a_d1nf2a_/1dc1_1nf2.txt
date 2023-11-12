@@ -1,0 +1,3 @@
+The motif in 1dc1: compared to d1ckqa_ (same superfamiliy), two strands are insertion;
+The motif in 1nf2: the inserted domain appears like a circular-permuted ferredoxin, and most of the elements in the motif come from this
+ferredoxin-like part.

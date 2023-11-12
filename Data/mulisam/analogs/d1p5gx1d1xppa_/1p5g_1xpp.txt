@@ -1,0 +1,2 @@
+The motif in 1p5g: comparing the three duplicates, the first two strands are insertion. Hybrid motif. Since the three domains apparently have a
+mini-Rossman core, this motif can be used as analog to a+b motifs.

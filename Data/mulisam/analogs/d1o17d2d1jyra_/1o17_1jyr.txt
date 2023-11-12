@@ -1,0 +1,2 @@
+The motif in 1o17: compare to d2tpt_2 (same family); two strands are insertions; hybrid motif resulted from a helix-to-strand transition in a Rossmann structure.
+The motif in 1jyr: core motif in SH2 fold.

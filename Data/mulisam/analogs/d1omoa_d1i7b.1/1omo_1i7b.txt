@@ -1,0 +1,3 @@
+The motif in 1omo: interface motif uses elements from the two dimerization domains;
+The motif in 1i7b: interface motif uses elements from the two duplicates;
+Since the dimerization domain in 1omo and the duplicate in 1i7b are so different and so unlikely to evolutionarily related, these two motifs are analogs.

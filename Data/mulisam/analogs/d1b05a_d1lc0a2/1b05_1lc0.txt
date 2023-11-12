@@ -1,0 +1,4 @@
+The motif in 1b05: a hybrid motif, because a beta-hairpin is absent in the other duplicate and thus insertion.
+The motif in 1lc0: although "Glyceraldehyde-3-phosphate dehydrogenase-like, C-terminal domain" is a very variable fold, it is in SCOP a+b class and
+does not have any resemblance to Rossmann-like structures. 1b05 is in a/b class and is Rossmann-like. 
+So these two motifs are analogs.

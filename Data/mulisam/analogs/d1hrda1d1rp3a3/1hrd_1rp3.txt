@@ -1,0 +1,1 @@
+The motif in 1hrd: first helix is from the Rossmann core, the other two helices are from C-terminal extension. So this is a hybrid motif.

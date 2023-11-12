@@ -1,0 +1,3 @@
+The motif in 1qni: compared to 2cbp (same superfamily), the first strand in 1qni is an insertion. So this right-handed beta-helix in 1qni is a 
+hybrid. Basically, 1qni is a greek-key structure and is fundamentally different from the real beta-helix structures like 1k4z. So the motifs in
+1qni and 1k4z are analogs.

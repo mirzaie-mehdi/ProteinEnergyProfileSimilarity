@@ -1,0 +1,2 @@
+The motif in 1lci: the first helix is a N-terminal extension, the second one is present in the other duplicate, the third one is a
+Rossmann helix. So this is a hybrid motif, but needs circular permutation to make it into a common topology.

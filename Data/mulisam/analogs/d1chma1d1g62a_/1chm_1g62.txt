@@ -1,0 +1,5 @@
+The motif in 1chm: one helix and one strand do not belong to the RNaseH core. The "Creatinase/prolidase N-terminal domain" superfamily has only two
+proteins, and in the other protein (1n51) the inserted strand and helix are much deteriorated. Strictly speaking, this motif may not be a hybrid,
+since it is present in all members in this superfamily. 
+However, since d1chma1 and d1g62a_ are drastically different structures, the motif in d1chma1 and the motif in d1g62a_ are very unlikely to be
+homologs and are probably analogs.

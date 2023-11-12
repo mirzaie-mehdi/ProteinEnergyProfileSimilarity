@@ -1,0 +1,3 @@
+The motif in 1gx3: compare d1gx3a_ with classic cysteine proteinase papain d1ppn__ (same superfamily), half of the barrel in 1gx3 is
+absent in 1ppn. So this is a hybrid motif and is analog to true barrels in all-beta class. Note that the cysteine proteinase superfamily is
+very diverged in structures.

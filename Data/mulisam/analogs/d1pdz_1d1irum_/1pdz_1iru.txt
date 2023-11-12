@@ -1,0 +1,2 @@
+Compare 1pdz to d1bqg_1 (other family), the anti-parallel strand is the insertion. The motif in 1pdz comes from a TIM-barrel-like structure.
+The motif in 1iru_M comes from Ntn-like a+b sandwich. They are analogs.

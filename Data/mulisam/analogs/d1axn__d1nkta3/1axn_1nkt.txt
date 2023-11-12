@@ -1,0 +1,3 @@
+The motif in 1axn: the 3-helix bundle uses helix 5 in the 1st duplicate, helix 1 in the 2nd duplicate, and helix 2 in the 5th duplicate.
+This is an interface motif at the interface of three duplicates and in any one duplicate, the arrangement of helix
+1,2,5 is different than the arrangement in the interface motif.

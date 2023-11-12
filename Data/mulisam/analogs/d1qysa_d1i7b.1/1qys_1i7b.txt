@@ -1,0 +1,2 @@
+Top7 is a de novo designed protein, and thus is analog to the natural protein 1i7b. Top7 paper mentioned that
+there is no significant BLAST hit when Top7 sequence is used as query to search nr database.

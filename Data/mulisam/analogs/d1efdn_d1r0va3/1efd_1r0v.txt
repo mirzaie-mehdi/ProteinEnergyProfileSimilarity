@@ -1,0 +1,2 @@
+Comparing the two duplicates in 1efd, the motif results from some deletions in the Rossmann-like structure. Strictly speaking, this is not a hybrid motif.
+However, since d1r0va3 (and its homolog d1w7aa4) is drastically different than Rossmann structures, the motif in 1efd and the motif in 1r0v are analogs.

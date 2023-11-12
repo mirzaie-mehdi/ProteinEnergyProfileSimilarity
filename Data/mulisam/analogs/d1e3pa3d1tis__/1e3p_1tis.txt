@@ -1,0 +1,2 @@
+The motif in 1e3p: first two strands come from insertion, third strand and first helix come from the core of the "Ribosomal
+protein S5 domain 2-like" superfamily, last helix comes from C-terminal extension of another domain. hybrid motif.

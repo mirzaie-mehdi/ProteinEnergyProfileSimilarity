@@ -1,0 +1,13 @@
+$1m9n_Ai=d1m9na2(A235-A278,A412-A439,A440-A450);1j27_Ac=d1j27a_(A16-A62,A63-A98,A1-A15)$
+
+1m9n_Ai  235    SP|GFINLCDALNAWQLVKELKQALGIPAAASFKH------VSPAGAAVGI|  278
+                  |.****************.      .****.           .*****.|
+1j27_Ac   16  ARSL|KEKRALIKPALERLKARF------PVSAARLYGLDAWGYEVVGFTLLG|N  62
+
+1m9n_Ai  412    |PESAVRDLIVASIAVKYTQSNS-VCYAKD|       439
+                |.******************.   .****.|
+1j27_Ac   63  DP|AWVEETMRAAARFLAEAGGFQVALEEFRL|EAFEL   98
+
+1m9n_Ai  440       |GQVIGIGAG|QQ  450
+                   |.** .***.|
+1j27_Ac    1  MKAYL|GLY-TARLE|TP   15

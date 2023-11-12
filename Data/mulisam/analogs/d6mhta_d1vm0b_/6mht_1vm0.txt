@@ -1,0 +1,2 @@
+The motif in 6mht: methyltransferase is homologous to Rossmann-like proteins, so the anti-parallel strand is an insertion. So the motif is
+analogous to IF3-like.

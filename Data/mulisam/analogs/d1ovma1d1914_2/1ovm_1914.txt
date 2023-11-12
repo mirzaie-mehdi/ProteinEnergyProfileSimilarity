@@ -1,0 +1,4 @@
+The motif in 1ovm: compared with d1dhs__ (same superfamily, same cofactor-binding mode), a helix-to-strand transition generated the motif. 
+The motif in 1914: core motif, comparing the two homologous domains (SRP9 and SRP14).
+Strictly speaking, the motif in 1ovm is not a hybrid motif. However, since 1ovm is a Rossmann-like structure while 1914 is apparently not, these two
+motifs are analogs.

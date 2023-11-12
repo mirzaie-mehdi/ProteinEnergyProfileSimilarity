@@ -1,0 +1,2 @@
+The motif in 1a05: motif occurs at the interface of the two duplicates.
+The motif in 1j71: a core motif. Alternatively, this can be regarded as an interface motif because it uses corresponding elements from the two duplicates.

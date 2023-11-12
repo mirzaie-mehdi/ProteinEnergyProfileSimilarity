@@ -1,0 +1,2 @@
+The motif in 1st6: comparing the 8 duplicates, we know that the helix before the last duplicate is an insertion. So the three helix bundle
+is a hybrid motif with one inserted helix and two core helices.

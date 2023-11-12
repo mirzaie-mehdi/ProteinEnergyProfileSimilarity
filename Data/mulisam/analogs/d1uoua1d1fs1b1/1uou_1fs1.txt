@@ -1,0 +1,2 @@
+The motif in 1uou: it uses two helices in the N-terminal all-alpha domain, one insertion helix in the Rossmann-like domain, and the
+crossover helix of the Rossmann domain. So it is a hybrid motif.

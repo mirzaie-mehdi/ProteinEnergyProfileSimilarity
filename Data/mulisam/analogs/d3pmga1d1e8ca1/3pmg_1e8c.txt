@@ -1,0 +1,4 @@
+The motif in 3pmg: comparing the three duplicates, the C-terminal beta hairpin in the first duplicate is an addition. Hybrid motif. These
+three duplicates apparently have a mini-Rossmann core.
+The motif in 1e8c: compare 1e8c_A with d1gg4a3 (same family), it appears that the antiparallel strand in 1e8c_A is originally a helix or loop
+connecting the two parallel strands. Anyway, this can be regarded as a core motif.

@@ -1,0 +1,4 @@
+The motif in 1ecf: compare d1ecfa2 (Class II glutamine amidotransferases) and d1pmab_ (Proteasome subunits), superimpose the two first strands,
+and it seems that at least two strands in the reverse-ferredoxin motif in d1ecfa2 are insertions. hybrid motif.
+The bottom line is that Ntn and reverse-ferredoxin are drastically different folds. So the reverse_ferredoxin motif in Ntn is analog to real
+reverse_ferredoxin domains.

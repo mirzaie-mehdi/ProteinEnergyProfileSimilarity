@@ -1,0 +1,3 @@
+The motif in 1vk3: if 1vk3 is considered to be an elaborated ferredoxin, one helix and two strands in the motif are insertions. Hybrid motif.
+The motif in 1lbu: comparing with 1vhh, which lacks the last strand in the motif, this hedgehog/DD-peptidase fold has a circularly permuted
+ferredoxin core. So the motif in 1lbu is a hybrid with the last strand being insertion.

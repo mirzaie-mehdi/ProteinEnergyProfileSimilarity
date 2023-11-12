@@ -1,0 +1,3 @@
+The motif in 1g99: compared to d1ig8a1 (same superfamily), two strands are insertion to the RNaseH core. hybrid motif.
+The motif in 1gqy: although it looks like a dsRBD, the helix belongs to the Rossmann core because without it, half of the Rossmann sheet is
+not covered. So this motif cannot be dsRBD and thus has nothing to do with RNaseH domains (RNaseH is thought to originated from dsRBD).

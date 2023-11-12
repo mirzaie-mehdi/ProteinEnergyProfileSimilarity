@@ -1,0 +1,18 @@
+$1smt_Ai=d1smta_(A28-A59,A101-A121,B28-B59,B101-B120);1b7t_Ac=d1b7ta4(A323-A364,A371-A402,A410-453,A591-A624)$
+
+1smt_Ai   28                         I|APEVAQSLAEFFAVLA|DPNRLRLLSLLARSE   59
+                                      |.**************.|
+1b7t_Ac  323  DDVEEFKLCDEAFDILGFTKEEKQ|SMFKCTASILHMGEMK|FK               364
+
+1smt_Ai  101                QLQDH|HIVALYQNALDH|LQEC  121
+                                 |.**********.|
+1b7t_Ac  371  QAESDGTAEAEKVAFLCGI|NAGDLLKALLKP|K     402
+
+1smt_Ai   28   IAPE|VAQSLAEFFAVLAD|PNRLRLLSLLARSE              59
+                   |.************.|
+1b7t_Ac  410  VTKGQ|NMNQVVNSVGALAK|SLYDRMFNWLVRRVNKTLDTKAKRN  453
+
+1smt_Ai  101           QLQD|HHIVALYQNA|LDHLQE       120
+                           |.********.|
+1b7t_Ac  591  ITGWLEKNKDPIN|ENVVALLGAS|KEPLVAELFKA  624
+

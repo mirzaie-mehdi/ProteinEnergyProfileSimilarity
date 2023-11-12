@@ -1,0 +1,2 @@
+In 1n00, the 4-helix bundle uses the first two helices in the 2nd duplicate and the first two helices in the 4th duplicate.
+It occurs in the interface between two duplicates. Therefore, it is an interface motif.

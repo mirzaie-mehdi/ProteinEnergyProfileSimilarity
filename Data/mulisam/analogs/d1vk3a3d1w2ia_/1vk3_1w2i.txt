@@ -1,0 +1,5 @@
+The motif in 1vk3: if 1vk3 is considered to be an elaborated ferredoxin, one helix and two strands in the motif are insertions. Hybrid motif.
+The motif in 1w2i: the last strand does not belong to the ferredoxin core.
+These two motifs are analogs. In the superposition, the first ferredoxin strand in 1vk3 will be aligned to the first ferredoxin strand in
+1w2i. But that is OK, since they are aligned back-to-back, i.e. the helix-packing face in one strand is aligned to the
+non-helix-packing face in the other strand.

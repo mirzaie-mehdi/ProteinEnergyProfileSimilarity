@@ -1,0 +1,2 @@
+The motif in 1nf2: compare 1nf2 with 1l6r (same family), the inserted subdomain is a circularly permuted ferredoxin in 1l6r. So the motif in 1nf2 is a hybrid.
+The motif in 1ptm: occurs at the interface of the two duplicates, hybrid.

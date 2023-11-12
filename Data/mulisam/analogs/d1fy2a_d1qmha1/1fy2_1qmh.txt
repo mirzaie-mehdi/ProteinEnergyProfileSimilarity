@@ -1,0 +1,2 @@
+The motif in 1fy2: part of the motif comes from the permuted flavodoxin core, part comes from C-terminal insertion. The insertion looks different in
+different family, e.g. d1gpma2. So this is a hybrid motif and is analog to the thioredoxin core motif.

@@ -1,0 +1,3 @@
+The motif in 1o02: hybrid; uses N-terminal extension and the 2nd and 3rd strands in the Rossmann core.
+The motif in 1ihn: there is only one structure in this SCOP fold. No homologs to compare with. But this fold is very different from Rossmann fold.
+So these two motifs are analogs.

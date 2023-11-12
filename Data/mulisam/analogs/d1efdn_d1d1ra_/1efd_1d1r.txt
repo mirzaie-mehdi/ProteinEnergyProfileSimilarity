@@ -1,0 +1,2 @@
+Comparing the two duplicates in 1efd, the motif results from some deletions in the Rossmann-like structure. Strictly speaking, this is not a hybrid motif.
+However, since eIF1-like fold is drastically different than Rossmann structures, the motif in 1efd and the motif in 1d1r are analogs.

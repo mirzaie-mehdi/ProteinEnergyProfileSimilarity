@@ -1,0 +1,3 @@
+The motif in 1o17: compare to d2tpt_2 (same family); two strands are insertions; hybrid motif resulted from a helix-to-strand transition in a Rossmann structure.
+In 1ir6, comparing d1ir6a_ and d1k20a_ (same superfamily), domain 2 in these two homologs are not exactly the same. Anyway, domain 2 does 
+not have a Rossmann-like structure. So the motif in 1o17 and the motif in 1ir6 are analogs.
