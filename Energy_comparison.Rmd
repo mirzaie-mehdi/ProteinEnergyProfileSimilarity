@@ -58,6 +58,7 @@ library(tanggle)
 library(stringr)
 library(protr)
 library(proxy)
+library(class)
 mythem <- theme_bw(base_line_size = .2)+
   theme(axis.text = element_text(size=12, face = "bold"),
         axis.title = element_text(size = 15, face = "bold"),
@@ -66,7 +67,6 @@ mythem <- theme_bw(base_line_size = .2)+
         title = element_text(size = 15)
         )
 # ************************************
-# *********************************
 manhat <- function(X, Y){
   x = X[-1];y = Y[-1]
   xy = abs(x - y)
@@ -76,13 +76,13 @@ manhat <- function(X, Y){
   return(d)
 }
 # ********
-manhat_norm <- function(X, Y){
+manhat_norm_maxl <- function(X, Y){
   x = X[-1];y = Y[-1]
   xy = abs(x - y)
   xy = xy[xy != 0]
   d = sum(xy)/length(xy)
   Lmax = max(X[1], Y[1])
-  d = d / (0.5 * (Lmax^0.6))
+  d = d / (0.5 * (Lmax^0.57))
   return(d)
 }
 manhat_norm_diff <- function(X, Y){
@@ -90,20 +90,18 @@ manhat_norm_diff <- function(X, Y){
   xy = abs(x - y)
   xy = xy[xy != 0]
   d = sum(xy)/length(xy)
-  Lmax = abs(X[1]- Y[1]) + 1
-  d = d / (0.1 * (Lmax^0.86))
-  d = d / (1.1 * (Lmax^0.50))
-
+  Ldiff = abs(X[1]- Y[1]) + 1
+  d = d / (1.25 * (Ldiff^0.50))
   return(d)
 }
 
-manhat_norm_min <- function(X, Y){
+manhat_norm_minl <- function(X, Y){
   x = X[-1];y = Y[-1]
   xy = abs(x - y)
   xy = xy[xy != 0]
   d = sum(xy)/length(xy)
   Lmin = min(X[1], Y[1])
-  d = d / (0.4 * (Lmin^0.6))
+  d = d / (2.6 * (Lmin^0.3))
   return(d)
 }
 
@@ -122,9 +120,9 @@ pairs$min_len <- apply(pairs[,3:4],1,min)
 pairs$max_len <- apply(pairs[,3:4],1,max)
 pairs$mean_len <- apply(pairs[,3:4],1,mean)
 pairs$diff <- abs(pairs$len1 - pairs$len2)
-set.seed(1234)
+set.seed(123)
 pairs_random <- pairs %>%
-  group_by(max_len) %>%
+  group_by(diff) %>%
   sample_n(1) %>%
   ungroup()
 
@@ -169,8 +167,8 @@ for(i in 1:nrow(pairs_random)){
   pairs_random$dis[i] <- dist(df,method = manhat)
 }
 
-lm(log10(dis)~log10(max_len),pairs_random)
-ggplot(pairs_random[pairs_random$max_len>10,],aes(max_len,dis))+geom_point()+
+lm(log10(dis)~log10(diff),pairs_random)
+ggplot(pairs_random[pairs_random$diff>10,],aes(diff,dis))+geom_point()+
     scale_y_log10()+scale_x_log10()+
   geom_smooth(method = 'lm')+
   stat_cor(col='red')
@@ -179,8 +177,8 @@ lm(log10(dis)~log10(diff),pairs_random[pairs_random$diff>10,])
 #step <- 5
 #sel_pairs_random <- pairs_random[pairs_random$max_len %in% seq(40, nrow(pairs_random), by = step), ]
 
-pairs_random$adj <- apply(pairs_random[,c(6,9)],1,function(x){return(x[2]/(.50*x[1]^0.57))})
-ggplot(pairs_random[pairs_random$max_len>80,],aes(max_len,adj))+geom_point()+
+pairs_random$adj <- apply(pairs_random[,c(8,9)],1,function(x){return(x[2]/(1.250*x[1]^0.5))})
+ggplot(pairs_random[pairs_random$max_len>10,],aes(max_len,adj))+geom_point()+
     scale_y_log10()+scale_x_log10()+
   geom_smooth(method = 'lm')+
   stat_cor(col='red')
@@ -575,7 +573,7 @@ saveRDS(E210.seqPDB_astral95,file = "Data/rds/E210.seqPDB_astral_95.rds")
 
 ```{r}
 df <- readRDS("data/rds/E210.astral40.rds")
-dfs <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
+dfs <- df[df$class %in% c("a","b","c","d")& df$length > 100 & !is.na(df$FF),]
 df1<-dfs[,-c(1:2,4:5,7:8)]
 df1[,-1] <- df1[,-1]
 #df1$total = rowSums(df1[,-c(1,2)])
@@ -587,16 +585,18 @@ df1<-data.frame(class=substr(df1$fold,1,1),df1)
 #df1 = df1 %>% group_by(fold) %>% 
 #  dplyr::summarise(across(colnames(df1)[-c(1,2)], mean))
 #df1<-data.frame(class=substr(df1$fold,1,1),df1)
-dis <- as.matrix(proxy::dist(df1[,-c(1,3)], method = manhat_norm))
+dis <- as.matrix(proxy::dist(df1[,-c(1,3)], method = manhat_norm_diff))
 ump <- umap(d = dis,
-            n_neighbors = 50,
-            min_dist = 0.01,
+            n_neighbors = 5,
+            min_dist = 0.1,
             input="dist")
 ump_df <- data.frame(df1[,1:2],
                      UMAP1 = ump$layout[, 1],
                      UMAP2 = ump$layout[, 2])
 ggplot(ump_df,aes(UMAP1, UMAP2, color= class)) +
    geom_point(alpha=.7) + 
+  ylim(-15,15) +
+  xlim(-10,20) +
    mythem
 #------------------tamam--------------------------
 tm_score1 <- function(x, y){
@@ -720,6 +720,157 @@ g.pc <- ggplot(pc.df, aes(x=PC1, y=PC2, col=group))+
   mythem
  
 ```
+## KNN
+
+
+```{r}
+set.seed(123)
+train_data <- data.frame(
+  x1 = rnorm(50),
+  x2 = rnorm(50),
+  class = factor(rep(c("A", "B"), each = 25))
+)
+
+test_data <- data.frame(
+  x1 = rnorm(10),
+  x2 = rnorm(10)
+)
+k=3
+predicted_classes <- knn(train = train_data[, c("x1", "x2")], test = test_data[, c("x1", "x2")], cl = train_data$class, k = k)
+
+cat("Predicted Classes:", predicted_classes, "\n")
+
+data("iris")
+dataset <- na.omit(iris)
+# k-nearest neighbors with an Euclidean distance measure is sensitive to magnitudes and hence should be scaled for all features to weigh in equally.
+dataset[,-5] <- scale(dataset[,-5])
+validationIndex <- createDataPartition(dataset$Species, p=0.70, list=FALSE)
+
+train <- dataset[validationIndex,] # 70% of data to training
+test <- dataset[-validationIndex,] # remaining 30% for test
+
+# Run algorithms using 10-fold cross validation
+trainControl <- trainControl(method="repeatedcv", number=10, repeats=3)
+metric <- "Accuracy"
+
+
+set.seed(7)
+fit.knn <- train(Species~., data=train, method="knn",
+                 metric=metric ,trControl=trainControl)
+knn.k1 <- fit.knn$bestTune # keep this Initial k for testing with knn() function in next section
+print(fit.knn)
+plot(fit.knn)
+
+df <- readRDS("data/rds/E210.astral40.rds")
+df <- df[ !is.na(df$FF) & df$length > 100 & df$class %in% c("a","b"),]
+df <- df[,-c(1:4,6:8),]
+validationIndex <- createDataPartition(df$class, p=0.70, list=FALSE)
+train <- df[validationIndex,] # 70% of data to training
+test <- df[-validationIndex,] # remaining 30% for test
+# Run algorithms using 10-fold cross validation
+trainControl <- trainControl(method="repeatedcv", number=10, repeats=3)
+metric <- "Accuracy"
+set.seed(7)
+fit.knn <- train(class~., data=train, method="knn", 
+                 metric=metric ,trControl=trainControl)
+
+grid <- expand.grid(.k=seq(1,20,by=1))
+fit.knn <- train(class~., data=train, method="knn", 
+                 metric=metric, tuneGrid=grid, trControl=trainControl)
+knn.k2 <- fit.knn$bestTune # keep this optimal k for testing with stand alone knn() function in next section
+print(fit.knn)
+
+knn.k1 <- fit.knn$bestTune # keep this Initial k for testing with knn() function in next section
+print(fit.knn)
+plot(fit.knn)
+
+
+ # Sample data
+set.seed(123)
+train_data <- data.frame(
+  x1 = rnorm(50),
+  x2 = rnorm(50),
+  class = factor(rep(c("A", "B"), each = 25))
+)
+
+test_data <- data.frame(
+  x1 = rnorm(10),
+  x2 = rnorm(10)
+)
+
+# Set the number of neighbors (k)
+k <- 3
+# Set the distance metric (e.g., "manhattan" or "maximum")
+distance_metric <- "manhattan"
+# Run KNN classifier with the specified distance metric
+predicted_classes <- knn(train = train_data[, c("x1", "x2")], 
+                         test = test_data[, c("x1", "x2")], 
+                         cl = train_data$class, 
+                         k = k)
+# Print the predicted classes
+cat("Predicted Classes:", predicted_classes, "\n")
+
+
+
+## Customized distance in KNN --------------
+set.seed(123)
+df <- readRDS("data/rds/E210.astral40.rds")
+df <- df[ !is.na(df$FF) & df$length > 100 & df$class %in% c("a","b"),]
+df <- df[,-c(1:2,4,6:8),]
+# Generate a vector of indices for the training set
+train_index <- sample(x = nrow(df),  size = round(0.8 * nrow(df) ) )
+# Create the training and testing sets
+train <- df[train_index, ]
+test  <- df[-train_index, ] 
+trControl <- trainControl(method = "cv", number = 10)
+k_grid <- expand.grid(k = seq(from = 1, to = 10, by = 1))
+manhat <- function(x, y){
+#  x = X[-1];y = Y[-1]
+  xy = abs(x - y)
+  xy = xy[xy != 0]
+  d = sum(xy)/length(xy)
+  return(d)
+}
+ManDKNN <- function(train_data, test_data, k) {
+  predictions <- vector("character", nrow(test_data))
+  for (i in 1:nrow(test_data)) {
+    new_input <- test_data[i, -1]
+    distances <- apply(train_data[,-1], 1, 
+                       function(x) manhat(x, new_input))
+    DL_table <- data.frame(dist = distances, label = train_data$class)
+    sorted_DL_table <- DL_table[order(DL_table$dist), ]
+    neighbors <- head(sorted_DL_table, k)
+    predictions[i] <- names(which.max(table(neighbors$label)))
+  }
+  return(predictions)
+}
+  k =1
+  predictions <- vector("character", nrow(test_data))
+  for (i in 1:nrow(test)) {
+    new_input <- test[i, -2]
+    df1  = rbind(new_input,train[,-2])
+    dis <- as.matrix(dist(df1, method = manhat))
+
+    distances <- apply(train[,-1], 1, 
+                       function(x) manhat(x, new_input))
+    DL_table <- data.frame(dist = distances, label = train$class)
+    sorted_DL_table <- DL_table[order(DL_table$dist), ]
+    neighbors <- head(sorted_DL_table, k)
+    predictions[i] <- names(which.max(table(neighbors$label)))
+    predictions[i]
+  }
+
+
+ED <- ManDKNN(train_data = train, 
+            test_data = test, k)
+
+tableManD <- table(ED, test$class)
+ManDA <- (tableManD[1,1] + tableManD[2,2]) / 258
+
+```
+
+
+
 ## LDA
 
 ```{r}
@@ -1230,7 +1381,7 @@ df <- E210_ferritin
 df <- df[with(df, order(df$group)), ]
 row.names(df) <- df[,1]
 rn <- df[,1]
-dis <- proxy::dist(df[,-c(1,3)], method = manhat_norm)
+dis <- proxy::dist(df[,-c(1,3)], method = manhat_norm_diff)
 dis[is.nan(dis)]<-0
 tree_data <- ape::bionj(dis)
 grp <- list(Bacteri     = rn[1:5],
@@ -1499,7 +1650,7 @@ df = df[df$conformation == "Close",]
 rownames(df) = df$pdbID
 x = df[,-c(1,3:4)]
 x  <- as.matrix(x) 
-hc <- x %>% proxy::dist(method = manhat_norm)
+hc <- x %>% proxy::dist(method = manhat_norm_maxl)
 hc[is.nan(hc)] <- 0
 hc <- hc%>% hclust(method = "ward.D2")
 dend <- hc %>% as.dendrogram
@@ -2921,7 +3072,7 @@ E210.seq_bacteriocin = readRDS("Data/rds/E210.seq_bacteriocin.rds")
 df = E210.seq_bacteriocin
 df1 <- df[,-seq(1:1)]
 
-dis <- as.matrix(proxy::dist(df1, method = manhat_norm))
+dis <- as.matrix(proxy::dist(df1, method = manhat_norm_maxl))
 ump <- umap(d = dis,
             n_neighbors = 40,
             min_dist = 0.01,
@@ -2971,7 +3122,7 @@ col = unique(group_cols),horiz = FALSE,xpd = TRUE)
 #------------boxplot
 df = E210.seq_bacteriocin
 x = df[,-c(1:1)]
-hc <- as.matrix(x %>% dist(method = manhat_norm))
+hc <- as.matrix(x %>% dist(method = manhat_norm_maxl))
 class1 = hc[1:499,1:499]
 class1=class1[lower.tri(class1)]
 class2 = hc[500:728,500:728]
@@ -3044,7 +3195,7 @@ df <- readRDS("Data/rds/E210.astral40.rds")
 df <- df[!is.na(df$FL) & df$class %in% c('a','b','c','d'), ]
 folds <- unique(df$fold)
 
-dis <- as.matrix(dist(df[,-c(1:2,4:8)],method = manhat_norm))
+dis <- as.matrix(dist(df[,-c(1:2,4:8)],method = manhat_norm_maxl))
 dis <- data.frame(gr=df$fold, dis)
 fo<-unique(dis$gr)
 
@@ -3140,7 +3291,7 @@ for(i in 1:nrow(mulidup)){
   E210_2pdb$p2 <- energy210
   
   df <- data.frame(length=c(len1,len2), t(E210_2pdb))
-  d <- dist(df,method = manhat_norm)
+  d <- dist(df,method = manhat_norm_maxl)
 #  dis[i] <- d/log(min(c(len1, len2)))
 #  dis[i] <- d
   df <- data.frame(length=c(len1,len2),t(E210_2pdb))
@@ -3148,11 +3299,10 @@ for(i in 1:nrow(mulidup)){
   dis_old[i] <- d
   d <- dist(df,method = manhat_norm_diff)
   dis_old_diff[i] <- d
-  d <- dist(df,method = manhat_norm)
+  d <- dist(df,method = manhat_norm_maxl)
   dis_new[i] <- d
-  d <- dist(df,method = manhat_norm_min)
+  d <- dist(df,method = manhat_norm_minl)
   dis_new_min[i] <- d
-  
 }
 mulidup_tm <- data.frame(mulidup_tm,dis_old,dis_new,dis_old_diff,dis_new_min)
 
@@ -3163,15 +3313,16 @@ len$diff <- len$max-len$min
 
 plot(dis, len$diff)
 
-E210.astral40 <- readRDS("Data/rds/E210.seq_astral40.rds") 
+E210.astral40 <- readRDS("Data/rds/E210.astral40.rds") 
 df40 <- E210.astral40[sample(nrow(E210.astral40),1000),]
 dis40 <- as.vector(dist(df40[,-c(1:2,4:8)],
-                        method = manhat_norm))
+                        method = manhat))
 
 
 df <- data.frame(group=rep(c('rand40','mulidup','tm'),c(241,241,241)),
-                 distance=c(dis40[sample(1000,241)], dis_new, mulidup_tm$tm_norm_chain1))
-ggplot(df,aes(group,distance,fill=group))+geom_boxplot()
+                 distance=c(dis40[sample(1000,241)], dis_old,
+                            mulidup_tm$tm_norm_chain1))
+g = ggplot(df,aes(group,distance,fill=group))+geom_boxplot()
 
 ```
 
@@ -3245,7 +3396,7 @@ for(i in seq(1,260,2)){
   E210_2pdb$p2 <- energy210
   
   df <- data.frame(length=c(len1,len2), t(E210_2pdb))
-  d <- dist(df,method = manhat_norm)
+  d <- dist(df,method = manhat_norm_maxl)
 #  dis[i] <- d/log(min(c(len1, len2)))
 #  dis[i] <- d
   df <- data.frame(length=c(len1,len2),t(E210_2pdb))
@@ -3253,9 +3404,9 @@ for(i in seq(1,260,2)){
   dis_old[k] <- d
   d <- dist(df,method = manhat_norm_diff)
   dis_old_diff[k] <- d
-  d <- dist(df,method = manhat_norm)
+  d <- dist(df,method = manhat_norm_maxl)
   dis_new[k] <- d
-  d <- dist(df,method = manhat_norm_min)
+  d <- dist(df,method = manhat_norm_minl)
   dis_new_min[k] <- d
   k <- k+1
 }
@@ -3270,7 +3421,7 @@ len$diff <- len$max-len$min
 E210.astral40 <- readRDS("Data/rds/E210.seq_astral40.rds") 
 df40 <- E210.astral40[sample(nrow(E210.astral40),1000),]
 dis40 <- as.vector(dist(df40[,-c(1:2,4:8)],
-                        method = manhat_norm))
+                        method = manhat_norm_maxl))
 
 
 df <- data.frame(group=rep(c('rand40','mulisam'),c(130,130)),
