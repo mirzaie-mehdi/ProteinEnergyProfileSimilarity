@@ -724,148 +724,25 @@ g.pc <- ggplot(pc.df, aes(x=PC1, y=PC2, col=group))+
 
 
 ```{r}
-set.seed(123)
-train_data <- data.frame(
-  x1 = rnorm(50),
-  x2 = rnorm(50),
-  class = factor(rep(c("A", "B"), each = 25))
-)
-
-test_data <- data.frame(
-  x1 = rnorm(10),
-  x2 = rnorm(10)
-)
-k=3
-predicted_classes <- knn(train = train_data[, c("x1", "x2")], test = test_data[, c("x1", "x2")], cl = train_data$class, k = k)
-
-cat("Predicted Classes:", predicted_classes, "\n")
-
-data("iris")
-dataset <- na.omit(iris)
-# k-nearest neighbors with an Euclidean distance measure is sensitive to magnitudes and hence should be scaled for all features to weigh in equally.
-dataset[,-5] <- scale(dataset[,-5])
-validationIndex <- createDataPartition(dataset$Species, p=0.70, list=FALSE)
-
-train <- dataset[validationIndex,] # 70% of data to training
-test <- dataset[-validationIndex,] # remaining 30% for test
-
-# Run algorithms using 10-fold cross validation
-trainControl <- trainControl(method="repeatedcv", number=10, repeats=3)
-metric <- "Accuracy"
-
-
-set.seed(7)
-fit.knn <- train(Species~., data=train, method="knn",
-                 metric=metric ,trControl=trainControl)
-knn.k1 <- fit.knn$bestTune # keep this Initial k for testing with knn() function in next section
-print(fit.knn)
-plot(fit.knn)
-
 df <- readRDS("data/rds/E210.astral40.rds")
 df <- df[ !is.na(df$FF) & df$length > 100 & df$class %in% c("a","b"),]
 df <- df[,-c(1:4,6:8),]
-validationIndex <- createDataPartition(df$class, p=0.70, list=FALSE)
-train <- df[validationIndex,] # 70% of data to training
-test <- df[-validationIndex,] # remaining 30% for test
-# Run algorithms using 10-fold cross validation
-trainControl <- trainControl(method="repeatedcv", number=10, repeats=3)
-metric <- "Accuracy"
-set.seed(7)
-fit.knn <- train(class~., data=train, method="knn", 
-                 metric=metric ,trControl=trainControl)
-
-grid <- expand.grid(.k=seq(1,20,by=1))
-fit.knn <- train(class~., data=train, method="knn", 
-                 metric=metric, tuneGrid=grid, trControl=trainControl)
-knn.k2 <- fit.knn$bestTune # keep this optimal k for testing with stand alone knn() function in next section
-print(fit.knn)
-
-knn.k1 <- fit.knn$bestTune # keep this Initial k for testing with knn() function in next section
-print(fit.knn)
-plot(fit.knn)
-
-
- # Sample data
-set.seed(123)
-train_data <- data.frame(
-  x1 = rnorm(50),
-  x2 = rnorm(50),
-  class = factor(rep(c("A", "B"), each = 25))
-)
-
-test_data <- data.frame(
-  x1 = rnorm(10),
-  x2 = rnorm(10)
-)
-
-# Set the number of neighbors (k)
-k <- 3
-# Set the distance metric (e.g., "manhattan" or "maximum")
-distance_metric <- "manhattan"
-# Run KNN classifier with the specified distance metric
-predicted_classes <- knn(train = train_data[, c("x1", "x2")], 
-                         test = test_data[, c("x1", "x2")], 
-                         cl = train_data$class, 
-                         k = k)
-# Print the predicted classes
-cat("Predicted Classes:", predicted_classes, "\n")
-
-
-
-## Customized distance in KNN --------------
-set.seed(123)
-df <- readRDS("data/rds/E210.astral40.rds")
-df <- df[ !is.na(df$FF) & df$length > 100 & df$class %in% c("a","b"),]
-df <- df[,-c(1:2,4,6:8),]
-# Generate a vector of indices for the training set
-train_index <- sample(x = nrow(df),  size = round(0.8 * nrow(df) ) )
-# Create the training and testing sets
-train <- df[train_index, ]
-test  <- df[-train_index, ] 
-trControl <- trainControl(method = "cv", number = 10)
-k_grid <- expand.grid(k = seq(from = 1, to = 10, by = 1))
-manhat <- function(x, y){
-#  x = X[-1];y = Y[-1]
-  xy = abs(x - y)
-  xy = xy[xy != 0]
-  d = sum(xy)/length(xy)
-  return(d)
+predictions <- vector("character", nrow(df))
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat_norm_diff))
+diag(dis) <- NA
+acc <- rep(0,150)
+for(k in 1:150){
+  print(k)
+  for (i in 1:nrow(df)) {
+   DL_table <- data.frame(dist = dis[i,], label = df$class)
+   sorted_DL_table <- DL_table[order(DL_table$dist), ]
+   neighbors <- head(sorted_DL_table, k)
+   predictions[i] <- names(which.max(table(neighbors$label)))
+ }
+tableManD <- table(predictions, df$class)
+acc[k] <- sum(diag(tableManD))/sum(tableManD)
 }
-ManDKNN <- function(train_data, test_data, k) {
-  predictions <- vector("character", nrow(test_data))
-  for (i in 1:nrow(test_data)) {
-    new_input <- test_data[i, -1]
-    distances <- apply(train_data[,-1], 1, 
-                       function(x) manhat(x, new_input))
-    DL_table <- data.frame(dist = distances, label = train_data$class)
-    sorted_DL_table <- DL_table[order(DL_table$dist), ]
-    neighbors <- head(sorted_DL_table, k)
-    predictions[i] <- names(which.max(table(neighbors$label)))
-  }
-  return(predictions)
-}
-  k =1
-  predictions <- vector("character", nrow(test_data))
-  for (i in 1:nrow(test)) {
-    new_input <- test[i, -2]
-    df1  = rbind(new_input,train[,-2])
-    dis <- as.matrix(dist(df1, method = manhat))
 
-    distances <- apply(train[,-1], 1, 
-                       function(x) manhat(x, new_input))
-    DL_table <- data.frame(dist = distances, label = train$class)
-    sorted_DL_table <- DL_table[order(DL_table$dist), ]
-    neighbors <- head(sorted_DL_table, k)
-    predictions[i] <- names(which.max(table(neighbors$label)))
-    predictions[i]
-  }
-
-
-ED <- ManDKNN(train_data = train, 
-            test_data = test, k)
-
-tableManD <- table(ED, test$class)
-ManDA <- (tableManD[1,1] + tableManD[2,2]) / 258
 
 ```
 
@@ -2664,7 +2541,7 @@ dis <- dist(df[,-c(1,2,3)], method = tm_score)
 #--------------------------------------------
 dis <- sqrt(dis)
 #------------------
-tree_data <- ape::bionj(dis)
+tree_data <- ape::bionj(d2)
 grp <- list(Bacteri     = rn[1:5],
             BMM_alpha = rn[6:7],
             BMM_beta  = rn[8:10],
