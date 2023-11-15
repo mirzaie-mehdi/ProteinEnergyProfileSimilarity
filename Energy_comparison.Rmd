@@ -60,12 +60,13 @@ library(protr)
 library(proxy)
 library(class)
 mythem <- theme_bw(base_line_size = .2)+
-  theme(axis.text = element_text(size=12, face = "bold"),
-        axis.title = element_text(size = 15, face = "bold"),
-        legend.text = element_text(size = 15, colour = "black"),
+  theme(axis.text.x = element_text(size=13, face = "bold"),
+        axis.text.y = element_text(size=13, face = "bold"),
+        axis.title = element_text(size = 20, face = "bold"),
+        legend.text = element_text(size = 20, colour = "black"),
         legend.title = element_blank(),
         title = element_text(size = 15)
-        )
+  )
 # ************************************
 tm_score3 <- function(x, y){
   xy = abs(x - y)
@@ -3329,5 +3330,129 @@ ggplot(df,aes(group,distance,fill=group))+geom_boxplot()
 
 ```
 
+# Figures
+
+```{r}
+# astral 95
+df_seq <- readRDS("Data/rds/E210.seq_astral_95.rds") 
+df_seq = df_seq[!is.na(df_seq$FL),] 
+
+df_str <- readRDS("Data/rds/E210.astral_95.rds") 
+df_str = df_str[!is.na(df_str$FL),] 
+m<-match(df_str$scopeID,df_seq$scopeID)
+df_str <- df_str[-which(is.na(m)),]
+# **** total energy 95
+df_tot95 <- data.frame(data='Astral 95', class=df_str$class,
+                       length = df_seq$length,
+                       seq=rowSums(df_seq[,-c(1:8)]),
+                       str=rowSums(df_str[,-c(1:8)]))
+# **** distance 95
+dis_seq <- dist(df_seq[,-c(1:8)],method = manhat)
+dis_str <- dist(df_str[,-c(1:8)],method = manhat)
+idx <- sample(length(dis_str),100000)
+df_dis95 <- data.frame(data='Astral 95',
+                       dis_str=as.vector(dis_str)[idx],
+                       dis_seq=as.vector(dis_seq)[idx])
+saveRDS(df_dis95,'manuscript/fig_data/dis_95_manhat.rds')
+# ************************************************************
+# astral 40
+df_seq <- readRDS("Data/rds/E210.seq_astral40.rds") 
+df_seq = df_seq[!is.na(df_seq$FL),] 
+
+df_str <- readRDS("Data/rds/E210.astral40.rds") 
+df_str = df_str[!is.na(df_str$FL),] 
+m<-match(df_str$scopeID,df_seq$scopeID)
+df_str <- df_str[-which(is.na(m)),]
+# **** total energy 40
+df_tot40 <- data.frame(data='Astral 40', class=df_str$class,
+                       length=df_seq$length,
+                       seq=rowSums(df_seq[,-c(1:8)]),
+                       str=rowSums(df_str[,-c(1:8)]))
+# **** distance 40
+dis_seq <- dist(df_seq[,-c(1:8)],method = manhat)
+dis_str <- dist(df_str[,-c(1:8)],method = manhat)
+idx <- sample(length(dis_str),100000)
+df_dis40 <- data.frame(data='Astral 40',
+                       dis_str=as.vector(dis_str)[idx],
+                       dis_seq=as.vector(dis_seq)[idx])
+saveRDS(df_dis40,'manuscript/fig_data/dis_40_manhat.rds')
+# ****************************************************************
+# ************** total energy 40 and 95
+df_tot <- rbind(df_tot40, df_tot95)
+saveRDS(df_tot, 'manuscript/fig_data/df_total_energy.rds')
+
+AB <- ggplot(df_tot, aes(seq/2000,str/1000))+
+       geom_pointdensity(adjust = .1,alpha=.3,show.legend = T)+
+       geom_smooth(method = 'glm',col='red')+
+       stat_cor(method = "pearson", size=5, color = "red", geom = "label") +
+       scale_color_viridis()+facet_wrap(vars(data))+
+       theme_bw(base_line_size = .3)+
+       xlab('Total energy (sequence)')+ylab('Total energy (structure)')+
+       theme(axis.title = element_text(size=20),
+             axis.text = element_text(size=15),
+             strip.text = element_text(size = 20),
+             legend.title = element_text(size = 15),
+             legend.text = element_text(size = 12),
+             panel.spacing = unit(2, "lines"))
+# ****************************************************************
+# ************** distance 40 and 95
+df_dis <- rbind(df_dis40, df_dis95)
+CD <- ggplot(df_dis, aes(dis_seq,dis_str))+
+       geom_pointdensity(adjust = .1,alpha=.3,show.legend = T)+
+       geom_smooth(method = 'glm',col='red')+
+       stat_cor(method = "pearson", size=5, color = "red", geom = "label") +
+       scale_color_viridis()+facet_wrap(vars(data))+
+       theme_bw(base_line_size = .3)+
+       xlab('Distance (CPE)')+ylab('Distance (SPE)')+
+       theme(axis.title = element_text(size=20),
+             axis.text = element_text(size=15),
+             strip.text = element_text(size = 20),
+             legend.title = element_text(size = 15),
+             legend.text = element_text(size = 12),
+             panel.spacing = unit(2, "lines"))
+ggarrange(
+    AB, NULL,CD, ncol = 1,
+    heights = c(1, 0.17, 1),
+    labels = c("A", "", "B"),
+    font.label = list(size = 20) # color = "red"
+    )
+# *************************************
+df_tot <- df_tot[df_tot$class%in%c('a','b','c','d'),]
+df_tot$class[df_tot$class=='a']<-'All_alpha'
+df_tot$class[df_tot$class=='b']<-'All_beta'
+df_tot$class[df_tot$class=='c']<-'alpha/beta'
+df_tot$class[df_tot$class=='d']<-'alpha+beta'
+
+AB <- ggplot(df_tot,aes(class,str/length,fill=class))+
+        geom_boxplot(outlier.shape = NA)+
+        theme_bw(base_line_size = .3)+facet_wrap(vars(data))+
+        xlab('')+ylab('Total energy (structure)')+ylim(-15,-4)+
+             theme(axis.title = element_text(size=20),
+                   axis.text.y = element_text(size=15),
+                   axis.text.x = element_blank(),
+                   strip.text = element_text(size = 20),
+                   legend.title = element_blank(),
+                   legend.text = element_text(size = 20),
+                   panel.spacing = unit(2, "lines"))
+
+CD <- ggplot(df_tot,aes(class,seq/(2*length),fill=class))+
+        geom_boxplot(outlier.shape = NA)+
+        theme_bw(base_line_size = .3)+facet_wrap(vars(data))+
+        xlab('')+ylab('Total energy (sequence)')+ylim(-14,-6)+
+             theme(axis.title = element_text(size=20),
+                   axis.text.y = element_text(size=15),
+                   axis.text.x = element_blank(),
+                   strip.text = element_text(size = 20),
+                   legend.title = element_blank(),
+                   legend.text = element_text(size = 20),
+                   panel.spacing = unit(2, "lines"))
+ggarrange(
+    AB, NULL,CD, ncol = 1,
+    heights = c(1, 0.1, 1),
+    labels = c("A", "", "B"),
+    common.legend = T, legend = 'bottom',
+    font.label = list(size = 20) # color = "red"
+    )
+```
 
 
