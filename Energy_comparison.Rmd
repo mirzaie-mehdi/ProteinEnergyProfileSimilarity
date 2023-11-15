@@ -72,7 +72,7 @@ tm_score3 <- function(x, y){
   xy = abs(x - y)
   xy = xy[xy != 0]
   d = sum(xy)/length(xy)
-  d <- d/max(20,d)
+  d <- d/max(15,d)
   return(d)
 }
 # ***********
@@ -3424,9 +3424,10 @@ df_tot$class[df_tot$class=='c']<-'alpha/beta'
 df_tot$class[df_tot$class=='d']<-'alpha+beta'
 
 AB <- ggplot(df_tot,aes(class,str/length,fill=class))+
-        geom_boxplot(outlier.shape = NA)+
-        theme_bw(base_line_size = .3)+facet_wrap(vars(data))+
-        xlab('')+ylab('Total energy (structure)')+ylim(-15,-4)+
+        geom_boxplot(outlier.alpha = .01)+
+        theme_bw(base_line_size = .1)+facet_wrap(vars(data))+
+        xlab('')+ylab('Total energy (structure)')+
+        coord_cartesian(ylim = c(-15, -4))+
              theme(axis.title = element_text(size=20),
                    axis.text.y = element_text(size=15),
                    axis.text.x = element_blank(),
@@ -3436,9 +3437,10 @@ AB <- ggplot(df_tot,aes(class,str/length,fill=class))+
                    panel.spacing = unit(2, "lines"))
 
 CD <- ggplot(df_tot,aes(class,seq/(2*length),fill=class))+
-        geom_boxplot(outlier.shape = NA)+
+        geom_boxplot(outlier.alpha = .1)+
         theme_bw(base_line_size = .3)+facet_wrap(vars(data))+
-        xlab('')+ylab('Total energy (sequence)')+ylim(-14,-6)+
+        xlab('')+ylab('Total energy (sequence)')+
+        coord_cartesian(ylim = c(-15, -6))+
              theme(axis.title = element_text(size=20),
                    axis.text.y = element_text(size=15),
                    axis.text.x = element_blank(),
