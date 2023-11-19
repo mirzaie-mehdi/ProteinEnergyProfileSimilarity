@@ -3393,11 +3393,16 @@ df_dis40 <- data.frame(data='Astral 40',
                        dis_str=as.vector(dis_str)[idx],
                        dis_seq=as.vector(dis_seq)[idx])
 saveRDS(df_dis40,'manuscript/fig_data/dis_40_manhat.rds')
-# ****************************************************************
-# ************** total energy 40 and 95
+# **************************************
 df_tot <- rbind(df_tot40, df_tot95)
 saveRDS(df_tot, 'manuscript/fig_data/df_total_energy.rds')
+```
 
+## fig1
+
+```{r}
+# ************** total energy 40 and 95
+df_tot <- readRDS('manuscript/fig_data/df_total_energy.rds')
 AB <- ggplot(df_tot, aes(seq/2000,str/1000))+
        geom_pointdensity(adjust = .1,alpha=.3,show.legend = T)+
        geom_smooth(method = 'glm',col='red')+
@@ -3411,7 +3416,7 @@ AB <- ggplot(df_tot, aes(seq/2000,str/1000))+
              legend.title = element_text(size = 15),
              legend.text = element_text(size = 12),
              panel.spacing = unit(2, "lines"))
-# ****************************************************************
+
 # ************** distance 40 and 95
 df_dis <- rbind(df_dis40, df_dis95)
 CD <- ggplot(df_dis, aes(dis_seq,dis_str))+
@@ -3433,7 +3438,13 @@ ggarrange(
     labels = c("A", "", "B"),
     font.label = list(size = 20) # color = "red"
     )
-# *************************************
+
+```
+
+## Fig2
+
+```{r}
+df_tot <- readRDS('manuscript/fig_data/df_total_energy.rds')
 df_tot <- df_tot[df_tot$class%in%c('a','b','c','d'),]
 df_tot$class[df_tot$class=='a']<-'All_alpha'
 df_tot$class[df_tot$class=='b']<-'All_beta'
@@ -3472,6 +3483,442 @@ ggarrange(
     common.legend = T, legend = 'bottom',
     font.label = list(size = 20) # color = "red"
     )
+
 ```
 
+## Fig3EF
 
+```{r}
+my_comparisons<-list(c('within','between'))
+# ******** a.29.3
+# ****** structure40
+df <- readRDS("Data/rds/E210.astral40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$superfamily%in% 'a.29.3'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$family[idx], dis)
+fa<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fa)) {  
+  print(i)   
+  x <- fa[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_family_str <- data.frame(data='Astral 40-family a.29.3',type='Structure',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# ****** sequence40
+df <- readRDS("Data/rds/E210.seq_astral40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$superfamily%in% 'a.29.3'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$family[idx], dis)
+fa<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fa)) {  
+  print(i)   
+  x <- fa[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_family_seq <- data.frame(data='Astral 40-family a.29.3',type='Sequence',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# **********
+df_family <- rbind(df_family_seq, df_family_str)
+
+E <- ggboxplot(df_family, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  theme_bw(base_line_size = .2)+mythem+
+  theme(legend.position = 'none',
+        axis.text.x = element_blank(),
+        strip.text = element_text(size = 20))+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=7)+
+  facet_nested(~ data + type)
+# ******************************************
+# ****** structure95
+df <- readRDS("Data/rds/E210.astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$superfamily%in% 'a.29.3'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$family[idx], dis)
+fa<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fa)) {  
+  print(i)   
+  x <- fa[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_family_str <- data.frame(data='Astral 95-family a.29.3',type='Structure',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# ****** sequence95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$superfamily%in% 'a.29.3'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$family[idx], dis)
+fa<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fa)) {  
+  print(i)   
+  x <- fa[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_family_seq <- data.frame(data='Astral 95-family a.29.3',type='Sequence',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# **********
+df_family <- rbind(df_family_seq, df_family_str)
+
+FF <- ggboxplot(df_family, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  theme_bw(base_line_size = .2)+mythem+
+  theme(legend.position = 'none',
+        axis.text.x = element_blank(),
+        strip.text = element_text(size = 20))+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=7)+
+  facet_nested(~ data + type)
+# ********
+ggarrange(
+  E, NULL,FF, nrow = 1,
+  widths = c(1, 0.3, 1),
+  labels = c("E", "", "F"),
+  font.label = list(size = 20) # color = "red"
+)
+```
+
+## Fig3CD
+
+```{r}
+my_comparisons<-list(c('within','between'))
+# ******** a.29
+# ****** structure40
+df <- readRDS("Data/rds/E210.astral40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$fold%in% 'a.29'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$superfamily[idx], dis)
+sf<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(sf)) {  
+  print(i)   
+  x <- sf[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_superfamily_str <- data.frame(data='Astral 40-superfamily a.29',type='Structure',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# ****** sequence40
+df <- readRDS("Data/rds/E210.seq_astral40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$fold%in% 'a.29'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$superfamily[idx], dis)
+sf<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(sf)) {  
+  print(i)   
+  x <- sf[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_superfamily_seq <- data.frame(data='Astral 40-superfamily a.29',type='Sequence',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# **********
+df_superfamily <- rbind(df_superfamily_seq, df_superfamily_str)
+
+C <- ggboxplot(df_superfamily, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  theme_bw(base_line_size = .2)+mythem+
+  theme(legend.position = 'none',
+        axis.text.x = element_blank(),
+        strip.text = element_text(size = 20))+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=7)+
+  facet_nested(~ data + type)
+# ******************************************
+# ****** structure95
+df <- readRDS("Data/rds/E210.astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$fold%in% 'a.29'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$superfamily[idx], dis)
+sf<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(sf)) {  
+  print(i)   
+  x <- sf[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_superfamily_str <- data.frame(data='Astral 95-superfamily a.29',type='Structure',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# ****** sequence95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$fold%in% 'a.29'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$superfamily[idx], dis)
+sf<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(sf)) {  
+  print(i)   
+  x <- sf[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_superfamily_seq <- data.frame(data='Astral 95-superfamily a.29',type='Sequence',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# **********
+df_superfamily <- rbind(df_superfamily_seq, df_superfamily_str)
+
+D <- ggboxplot(df_superfamily, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  theme_bw(base_line_size = .2)+mythem+
+  theme(legend.position = 'none',
+        axis.text.x = element_blank(),
+        strip.text = element_text(size = 20))+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=7)+
+  facet_nested(~ data + type)
+# ********
+ggarrange(
+  C, NULL,D, nrow = 1,
+  widths = c(1, 0.3, 1),
+  labels = c("C", "", "D"),
+  font.label = list(size = 20) # color = "red"
+)
+```
+
+## Fig3AB
+
+```{r}
+my_comparisons<-list(c('within','between'))
+# ******** a
+# ****** structure40
+df <- readRDS("Data/rds/E210.astral40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$class%in% 'a'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$fold[idx], dis)
+fo<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fo)) {  
+  print(i)   
+  x <- fo[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+wit <- within[sample(length(within),1000)] 
+bet <- between[sample(length(between),1000)] 
+df_fold_str <- data.frame(data='Astral 40-class alpha',type='Structure',
+                            gr=rep(c('within','between'),c(1000,1000)),
+                            distance=c(wit,bet)) 
+# ****** sequence40
+df <- readRDS("Data/rds/E210.seq_astral40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$class%in% 'a'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$fold[idx], dis)
+fo <- unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fo)) {  
+  print(i)   
+  x <- fo[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+wit <- within[sample(length(within),1000)] 
+bet <- between[sample(length(between),1000)] 
+df_fold_seq <- data.frame(data='Astral 40-class alpha',type='Sequence',
+                            gr=rep(c('within','between'),c(1000,1000)),
+                            distance=c(wit,bet))
+# **********
+df_fold <- rbind(df_fold_seq, df_fold_str)
+
+A <- ggboxplot(df_fold, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  theme_bw(base_line_size = .2)+mythem+
+  theme(legend.position = 'none',
+        axis.text.x = element_blank(),
+        strip.text = element_text(size = 20))+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=7,
+                     label.y = 34, tip.length = .01)+
+  facet_nested(~ data + type)+
+  coord_cartesian(ylim = c(0, 40))
+# ******************************************
+# ****** structure95
+df <- readRDS("Data/rds/E210.astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$class%in% 'a'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$fold[idx], dis)
+fo<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fo)) {  
+  print(i)   
+  x <- fo[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+wit <- within[sample(length(within),1000)] 
+bet <- between[sample(length(between),1000)] 
+df_fold_str <- data.frame(data='Astral 95-class alpha',type='Structure',
+                            gr=rep(c('within','between'),c(1000,1000)),
+                            distance=c(wit,bet))
+# ****** sequence95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$class%in% 'a'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$fold[idx], dis)
+fo<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fo)) {  
+  print(i)   
+  x <- fo[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+wit <- within[sample(length(within),1000)] 
+bet <- between[sample(length(between),1000)] 
+df_fold_seq <- data.frame(data='Astral 95-class alpha',type='Sequence',
+                            gr=rep(c('within','between'),c(1000,1000)),
+                            distance=c(wit,bet)) 
+# **********
+df_fold <- rbind(df_fold_seq, df_fold_str)
+
+B <- ggboxplot(df_fold, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  theme_bw(base_line_size = .2)+mythem+
+  theme(legend.position = 'none',
+        axis.text.x = element_blank(),
+        strip.text = element_text(size = 20))+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=7,
+                     label.y = 34, tip.length = .01)+
+  facet_nested(~ data + type)+
+  coord_cartesian(ylim = c(0, 40))
+# ********
+ggarrange(
+  A, NULL,B, nrow = 1,
+  widths = c(1, 0.3, 1),
+  labels = c("A", "", "B"),
+  font.label = list(size = 20) # color = "red"
+)
+```
