@@ -3143,8 +3143,8 @@ protein_data = protein_data[protein_data$class1 !="b" & protein_data$class2 !="b
 folda1 = protein_data[protein_data$fold1 %in% "a.2"& protein_data$fold2 %in% "a.2",]
 plot(folda1$LengthDifference,folda1$Distance)
 
-different_proteins <- protein_data[protein_data$fold1 != protein_data$fold2 
-                                   & protein_data$fold1 != protein_data$fold2,]
+different_proteins <- protein_data[protein_data$super1 != protein_data$super2 
+                                   & protein_data$fold1 == protein_data$fold2,]
 different_proteins$group = "Diff"
 
 pairs_random_differ <- different_proteins %>%
