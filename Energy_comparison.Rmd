@@ -36,16 +36,13 @@ library(visNetwork)
 library(pheatmap)
 library(umap)
 library(Rtsne)
-library(mixOmics)
 library(viridis)
 library(viridisLite)
-library(fgsea)
 library(bio3d)
 library(caret)
 library(e1071)
 library(randomForest)
 library(seqinr)
-library(ShortRead)
 library(geometry)
 library(ape)
 library(colorspace)
@@ -67,14 +64,7 @@ mythem <- theme_bw(base_line_size = .2)+
         legend.title = element_blank(),
         title = element_text(size = 15)
   )
-# ************************************
-tm_score3 <- function(x, y){
-  xy = abs(x - y)
-  xy = xy[xy != 0]
-  d = sum(xy)/length(xy)
-  d <- d/max(15,d)
-  return(d)
-}
+
 # ***********
 manhat <- function(X, Y){
   x = X[-1];y = Y[-1]
@@ -114,6 +104,15 @@ manhat_norm_minl <- function(X, Y){
   return(d)
 }
 
+energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
+energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
+source("Functions/amacid2num.R")
+source("Functions/atomtype2num167.R")
+source("Functions/Energy_PC210.R")
+source("Functions/NetworkFrame.R")
+source("Functions/inedx_HelixSheet.R")
+source("Functions/split_position.R")
+
 ```
 
 ## Lenght_dependent
@@ -134,6 +133,12 @@ pairs_random <- pairs %>%
   group_by(diff) %>%
   sample_n(1) %>%
   ungroup()
+manhat <- function(x, y){
+  xy = abs(x - y)
+  xy = xy[xy != 0]
+  d = sum(xy)/length(xy)
+  return(d)
+}
 
 energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
 energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
@@ -143,6 +148,8 @@ source("Functions/Energy_PC210.R")
 source("Functions/NetworkFrame.R")
 
 pairs_random$dis <- 0
+ results = c()
+ results_l = c()
 for(i in 1:nrow(pairs_random)){
   print(i)
   pdb1 <- read.cif(substr(pairs_random$X1[i],1,4))
@@ -167,15 +174,25 @@ for(i in 1:nrow(pairs_random)){
   Net_Frame <- NetworkFrame(PDB = pdb1)
   energy210 <- Energy_PC210(Net_Frame ,energy_dell_dunbrack)
   E210_2pdb$p1 <- energy210
-  
+  pairs_random$e1[i] = sum(energy210)
+
   Net_Frame <- NetworkFrame(PDB = pdb2)
   energy210 <- Energy_PC210(Net_Frame, energy_dell_dunbrack)
   E210_2pdb$p2 <- energy210
-  
+  pairs_random$e2[i] = sum(energy210)
+
+  results = cbind(results,abs(E210_2pdb$p2 - E210_2pdb$p1))
+  results_l = cbind(results_l,abs(E210_2pdb$p2/pairs_random$len2[i] - E210_2pdb$p1/pairs_random$len1[i]))
+
   df <- data.frame(t(E210_2pdb))
   pairs_random$dis[i] <- dist(df,method = manhat)
+  x1 = t(E210_2pdb$p1/pairs_random$len1[i])
+  x2 = t(E210_2pdb$p2/pairs_random$len2[i])
+  pairs_random$disl[i] <- dist(x1,x2,method = manhat)
 }
-
+ res = as.data.frame(results)
+pairs_random$mu = apply(res,1,mean)
+ 
 lm(log10(dis)~log10(diff),pairs_random)
 ggplot(pairs_random[pairs_random$diff>10,],aes(diff,dis))+geom_point()+
     scale_y_log10()+scale_x_log10()+
@@ -3210,7 +3227,7 @@ len$min <- apply(len[,1:2],1,min)
 len$max <- apply(len[,1:2],1,max)
 len$diff <- len$max-len$min
 
-plot(dis, len$diff)
+plot(dis_old, mulidup_tm$tm_norm_chain1)
 
 E210.astral40 <- readRDS("Data/rds/E210.astral40.rds") 
 df40 <- E210.astral40[sample(nrow(E210.astral40),1000),]
