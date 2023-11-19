@@ -3122,6 +3122,7 @@ n = 5698
 lengths = (df$length)
 fold = df$fold
 super = df$superfamily
+class = df$class
 distances = as.matrix(dis[,-c(1:3)])
 protein_data <- data.frame(
   Protein1 = rep(lengths, each = n),
@@ -3130,27 +3131,39 @@ protein_data <- data.frame(
   fold2 = rep(fold, times = n),
   super1 = rep(super, each = n),
   super2 = rep(super, times = n),
+  class1 = rep(class, each = n),
+  class2 = rep(class, times = n),
   Distance = as.vector(distances),
   LengthDifference = abs(rep(lengths, each = n) - rep(lengths, times = n))
 )
 
 protein_data = protein_data[protein_data$Distance !=0,]
+protein_data = protein_data[protein_data$class1 !="b" & protein_data$class2 !="b",]
+
 folda1 = protein_data[protein_data$fold1 %in% "a.2"& protein_data$fold2 %in% "a.2",]
 plot(folda1$LengthDifference,folda1$Distance)
 
-different_proteins <- protein_data[protein_data$super1 != protein_data$super2 
-                                   & protein_data$fold1 == protein_data$fold2,]
-pairs_random <- different_proteins %>%
-  group_by(LengthDifference) %>%
-  sample_n(1) %>%
-  ungroup()
+different_proteins <- protein_data[protein_data$fold1 != protein_data$fold2 
+                                   & protein_data$fold1 != protein_data$fold2,]
+different_proteins$group = "Diff"
 
-different_proteins <- protein_data[protein_data$super1 == protein_data$super2 ,]
-pairs_random <- different_proteins %>%
+pairs_random_differ <- different_proteins %>%
   group_by(LengthDifference) %>%
-  sample_n(1) %>%
+  sample_n(2) %>%
   ungroup()
+lm(formula = Distance ~ LengthDifference, data = pairs_random_differ)
+same_proteins <- protein_data[protein_data$super1 == protein_data$super2 ,]
+same_proteins$group = "same"
 
+pairs_random_same <- same_proteins %>%
+  group_by(LengthDifference) %>%
+  sample_n(2) %>%
+  ungroup()
+lm(formula = Distance ~ LengthDifference, data = pairs_random_same)
+
+df_diff_same = rbind(pairs_random_differ,pairs_random_same)
+ggplot(data = df_diff_same,aes(LengthDifference,Distance,color = group)) +
+  geom_point()
 
 diff_fold <- different_proteins[sample(nrow(different_proteins), size = 4000, replace = FALSE), ]
 lm(formula = Distance ~ LengthDifference, data = diff_fold)
@@ -3160,6 +3173,14 @@ same_fold <- protein_data[protein_data$fold1 == protein_data$fold2,]
 same_fold <- same_fold[sample(nrow(same_fold), size = 4000, replace = FALSE), ]
 lm(formula = Distance ~ (LengthDifference+1), data = same_fold)
 plot(same_fold$LengthDifference,same_fold$Distance)
+
+
+df_diff200 = different_proteins[different_proteins$LengthDifference<100,]
+df_same200 = same_proteins[same_proteins$LengthDifference<100,]
+
+dff200 = rbind(df_diff200,df_same200)
+dff200 = dff200[dff200$Distance!=0,]
+ggplot(dff200,aes(group,Distance)) + geom_boxplot()
 
 
 between<-c() 
