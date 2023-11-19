@@ -89,8 +89,10 @@ manhat_norm_diff <- function(X, Y){
   xy = abs(x - y)
   xy = xy[xy != 0]
   d = sum(xy)/length(xy)
-  Ldiff = abs(X[1]- Y[1]) + 1
-  d = d / (1.25 * (Ldiff^0.50))
+  Ldiff = abs(X[1]- Y[1]) 
+  d = d / (6.66 + (Ldiff * 0.036))
+#  Ldiff = abs(X[1]- Y[1]) + 1
+#  d = d / (1.25 * (Ldiff^0.50))
   return(d)
 }
 
@@ -190,7 +192,7 @@ for(i in 1:nrow(pairs_random)){
   x2 = t(E210_2pdb$p2/pairs_random$len2[i])
   pairs_random$disl[i] <- dist(x1,x2,method = manhat)
 }
- res = as.data.frame(results)
+res = as.data.frame(results)
 pairs_random$mu = apply(res,1,mean)
  
 lm(log10(dis)~log10(diff),pairs_random)
@@ -198,6 +200,7 @@ ggplot(pairs_random[pairs_random$diff>10,],aes(diff,dis))+geom_point()+
     scale_y_log10()+scale_x_log10()+
   geom_smooth(method = 'lm')+
   stat_cor(col='red')
+
 lm(log10(dis)~log10(diff),pairs_random[pairs_random$diff>10,])
 
 #step <- 5
@@ -1291,9 +1294,9 @@ df <- df[with(df, order(df$family)), ]
 #df <- df[with(df, order(df$group)), ]
 row.names(df) <- df[,1]
 rn <- df[,1]
-dis <- proxy::dist(df[,-c(1,2,3,214)], method = tm_score3)
+dis <- proxy::dist(df[,-c(1,2,3,214)], method = manhat)
 dis[is.nan(dis)]<-0
-tree_data <- ape::bionj(dis)
+tree_data <- ape::bionj(1 -dis)
 grp <- list(Bacteri     = rn[1:5],
             Dps  = rn[6:20],
             Ferritins  = rn[21:31],
@@ -3108,12 +3111,56 @@ ggarrange(g1,g2)
 ## fold
 ```{r}
 df <- readRDS("Data/rds/E210.astral40.rds")
-df <- df[!is.na(df$FL) & df$class %in% c('a','b','c','d'), ]
+df <- df[!is.na(df$FL) & df$class %in% c('a','b'), ]
 folds <- unique(df$fold)
 
-dis <- as.matrix(dist(df[,-c(1:2,4:8)],method = manhat_norm_maxl))
-dis <- data.frame(gr=df$fold, dis)
+dis <- as.matrix(dist(df[,-c(1:8)],method = manhat))
+dis <- data.frame(fold=df$fold,superf = df$superfamily,length = df$length, dis)
 fo<-unique(dis$gr)
+
+n = 5698
+lengths = (df$length)
+fold = df$fold
+super = df$superfamily
+distances = as.matrix(dis[,-c(1:3)])
+protein_data <- data.frame(
+  Protein1 = rep(lengths, each = n),
+  Protein2 = rep(lengths, times = n),
+  fold1 = rep(fold, each = n),
+  fold2 = rep(fold, times = n),
+  super1 = rep(super, each = n),
+  super2 = rep(super, times = n),
+  Distance = as.vector(distances),
+  LengthDifference = abs(rep(lengths, each = n) - rep(lengths, times = n))
+)
+
+protein_data = protein_data[protein_data$Distance !=0,]
+folda1 = protein_data[protein_data$fold1 %in% "a.2"& protein_data$fold2 %in% "a.2",]
+plot(folda1$LengthDifference,folda1$Distance)
+
+different_proteins <- protein_data[protein_data$super1 != protein_data$super2 
+                                   & protein_data$fold1 == protein_data$fold2,]
+pairs_random <- different_proteins %>%
+  group_by(LengthDifference) %>%
+  sample_n(1) %>%
+  ungroup()
+
+different_proteins <- protein_data[protein_data$super1 == protein_data$super2 ,]
+pairs_random <- different_proteins %>%
+  group_by(LengthDifference) %>%
+  sample_n(1) %>%
+  ungroup()
+
+
+diff_fold <- different_proteins[sample(nrow(different_proteins), size = 4000, replace = FALSE), ]
+lm(formula = Distance ~ LengthDifference, data = diff_fold)
+plot(diff_fold$LengthDifference,diff_fold$Distance)
+
+same_fold <- protein_data[protein_data$fold1 == protein_data$fold2,]
+same_fold <- same_fold[sample(nrow(same_fold), size = 4000, replace = FALSE), ]
+lm(formula = Distance ~ (LengthDifference+1), data = same_fold)
+plot(same_fold$LengthDifference,same_fold$Distance)
+
 
 between<-c() 
 within<-c()
