@@ -36,16 +36,13 @@ library(visNetwork)
 library(pheatmap)
 library(umap)
 library(Rtsne)
-library(mixOmics)
 library(viridis)
 library(viridisLite)
-library(fgsea)
 library(bio3d)
 library(caret)
 library(e1071)
 library(randomForest)
 library(seqinr)
-library(ShortRead)
 library(geometry)
 library(ape)
 library(colorspace)
@@ -69,6 +66,10 @@ mythem <- theme_bw(base_line_size = .2)+
         title = element_text(size = 15)
   )
 
+<<<<<<< HEAD
+=======
+# ***********
+>>>>>>> 8813a7f779e05eb34ba8290c1e32f401acab9f89
 manhat <- function(X, Y){
   #x = X[-1];y = Y[-1]
   x = X; y = Y
@@ -93,8 +94,10 @@ manhat_norm_diff <- function(X, Y){
   xy = abs(x - y)
   xy = xy[xy != 0]
   d = sum(xy)/length(xy)
-  Ldiff = abs(X[1]- Y[1]) + 1
-  d = d / (1.25 * (Ldiff^0.50))
+  Ldiff = abs(X[1]- Y[1]) 
+  d =  (6.66 + (Ldiff * 0.036))/d
+#  Ldiff = abs(X[1]- Y[1]) + 1
+#  d = d / (1.25 * (Ldiff^0.50))
   return(d)
 }
 
@@ -107,6 +110,15 @@ manhat_norm_minl <- function(X, Y){
   d = d / (2.6 * (Lmin^0.3))
   return(d)
 }
+
+energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
+energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
+source("Functions/amacid2num.R")
+source("Functions/atomtype2num167.R")
+source("Functions/Energy_PC210.R")
+source("Functions/NetworkFrame.R")
+source("Functions/inedx_HelixSheet.R")
+source("Functions/split_position.R")
 
 ```
 
@@ -162,6 +174,12 @@ pairs_random <- pairs %>%
   group_by(min_len) %>%
   sample_n(1) %>%
   ungroup()
+manhat <- function(x, y){
+  xy = abs(x - y)
+  xy = xy[xy != 0]
+  d = sum(xy)/length(xy)
+  return(d)
+}
 
 energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
 energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
@@ -171,8 +189,13 @@ source("Functions/Energy_PC210.R")
 source("Functions/NetworkFrame.R")
 
 pairs_random$dis <- 0
+<<<<<<< HEAD
 pairs_random$dis_tot <- 0
 
+=======
+ results = c()
+ results_l = c()
+>>>>>>> 8813a7f779e05eb34ba8290c1e32f401acab9f89
 for(i in 1:nrow(pairs_random)){
   print(i)
   pdb1 <- read.cif(substr(pairs_random$X1[i],1,4))
@@ -197,21 +220,35 @@ for(i in 1:nrow(pairs_random)){
   Net_Frame <- NetworkFrame(PDB = pdb1)
   energy210 <- Energy_PC210(Net_Frame ,energy_dell_dunbrack)
   E210_2pdb$p1 <- energy210
-  
+  pairs_random$e1[i] = sum(energy210)
+
   Net_Frame <- NetworkFrame(PDB = pdb2)
   energy210 <- Energy_PC210(Net_Frame, energy_dell_dunbrack)
   E210_2pdb$p2 <- energy210
-  
+  pairs_random$e2[i] = sum(energy210)
+
+  results = cbind(results,abs(E210_2pdb$p2 - E210_2pdb$p1))
+  results_l = cbind(results_l,abs(E210_2pdb$p2/pairs_random$len2[i] - E210_2pdb$p1/pairs_random$len1[i]))
+
   df <- data.frame(t(E210_2pdb))
   pairs_random$dis[i] <- dist(df,method = manhat)
+<<<<<<< HEAD
   pairs_random$dis_tot[i] <- dist(rowSums(df),method = manhat)
+=======
+  x1 = t(E210_2pdb$p1/pairs_random$len1[i])
+  x2 = t(E210_2pdb$p2/pairs_random$len2[i])
+  pairs_random$disl[i] <- dist(x1,x2,method = manhat)
+>>>>>>> 8813a7f779e05eb34ba8290c1e32f401acab9f89
 }
-
+res = as.data.frame(results)
+pairs_random$mu = apply(res,1,mean)
+ 
 lm(log10(dis)~log10(diff),pairs_random)
 ggplot(pairs_random[pairs_random$diff>10,],aes(diff,dis))+geom_point()+
     scale_y_log10()+scale_x_log10()+
   geom_smooth(method = 'lm')+
   stat_cor(col='red')
+
 lm(log10(dis)~log10(diff),pairs_random[pairs_random$diff>10,])
 
 #step <- 5
@@ -1278,9 +1315,9 @@ df <- df[with(df, order(df$family)), ]
 #df <- df[with(df, order(df$group)), ]
 row.names(df) <- df[,1]
 rn <- df[,1]
-dis <- proxy::dist(df[,-c(1,2,3,214)], method = tm_score3)
+dis <- proxy::dist(df[,-c(1,2,3,214)], method = manhat)
 dis[is.nan(dis)]<-0
-tree_data <- ape::bionj(dis)
+tree_data <- ape::bionj(1 -dis)
 grp <- list(Bacteri     = rn[1:5],
             Dps  = rn[6:20],
             Ferritins  = rn[21:31],
@@ -3095,12 +3132,77 @@ ggarrange(g1,g2)
 ## fold
 ```{r}
 df <- readRDS("Data/rds/E210.astral40.rds")
-df <- df[!is.na(df$FL) & df$class %in% c('a','b','c','d'), ]
+df <- df[!is.na(df$FL) & df$class %in% c('a','b'), ]
 folds <- unique(df$fold)
 
-dis <- as.matrix(dist(df[,-c(1:2,4:8)],method = manhat_norm_maxl))
-dis <- data.frame(gr=df$fold, dis)
+dis <- as.matrix(dist(df[,-c(1:8)],method = manhat))
+dis <- data.frame(fold=df$fold,superf = df$superfamily,length = df$length, dis)
 fo<-unique(dis$gr)
+
+n = 5698
+lengths = (df$length)
+fold = df$fold
+super = df$superfamily
+class = df$class
+distances = as.matrix(dis[,-c(1:3)])
+protein_data <- data.frame(
+  Protein1 = rep(lengths, each = n),
+  Protein2 = rep(lengths, times = n),
+  fold1 = rep(fold, each = n),
+  fold2 = rep(fold, times = n),
+  super1 = rep(super, each = n),
+  super2 = rep(super, times = n),
+  class1 = rep(class, each = n),
+  class2 = rep(class, times = n),
+  Distance = as.vector(distances),
+  LengthDifference = abs(rep(lengths, each = n) - rep(lengths, times = n))
+)
+
+
+
+
+protein_data = protein_data[protein_data$Distance !=0,]
+protein_data = protein_data[protein_data$class1 !="b" & protein_data$class2 !="b",]
+different_proteins <- protein_data[protein_data$super1 != protein_data$super2 
+                                   & protein_data$fold1 == protein_data$fold2,]
+different_proteins$group = "Diff"
+
+#pairs_random_differ <- different_proteins %>%
+#  group_by(LengthDifference) %>%
+#  sample_n(2) %>%
+#  ungroup()
+#lm(formula = Distance ~ LengthDifference, data = pairs_random_differ)
+same_proteins <- protein_data[protein_data$super1 == protein_data$super2 ,]
+same_proteins$group = "same"
+
+#pairs_random_same <- same_proteins %>%
+#  group_by(LengthDifference) %>%
+#  sample_n(2) %>%
+#  ungroup()
+#lm(formula = Distance ~ LengthDifference, data = pairs_random_same)
+
+df_diff_same = rbind(pairs_random_differ,pairs_random_same)
+ggplot(data = df_diff_same,aes(LengthDifference,Distance,color = group)) +
+  geom_point()
+
+diff_fold <- different_proteins[sample(nrow(different_proteins), size = 4000, replace = FALSE), ]
+lm(formula = Distance ~ LengthDifference, data = diff_fold)
+plot(diff_fold$LengthDifference,diff_fold$Distance)
+
+same_fold <- protein_data[protein_data$fold1 == protein_data$fold2,]
+same_fold <- same_fold[sample(nrow(same_fold), size = 4000, replace = FALSE), ]
+lm(formula = Distance ~ (LengthDifference+1), data = same_fold)
+plot(same_fold$LengthDifference,same_fold$Distance)
+
+
+df_diff200 = different_proteins[different_proteins$LengthDifference<100,]
+df_same200 = same_proteins[same_proteins$LengthDifference<100,]
+
+dff200 = rbind(df_diff200,df_same200)
+dff200 = dff200[dff200$Distance!=0,]
+dff200$disnorm = dff200$Distance/(6.66 + (dff200$LengthDifference *- 0.036))
+ggplot(dff200,aes(group,Distance)) + geom_boxplot()
+
 
 between<-c() 
 within<-c()
@@ -3249,6 +3351,7 @@ E210.seqPDB_mulidup[,c(1:9)] <- E210_mulidup[,c(1:9)]
 saveRDS(E210_mulidup,'Data/rds/E210_malidup.rds')
 saveRDS(E210.seqPDB_mulidup,'Data/rds/E210.seqPDB_malidup.rds')
 
+<<<<<<< HEAD
 tm1 <- read.csv('~/Desktop/rds/dup/dis_tm1_all_pair.csv',row.names = 'X')
 tm2 <- read.csv('~/Desktop/rds/dup/dis_tm2_all_pair.csv',row.names = 'X')
 diag(tm1)<-NA
@@ -3286,6 +3389,9 @@ im <- apply(dis,1, FUN = which.min)
 res <- data.frame(sorce=df$fold, target=df$fold[im])
 res$pred <- ifelse(res[,1]==res[,2],"1","0")
 sum(as.numeric(res$pred))
+=======
+plot(dis_old, mulidup_tm$tm_norm_chain1)
+>>>>>>> 8813a7f779e05eb34ba8290c1e32f401acab9f89
 
 E210.astral40 <- readRDS("Data/rds/E210.astral40.rds") 
 df40 <- E210.astral40[sample(nrow(E210.astral40),1000),]
