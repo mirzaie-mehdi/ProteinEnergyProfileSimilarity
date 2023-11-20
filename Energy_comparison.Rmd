@@ -59,6 +59,7 @@ library(stringr)
 library(protr)
 library(proxy)
 library(class)
+# ********************
 mythem <- theme_bw(base_line_size = .2)+
   theme(axis.text.x = element_text(size=13, face = "bold"),
         axis.text.y = element_text(size=13, face = "bold"),
@@ -67,21 +68,14 @@ mythem <- theme_bw(base_line_size = .2)+
         legend.title = element_blank(),
         title = element_text(size = 15)
   )
-# ************************************
-tm_score3 <- function(x, y){
-  xy = abs(x - y)
-  xy = xy[xy != 0]
-  d = sum(xy)/length(xy)
-  d <- d/max(15,d)
-  return(d)
-}
-# ***********
+
 manhat <- function(X, Y){
-  x = X[-1];y = Y[-1]
+  #x = X[-1];y = Y[-1]
+  x = X; y = Y
   xy = abs(x - y)
   xy = xy[xy != 0]
   d = sum(xy)/length(xy)
-  #d = d/(abs(X[1]-Y[1])+1)
+ # d = sum(xy)/(abs(X[1]-Y[1])+1)
   return(d)
 }
 # ********
@@ -116,6 +110,40 @@ manhat_norm_minl <- function(X, Y){
 
 ```
 
+# Energy_Calculator
+
+```{r}
+energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
+energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
+source("Functions/amacid2num.R")
+source("Functions/atomtype2num167.R")
+source("Functions/Energy_PC210.R")
+source("Functions/NetworkFrame.R")
+source("Functions/inedx_HelixSheet.R")
+source("Functions/split_position.R")
+
+# ------Pairwise Amino Acid names-------------
+AA <- c("PHE","LEU","ILE","VAL","TRP","TYR","MET","CYS","HIS","THR",
+        "ARG","ALA","ASN","GLN","PRO","SER","ASP","GLY","LYS","GLU")
+letters_list <- aa321(AA)
+pair_inter <- character(0)
+for (i in 1:20) {
+  for (j in i:20) {
+    pair_inter <- c(pair_inter, paste0(letters_list[i], letters_list[j]))
+  }
+} 
+aaenergy <- read.csv("Data/csv/Pij.csv", header = F,sep = ";")
+aaenergy <- (aaenergy + t(aaenergy))/2
+colnames(aaenergy) = rownames(aaenergy)<- 
+  c("F","L","I","V","W","Y","M","C","H","T","R","A","N","Q","P","S","D","G","K","E")
+letters_list <- tolower(row.names(aaenergy))
+aa210<-aaenergy[lower.tri(aaenergy,diag = T)]
+# ----------------------------------------
+sig_int <- c('FF', 'FL', 'FI', 'FV', 'FW', 'FY', 'LL', 'LI', 
+             'LV', 'LW', 'LY', 'LM', 'LA', 'II', 'IV', 'IY',
+             'VV', 'VY', 'VA', 'YY', 'CC')
+```
+
 ## Lenght_dependent
 
 ```{r}
@@ -131,7 +159,7 @@ pairs$mean_len <- apply(pairs[,3:4],1,mean)
 pairs$diff <- abs(pairs$len1 - pairs$len2)
 set.seed(123)
 pairs_random <- pairs %>%
-  group_by(diff) %>%
+  group_by(min_len) %>%
   sample_n(1) %>%
   ungroup()
 
@@ -143,6 +171,8 @@ source("Functions/Energy_PC210.R")
 source("Functions/NetworkFrame.R")
 
 pairs_random$dis <- 0
+pairs_random$dis_tot <- 0
+
 for(i in 1:nrow(pairs_random)){
   print(i)
   pdb1 <- read.cif(substr(pairs_random$X1[i],1,4))
@@ -174,6 +204,7 @@ for(i in 1:nrow(pairs_random)){
   
   df <- data.frame(t(E210_2pdb))
   pairs_random$dis[i] <- dist(df,method = manhat)
+  pairs_random$dis_tot[i] <- dist(rowSums(df),method = manhat)
 }
 
 lm(log10(dis)~log10(diff),pairs_random)
@@ -452,38 +483,11 @@ TG = TG[,c("scopeID","pdbID" ,"Position", "class","fold","superfamily","family",
 saveRDS(TG,"Data/rds/TG.rds")
 ```
 
+# astral_95
 
-
-## Energy_Calculator
 ```{r}
-energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
-energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
-source("Functions/amacid2num.R")
-source("Functions/atomtype2num167.R")
-source("Functions/Energy_PC210.R")
-source("Functions/NetworkFrame.R")
-source("Functions/inedx_HelixSheet.R")
-source("Functions/split_position.R")
-
 astral95 <- readRDS("Data/rds/astral_95.rds")
 Nprotein <- nrow(astral95)
-# ------Pairwise Amino Acid names-------------
-AA <- c("PHE","LEU","ILE","VAL","TRP","TYR","MET","CYS","HIS","THR",
-        "ARG","ALA","ASN","GLN","PRO","SER","ASP","GLY","LYS","GLU")
-letters_list <- aa321(AA)
-pair_inter <- character(0)
-for (i in 1:20) {
-  for (j in i:20) {
-    pair_inter <- c(pair_inter, paste0(letters_list[i], letters_list[j]))
-  }
-} 
-aaenergy <- read.csv("Data/csv/Pij.csv", header = F,sep = ";")
-aaenergy <- (aaenergy + t(aaenergy))/2
-colnames(aaenergy) = rownames(aaenergy)<- 
-  c("F","L","I","V","W","Y","M","C","H","T","R","A","N","Q","P","S","D","G","K","E")
-letters_list <- tolower(row.names(aaenergy))
-aa210<-aaenergy[lower.tri(aaenergy,diag = T)]
-#----------------------------------------------
 num_columns <- 210
 E210.astral95 <- data.frame(pdbID = astral95$pdbID,
                             scopeID= astral95$scopeID,
@@ -739,8 +743,8 @@ df <- df[,-c(1:4,6:8),]
 predictions <- vector("character", nrow(df))
 dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat_norm_diff))
 diag(dis) <- NA
-acc <- rep(0,150)
-for(k in 1:150){
+acc <- rep(0,50)
+for(k in 1:50){
   print(k)
   for (i in 1:nrow(df)) {
    DL_table <- data.frame(dist = dis[i,], label = df$class)
@@ -3145,17 +3149,18 @@ plot(umap_result$layout,
 
 ```{r}
 mulidup <- read.delim('Data/dup/dup.txt')
-#mulidup_tm <- read.delim('Data/dup/dup_tm.csv')
 mulidup_tm <- read.csv("Data/dup/dup_tm.csv", header=T)
 
-dis_old <- rep(0, nrow(mulidup))
-dis_old_diff = dis_old
-dis_new_min = dis_old
-dis_new <- rep(0, nrow(mulidup))
-len <- data.frame(len1=rep(0,nrow(mulidup)),
-                  len2=rep(0,nrow(mulidup)))
+E210_mulidup <- data.frame(pair.name='x',pdbID=1:482,scopeID='x',position='x',length=0,
+                   class='x',fold='x',superfamily='x',family='x',
+                   matrix(0,482,210))
+colnames(E210_mulidup)[-c(1:9)] <- pair_inter
+E210.seqPDB_mulidup <- E210_mulidup
+
 for(i in 1:nrow(mulidup)){
   print(i)
+  r1 <- 2*i-1
+  r2 <- 2*i
   path <- paste0('Data/dup/', mulidup$Pair.Name[i])
   pdb1 <- read.pdb(paste0(path ,'/',mulidup$Domain1[i],'.pdb'))
   pdb2 <- read.pdb(paste0(path ,'/',mulidup$Domain2[i],'.pdb'))
@@ -3173,44 +3178,114 @@ for(i in 1:nrow(mulidup)){
   sele4 <- atom.select(pdb2, "noh")
   sele <- combine.select(sele1, sele2,sele4, operator="AND")
   pdb2 <- trim.pdb(pdb2, sele,verbose = FALSE)
+  # ******
+  E210_mulidup$pdbID[r1] <- mulidup$Domain1[i]
+  E210_mulidup$pdbID[r2] <- mulidup$Domain2[i]
   
-  len1 <- length(unique(pdb1$atom$resno))
-  len2 <- length(unique(pdb2$atom$resno))
-  len[i,1] <- len1
-  len[i,2] <- len2
+  E210_mulidup$scopeID[r1] <- mulidup$SCOP.ID1[i]
+  E210_mulidup$scopeID[r2] <- mulidup$SCOP.ID2[i]
   
-  E210_2pdb <- data_frame(p1=rep(0,210),p2=rep(0,210))
+  E210_mulidup$position[r1] <- mulidup$Range1[i]
+  E210_mulidup$position[r2] <- mulidup$Range2[i]
   
+  E210_mulidup$length[r1] <- length(unique(pdb1$atom$resno))
+  E210_mulidup$length[r2] <- length(unique(pdb2$atom$resno))
+  
+  E210_mulidup$pair.name[r1:r2] <- mulidup$Pair.Name[i]
+  E210_mulidup$class[r1:r2] <- mulidup$SCOP.Class[i]
+  E210_mulidup$fold[r1:r2] <- mulidup$SCOP.Fold[i]
+  E210_mulidup$superfamily[r1:r2] <- mulidup$SCOP.Superfamily[i]
+  E210_mulidup$family[r1:r2] <- mulidup$SCOP.Family[i]
+
   Net_Frame <- NetworkFrame(PDB = pdb1)
-  energy210 <- Energy_PC210(Net_Frame ,energy_dell_dunbrack)
-  E210_2pdb$p1 <- energy210
+#  indhs <- inedx_HelixSheet(PDB = pdb1)
+#  Net_Frame_hs <- Net_Frame[Net_Frame$resnoif %in% indhs & Net_Frame$resnojf %in% indhs,]
+#  if(dim(Net_Frame_hs)[1]!=0){
+#      Net_Frame <- Net_Frame_hs
+#  }
+  energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+  E210_mulidup[r1, -c(1:9)] <- energy210
   
   Net_Frame <- NetworkFrame(PDB = pdb2)
-  energy210 <- Energy_PC210(Net_Frame, energy_dell_dunbrack)
-  E210_2pdb$p2 <- energy210
+#  indhs <- inedx_HelixSheet(PDB = pdb2)
+#  Net_Frame_hs <- Net_Frame[Net_Frame$resnoif %in% indhs & Net_Frame$resnojf %in% indhs,]
+#  if(dim(Net_Frame_hs)[1]!=0){
+#      Net_Frame <- Net_Frame_hs
+#  }
+  energy210 <- Energy_PC210(Net_Frame ,energy_dell_dunbrack)
+  E210_mulidup[r2, -c(1:9)] <- energy210
+  # ******************************
+  #-----------sequence enregy based on PDB--------
+  pdbX <- pdb1$atom
+  pdbXca <- pdbX[pdbX$elety == "CA",]
+  seq = aa321(pdbXca$resid)
+  freq = c()
+  for (j in 1:20){
+      freq[j] <-  length(grep(letters_list[j],tolower(seq)))
+  }
+  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+  en_fr <- aaenergy * freq_matrix
+  en_fr <- en_fr/length(seq)
+  pair_es <- diag(freq) %*% as.matrix(en_fr)
+  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+  E210.seqPDB_mulidup[r1,-c(1:9)] <- aa210_p
   
-  df <- data.frame(length=c(len1,len2), t(E210_2pdb))
-  d <- dist(df,method = manhat_norm_maxl)
-#  dis[i] <- d/log(min(c(len1, len2)))
-#  dis[i] <- d
-  df <- data.frame(length=c(len1,len2),t(E210_2pdb))
-  d <- dist(df,method = manhat)
-  dis_old[i] <- d
-  d <- dist(df,method = manhat_norm_diff)
-  dis_old_diff[i] <- d
-  d <- dist(df,method = manhat_norm_maxl)
-  dis_new[i] <- d
-  d <- dist(df,method = manhat_norm_minl)
-  dis_new_min[i] <- d
+  pdbX <- pdb2$atom
+  pdbXca <- pdbX[pdbX$elety == "CA",]
+  seq = aa321(pdbXca$resid)
+  freq = c()
+  for (j in 1:20){
+      freq[j] <-  length(grep(letters_list[j],tolower(seq)))
+  }
+  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+  en_fr <- aaenergy * freq_matrix
+  en_fr <- en_fr/length(seq)
+  pair_es <- diag(freq) %*% as.matrix(en_fr)
+  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+  E210.seqPDB_mulidup[r2,-c(1:9)] <- aa210_p
 }
-mulidup_tm <- data.frame(mulidup_tm,dis_old,dis_new,dis_old_diff,dis_new_min)
 
-len$mean<-(len$len1+len$len2)/2
-len$min <- apply(len[,1:2],1,min)
-len$max <- apply(len[,1:2],1,max)
-len$diff <- len$max-len$min
+E210.seqPDB_mulidup[,c(1:9)] <- E210_mulidup[,c(1:9)]
+saveRDS(E210_mulidup,'Data/rds/E210_malidup.rds')
+saveRDS(E210.seqPDB_mulidup,'Data/rds/E210.seqPDB_malidup.rds')
 
-plot(dis, len$diff)
+tm1 <- read.csv('~/Desktop/rds/dup/dis_tm1_all_pair.csv',row.names = 'X')
+tm2 <- read.csv('~/Desktop/rds/dup/dis_tm2_all_pair.csv',row.names = 'X')
+diag(tm1)<-NA
+diag(tm2)<-NA
+
+df <- E210_mulidup
+#df$tot <- rowSums(df[,-c(1:9)])
+dis <- as.matrix(dist(df[,-c(1:4,6:9)], method = manhat_norm_minl))
+diag(dis)<-NA
+dis <- data.frame(gr=df$superfamily,dis)
+gr <- unique(dis$gr)
+
+
+between<-c() 
+within<-c()
+for (i in 1:length(gr)) {  
+  print(i)   
+  x <- gr[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_family <- data.frame(gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+ggplot(df_family,aes(gr,distance))+geom_boxplot()
+# **********
+
+
+im <- apply(dis,1, FUN = which.min)
+res <- data.frame(sorce=df$fold, target=df$fold[im])
+res$pred <- ifelse(res[,1]==res[,2],"1","0")
+sum(as.numeric(res$pred))
 
 E210.astral40 <- readRDS("Data/rds/E210.astral40.rds") 
 df40 <- E210.astral40[sample(nrow(E210.astral40),1000),]
@@ -3225,8 +3300,7 @@ g = ggplot(df,aes(group,distance,fill=group))+geom_boxplot()
 
 ```
 
-## Mulisam
-salam
+# Mulisam
 
 ```{r}
 # malisam
@@ -3905,3 +3979,143 @@ ggarrange(
   font.label = list(size = 20) # color = "red"
 )
 ```
+
+## Fig4
+
+```{r}
+# ******** str40
+df <- readRDS("Data/rds/E210.astral40.rds")
+df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
+df <- df[,-c(1:4,6:8)]
+dis <- as.matrix(proxy::dist(df[,-c(1)], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 20,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str40 <- data.frame(data='Astral 40',type='Structure',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+# ******** seq40
+df <- readRDS("Data/rds/E210.seq_astral40.rds")
+df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
+df <- df[,-c(1:4,6:8)]
+dis <- as.matrix(proxy::dist(df[,-c(1)], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 20,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq40 <- data.frame(data='Astral 40',type='Sequence',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+# ******** str95
+df <- readRDS("Data/rds/E210.astral_95.rds")
+df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
+df <- df[,-c(1:4,6:8)]
+dis <- as.matrix(proxy::dist(df[,-c(1)], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 20,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str95 <- data.frame(data='Astral 95',type='Structure',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+# ******** seq40
+df <- readRDS("Data/rds/E210.seq_astral_95.rds")
+df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
+df <- df[,-c(1:4,6:8)]
+dis <- as.matrix(proxy::dist(df[,-c(1)], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 20,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq95 <- data.frame(data='Astral 95',type='Sequence',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+# **** rbind
+ump_df <- rbind(ump_df_str40,ump_df_seq40,
+                ump_df_str95,ump_df_seq95)
+
+ggplot(ump_df,aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7) + 
+  #ylim(-15,15) +
+  #xlim(-10,20) +
+  facet_grid(data ~ type)+
+  mythem+
+  theme(strip.text = element_text(size = 20))
+
+```
+
+## Fig5
+
+```{r}
+# ******** str40
+df <- readRDS("Data/rds/E210.astral40.rds")
+df <- df[df$class %in% c("a",'b')&!is.na(df$FF)&df$length>10,]
+dis <- as.matrix(proxy::dist(df[,sig_int], method = manhat))
+
+dis <- data.frame(gr=df$class, dis)
+gr <- unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(gr)) {  
+  if(i%%10==0)print(i)
+  x <- gr[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+
+homo <- data.frame(type='homo',distance=within)
+remote_homo <- data.frame(type='remote_homo',distance=between)
+# *************
+dis$gr <- df$fold
+gr <- unique(dis$gr)
+between<-c() 
+for (i in 1:length(gr)) {  
+  if(i%%10==0)print(i)  
+  x <- gr[i]  
+  idx <- which(dis$gr==x)
+  x <- dis[idx,-c(1,idx+1)] 
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+str_analog <- data.frame(type='str_analog',distance=between)
+str_analog_fold <- data.frame(type='str_analog_fold',distance=between)
+
+between_class <- data.frame(type='between_class',distance=between)
+within_class <- data.frame(type='within_class',distance=within)
+
+df_evolution <- rbind(homo[sample(nrow(homo),5000),],
+                      remote_homo[sample(nrow(remote_homo),5000),],
+                      str_analog[sample(nrow(str_analog),5000),],
+                      str_analog_fold[sample(nrow(str_analog_fold),5000),],
+                      between_class[sample(nrow(between_class),5000),],
+                      within_class[sample(nrow(within_class),5000),])
+
+my_comparisons <- list(c('between_class','within_class'))
+g.p<-ggboxplot(df_evolution, x='type',y='distance', 
+          fill = 'type',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="black", fill="red")+xlab('')+
+  theme_bw(base_line_size = .2)+
+  theme(legend.position = 'none',
+        strip.text = element_text(size = 20))+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  coord_cartesian(ylim = c(0, 50))+
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=7,
+                     label.y = 40, tip.length = .01)
+
+
+```
+
