@@ -90,7 +90,7 @@ manhat_norm_diff <- function(X, Y){
   xy = xy[xy != 0]
   d = sum(xy)/length(xy)
   Ldiff = abs(X[1]- Y[1]) 
-  d = d / (6.66 + (Ldiff * 0.036))
+  d =  (6.66 + (Ldiff * 0.036))/d
 #  Ldiff = abs(X[1]- Y[1]) + 1
 #  d = d / (1.25 * (Ldiff^0.50))
   return(d)
@@ -3137,29 +3137,28 @@ protein_data <- data.frame(
   LengthDifference = abs(rep(lengths, each = n) - rep(lengths, times = n))
 )
 
+
+
+
 protein_data = protein_data[protein_data$Distance !=0,]
 protein_data = protein_data[protein_data$class1 !="b" & protein_data$class2 !="b",]
-
-folda1 = protein_data[protein_data$fold1 %in% "a.2"& protein_data$fold2 %in% "a.2",]
-plot(folda1$LengthDifference,folda1$Distance)
-
 different_proteins <- protein_data[protein_data$super1 != protein_data$super2 
                                    & protein_data$fold1 == protein_data$fold2,]
 different_proteins$group = "Diff"
 
-pairs_random_differ <- different_proteins %>%
-  group_by(LengthDifference) %>%
-  sample_n(2) %>%
-  ungroup()
-lm(formula = Distance ~ LengthDifference, data = pairs_random_differ)
+#pairs_random_differ <- different_proteins %>%
+#  group_by(LengthDifference) %>%
+#  sample_n(2) %>%
+#  ungroup()
+#lm(formula = Distance ~ LengthDifference, data = pairs_random_differ)
 same_proteins <- protein_data[protein_data$super1 == protein_data$super2 ,]
 same_proteins$group = "same"
 
-pairs_random_same <- same_proteins %>%
-  group_by(LengthDifference) %>%
-  sample_n(2) %>%
-  ungroup()
-lm(formula = Distance ~ LengthDifference, data = pairs_random_same)
+#pairs_random_same <- same_proteins %>%
+#  group_by(LengthDifference) %>%
+#  sample_n(2) %>%
+#  ungroup()
+#lm(formula = Distance ~ LengthDifference, data = pairs_random_same)
 
 df_diff_same = rbind(pairs_random_differ,pairs_random_same)
 ggplot(data = df_diff_same,aes(LengthDifference,Distance,color = group)) +
@@ -3180,6 +3179,7 @@ df_same200 = same_proteins[same_proteins$LengthDifference<100,]
 
 dff200 = rbind(df_diff200,df_same200)
 dff200 = dff200[dff200$Distance!=0,]
+dff200$disnorm = dff200$Distance/(6.66 + (dff200$LengthDifference *- 0.036))
 ggplot(dff200,aes(group,Distance)) + geom_boxplot()
 
 
