@@ -56,6 +56,11 @@ library(stringr)
 library(protr)
 library(proxy)
 library(class)
+```
+
+# dis function
+
+```{r libraries and reading files, include=FALSE}
 # ********************
 mythem <- theme_bw(base_line_size = .2)+
   theme(axis.text.x = element_text(size=13, face = "bold"),
@@ -66,17 +71,14 @@ mythem <- theme_bw(base_line_size = .2)+
         title = element_text(size = 15)
   )
 
-<<<<<<< HEAD
-=======
+
 # ***********
->>>>>>> 8813a7f779e05eb34ba8290c1e32f401acab9f89
 manhat <- function(X, Y){
-  #x = X[-1];y = Y[-1]
-  x = X; y = Y
+  x = X[-1];y = Y[-1]
   xy = abs(x - y)
   xy = xy[xy != 0]
   d = sum(xy)/length(xy)
- # d = sum(xy)/(abs(X[1]-Y[1])+1)
+  #d = sum(xy)/(abs(X[1]-Y[1])+1)
   return(d)
 }
 # ********
@@ -189,13 +191,12 @@ source("Functions/Energy_PC210.R")
 source("Functions/NetworkFrame.R")
 
 pairs_random$dis <- 0
-<<<<<<< HEAD
+
 pairs_random$dis_tot <- 0
 
-=======
+
  results = c()
  results_l = c()
->>>>>>> 8813a7f779e05eb34ba8290c1e32f401acab9f89
 for(i in 1:nrow(pairs_random)){
   print(i)
   pdb1 <- read.cif(substr(pairs_random$X1[i],1,4))
@@ -232,13 +233,12 @@ for(i in 1:nrow(pairs_random)){
 
   df <- data.frame(t(E210_2pdb))
   pairs_random$dis[i] <- dist(df,method = manhat)
-<<<<<<< HEAD
+
   pairs_random$dis_tot[i] <- dist(rowSums(df),method = manhat)
-=======
+
   x1 = t(E210_2pdb$p1/pairs_random$len1[i])
   x2 = t(E210_2pdb$p2/pairs_random$len2[i])
   pairs_random$disl[i] <- dist(x1,x2,method = manhat)
->>>>>>> 8813a7f779e05eb34ba8290c1e32f401acab9f89
 }
 res = as.data.frame(results)
 pairs_random$mu = apply(res,1,mean)
@@ -622,7 +622,7 @@ saveRDS(E210.seqPDB_astral95,file = "Data/rds/E210.seqPDB_astral_95.rds")
 ## UMAP_manhat_norm
 
 ```{r}
-df <- readRDS("data/rds/E210.astral40.rds")
+df <- readRDS("Data/rds/E210.astral40.rds")
 dfs <- df[df$class %in% c("a","b","c","d")& df$length > 100 & !is.na(df$FF),]
 df1<-dfs[,-c(1:2,4:5,7:8)]
 df1[,-1] <- df1[,-1]
@@ -1588,9 +1588,9 @@ df = df[!is.na(df$length),]
 df = df[df$conformation == "Close",]
 
 rownames(df) = df$pdbID
-x = df[,-c(1,3:4)]
+x = df[,-c(1,3:4)]/df$length
 x  <- as.matrix(x) 
-hc <- x %>% proxy::dist(method = manhat_norm_maxl)
+hc <- x %>% proxy::dist(method = manhat)
 hc[is.nan(hc)] <- 0
 hc <- hc%>% hclust(method = "ward.D2")
 dend <- hc %>% as.dendrogram
@@ -1603,6 +1603,8 @@ dend2 <- dend %>%
   #color_branches(k=3, col = c("red","blue","green3")) %>%
   color_labels(col =   group_cols) %>%
   set("labels_cex", 0.5) 
+ggplot(df, aes(virus, tot)) + geom_boxplot()
+df$tot<-rowSums(df[,-c(1:4)])
 plot(dend2, ylab = "Height")
 legend("topright", legend = as.character(unique(ord_sml)),
        pch = 15, pt.cex = 2.3, cex = 1.4, bty = 'n',
@@ -2580,7 +2582,7 @@ saveRDS(E210_seq_ferritin,file = "Data/rds/E210_seq_ferritin.rds")
 ## Phylogenetic Tree_Ferritin
 
 ```{r}
-E210_seq_ferritin <- readRDS("Data/rds/E210_seq_ferritin.rds")
+E210_seq_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
 
 df <- E210_seq_ferritin
 df <- df[with(df, order(df$group)), ]
@@ -2592,19 +2594,12 @@ row.names(df) <- df[,1]
 #dis <- log2(dis)
 #------------------
 rn <- df[,1]
-dis <- dist(df[,-c(1,2,3)], method="manhattan")
 #--------custom_distance--------------------
-tm_score <- function(x, y){
-  xy = x - y
-  d =sum(1/ (1 + (xy)^2))
-  return(d)
-}
-dis <- as.matrix(dist(df[,-c(1,2,3)], method = tm_score))
-dis <- dist(df[,-c(1,2,3)], method = tm_score)
+dis <- as.matrix(dist(df[,-c(1,3)], method = manhat))
 #--------------------------------------------
 dis <- sqrt(dis)
 #------------------
-tree_data <- ape::bionj(d2)
+tree_data <- ape::bionj(dis)
 grp <- list(Bacteri     = rn[1:5],
             BMM_alpha = rn[6:7],
             BMM_beta  = rn[8:10],
@@ -3133,13 +3128,11 @@ ggarrange(g1,g2)
 ```{r}
 df <- readRDS("Data/rds/E210.astral40.rds")
 df <- df[!is.na(df$FL) & df$class %in% c('a','b'), ]
-folds <- unique(df$fold)
 
-dis <- as.matrix(dist(df[,-c(1:8)],method = manhat))
+dis <- as.matrix(dist(df[,-c(1:2,4:8)],method = manhat))
 dis <- data.frame(fold=df$fold,superf = df$superfamily,length = df$length, dis)
-fo<-unique(dis$gr)
 
-n = 5698
+n = nrow(df)
 lengths = (df$length)
 fold = df$fold
 super = df$superfamily
@@ -3157,8 +3150,6 @@ protein_data <- data.frame(
   Distance = as.vector(distances),
   LengthDifference = abs(rep(lengths, each = n) - rep(lengths, times = n))
 )
-
-
 
 
 protein_data = protein_data[protein_data$Distance !=0,]
@@ -3181,11 +3172,12 @@ same_proteins$group = "same"
 #  ungroup()
 #lm(formula = Distance ~ LengthDifference, data = pairs_random_same)
 
-df_diff_same = rbind(pairs_random_differ,pairs_random_same)
-ggplot(data = df_diff_same,aes(LengthDifference,Distance,color = group)) +
-  geom_point()
+df_diff_same = rbind(same_proteins,different_proteins)
+ggplot(data = df_diff_same,aes(group,Distance,color = group)) +
+  geom_boxplot()
 
-diff_fold <- different_proteins[sample(nrow(different_proteins), size = 4000, replace = FALSE), ]
+diff_fold <- different_proteins[sample(nrow(different_proteins),
+                                       size = 4000, replace = FALSE), ]
 lm(formula = Distance ~ LengthDifference, data = diff_fold)
 plot(diff_fold$LengthDifference,diff_fold$Distance)
 
@@ -3204,15 +3196,16 @@ dff200$disnorm = dff200$Distance/(6.66 + (dff200$LengthDifference *- 0.036))
 ggplot(dff200,aes(group,Distance)) + geom_boxplot()
 
 
+gr<-unique(dis$superf)
 between<-c() 
 within<-c()
-for (i in 1:length(fo)) {  
+for (i in 1:length(gr)) {  
   print(i)   
-  x <- fo[i]  
+  x <- gr[i]  
   idx <- which(dis$gr==x)
-  y <- dis[idx,(idx+1)]
+  y <- dis[idx,(idx+3)]
   within <- c(within, y[lower.tri(y)])
-  x <- dis[idx,-c(1,idx+1)]   
+  x <- dis[idx,-c(1,idx+3)]   
   x <- as.vector(as.matrix(x))  
   x <- x[!is.na(x)]   
   between<-c(between,x) 
@@ -3247,25 +3240,25 @@ plot(umap_result$layout,
 
 ```
 
-# Mulidup
+# malidup
 
 ```{r}
-mulidup <- read.delim('Data/dup/dup.txt')
-mulidup_tm <- read.csv("Data/dup/dup_tm.csv", header=T)
+malidup <- read.delim('Data/dup/dup.txt')
+malidup_tm <- read.csv("Data/dup/dup_tm.csv", header=T)
 
-E210_mulidup <- data.frame(pair.name='x',pdbID=1:482,scopeID='x',position='x',length=0,
+E210_malidup <- data.frame(pair.name='x',pdbID=1:482,scopeID='x',position='x',length=0,
                    class='x',fold='x',superfamily='x',family='x',
                    matrix(0,482,210))
-colnames(E210_mulidup)[-c(1:9)] <- pair_inter
-E210.seqPDB_mulidup <- E210_mulidup
+colnames(E210_malidup)[-c(1:9)] <- pair_inter
+E210.seqPDB_malidup <- E210_malidup
 
-for(i in 1:nrow(mulidup)){
+for(i in 1:nrow(malidup)){
   print(i)
   r1 <- 2*i-1
   r2 <- 2*i
-  path <- paste0('Data/dup/', mulidup$Pair.Name[i])
-  pdb1 <- read.pdb(paste0(path ,'/',mulidup$Domain1[i],'.pdb'))
-  pdb2 <- read.pdb(paste0(path ,'/',mulidup$Domain2[i],'.pdb'))
+  path <- paste0('Data/dup/', malidup$Pair.Name[i])
+  pdb1 <- read.pdb(paste0(path ,'/',malidup$Domain1[i],'.pdb'))
+  pdb2 <- read.pdb(paste0(path ,'/',malidup$Domain2[i],'.pdb'))
   ch1 <- unique(pdb1$atom$chain)
   ch2 <- unique(pdb2$atom$chain)
   
@@ -3281,23 +3274,23 @@ for(i in 1:nrow(mulidup)){
   sele <- combine.select(sele1, sele2,sele4, operator="AND")
   pdb2 <- trim.pdb(pdb2, sele,verbose = FALSE)
   # ******
-  E210_mulidup$pdbID[r1] <- mulidup$Domain1[i]
-  E210_mulidup$pdbID[r2] <- mulidup$Domain2[i]
+  E210_malidup$pdbID[r1] <- malidup$Domain1[i]
+  E210_malidup$pdbID[r2] <- malidup$Domain2[i]
   
-  E210_mulidup$scopeID[r1] <- mulidup$SCOP.ID1[i]
-  E210_mulidup$scopeID[r2] <- mulidup$SCOP.ID2[i]
+  E210_malidup$scopeID[r1] <- malidup$SCOP.ID1[i]
+  E210_malidup$scopeID[r2] <- malidup$SCOP.ID2[i]
   
-  E210_mulidup$position[r1] <- mulidup$Range1[i]
-  E210_mulidup$position[r2] <- mulidup$Range2[i]
+  E210_malidup$position[r1] <- malidup$Range1[i]
+  E210_malidup$position[r2] <- malidup$Range2[i]
   
-  E210_mulidup$length[r1] <- length(unique(pdb1$atom$resno))
-  E210_mulidup$length[r2] <- length(unique(pdb2$atom$resno))
+  E210_malidup$length[r1] <- length(unique(pdb1$atom$resno))
+  E210_malidup$length[r2] <- length(unique(pdb2$atom$resno))
   
-  E210_mulidup$pair.name[r1:r2] <- mulidup$Pair.Name[i]
-  E210_mulidup$class[r1:r2] <- mulidup$SCOP.Class[i]
-  E210_mulidup$fold[r1:r2] <- mulidup$SCOP.Fold[i]
-  E210_mulidup$superfamily[r1:r2] <- mulidup$SCOP.Superfamily[i]
-  E210_mulidup$family[r1:r2] <- mulidup$SCOP.Family[i]
+  E210_malidup$pair.name[r1:r2] <- malidup$Pair.Name[i]
+  E210_malidup$class[r1:r2] <- malidup$SCOP.Class[i]
+  E210_malidup$fold[r1:r2] <- malidup$SCOP.Fold[i]
+  E210_malidup$superfamily[r1:r2] <- malidup$SCOP.Superfamily[i]
+  E210_malidup$family[r1:r2] <- malidup$SCOP.Family[i]
 
   Net_Frame <- NetworkFrame(PDB = pdb1)
 #  indhs <- inedx_HelixSheet(PDB = pdb1)
@@ -3306,7 +3299,7 @@ for(i in 1:nrow(mulidup)){
 #      Net_Frame <- Net_Frame_hs
 #  }
   energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
-  E210_mulidup[r1, -c(1:9)] <- energy210
+  E210_malidup[r1, -c(1:9)] <- energy210
   
   Net_Frame <- NetworkFrame(PDB = pdb2)
 #  indhs <- inedx_HelixSheet(PDB = pdb2)
@@ -3315,7 +3308,7 @@ for(i in 1:nrow(mulidup)){
 #      Net_Frame <- Net_Frame_hs
 #  }
   energy210 <- Energy_PC210(Net_Frame ,energy_dell_dunbrack)
-  E210_mulidup[r2, -c(1:9)] <- energy210
+  E210_malidup[r2, -c(1:9)] <- energy210
   # ******************************
   #-----------sequence enregy based on PDB--------
   pdbX <- pdb1$atom
@@ -3330,7 +3323,7 @@ for(i in 1:nrow(mulidup)){
   en_fr <- en_fr/length(seq)
   pair_es <- diag(freq) %*% as.matrix(en_fr)
   aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-  E210.seqPDB_mulidup[r1,-c(1:9)] <- aa210_p
+  E210.seqPDB_malidup[r1,-c(1:9)] <- aa210_p
   
   pdbX <- pdb2$atom
   pdbXca <- pdbX[pdbX$elety == "CA",]
@@ -3344,54 +3337,30 @@ for(i in 1:nrow(mulidup)){
   en_fr <- en_fr/length(seq)
   pair_es <- diag(freq) %*% as.matrix(en_fr)
   aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-  E210.seqPDB_mulidup[r2,-c(1:9)] <- aa210_p
+  E210.seqPDB_malidup[r2,-c(1:9)] <- aa210_p
 }
 
-E210.seqPDB_mulidup[,c(1:9)] <- E210_mulidup[,c(1:9)]
-saveRDS(E210_mulidup,'Data/rds/E210_malidup.rds')
-saveRDS(E210.seqPDB_mulidup,'Data/rds/E210.seqPDB_malidup.rds')
+E210.seqPDB_malidup[,c(1:9)] <- E210_malidup[,c(1:9)]
+saveRDS(E210_malidup,'Data/rds/E210_malidup.rds')
+saveRDS(E210.seqPDB_malidup,'Data/rds/E210.seqPDB_malidup.rds')
 
-<<<<<<< HEAD
+
 tm1 <- read.csv('~/Desktop/rds/dup/dis_tm1_all_pair.csv',row.names = 'X')
 tm2 <- read.csv('~/Desktop/rds/dup/dis_tm2_all_pair.csv',row.names = 'X')
 diag(tm1)<-NA
 diag(tm2)<-NA
 
-df <- E210_mulidup
+E210_malidup <- readRDS('Data/rds/E210_malidup.rds')
+df <- E210_malidup
 #df$tot <- rowSums(df[,-c(1:9)])
-dis <- as.matrix(dist(df[,-c(1:4,6:9)], method = manhat_norm_minl))
+dis <- as.matrix(dist(df[,-c(1:4,6:9)], method = manhat))
 diag(dis)<-NA
-dis <- data.frame(gr=df$superfamily,dis)
-gr <- unique(dis$gr)
-
-
-between<-c() 
-within<-c()
-for (i in 1:length(gr)) {  
-  print(i)   
-  x <- gr[i]  
-  idx <- which(dis$gr==x)
-  y <- dis[idx,(idx+1)]
-  within <- c(within, y[lower.tri(y)])
-  x <- dis[idx,-c(1,idx+1)]   
-  x <- as.vector(as.matrix(x))  
-  x <- x[!is.na(x)]   
-  between<-c(between,x) 
-}
-df_family <- data.frame(gr=rep(c('within','between'),
-                                   c(length(within),length(between))),
-                            distance=c(within,between)) 
-ggplot(df_family,aes(gr,distance))+geom_boxplot()
 # **********
-
-
 im <- apply(dis,1, FUN = which.min)
-res <- data.frame(sorce=df$fold, target=df$fold[im])
+res <- data.frame(sorce=df$superfamily, target=df$superfamily[im])
 res$pred <- ifelse(res[,1]==res[,2],"1","0")
 sum(as.numeric(res$pred))
-=======
-plot(dis_old, mulidup_tm$tm_norm_chain1)
->>>>>>> 8813a7f779e05eb34ba8290c1e32f401acab9f89
+plot(dis_old, malidup_tm$tm_norm_chain1)
 
 E210.astral40 <- readRDS("Data/rds/E210.astral40.rds") 
 df40 <- E210.astral40[sample(nrow(E210.astral40),1000),]
@@ -3399,9 +3368,9 @@ dis40 <- as.vector(dist(df40[,-c(1:2,4:8)],
                         method = manhat))
 
 
-df <- data.frame(group=rep(c('rand40','mulidup','tm'),c(241,241,241)),
+df <- data.frame(group=rep(c('rand40','malidup','tm'),c(241,241,241)),
                  distance=c(dis40[sample(1000,241)], dis_old,
-                            mulidup_tm$tm_norm_chain1))
+                            malidup_tm$tm_norm_chain1))
 g = ggplot(df,aes(group,distance,fill=group))+geom_boxplot()
 
 ```
@@ -4091,9 +4060,9 @@ ggarrange(
 ```{r}
 # ******** str40
 df <- readRDS("Data/rds/E210.astral40.rds")
-df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
-df <- df[,-c(1:4,6:8)]
-dis <- as.matrix(proxy::dist(df[,-c(1)], method = manhat))
+df <- df[df$class %in% c("a","b")& df$length > 10 & !is.na(df$FF),]
+df <- df[,c(5,3,9:218)]
+dis <- as.matrix(proxy::dist(df[,-1]/df$length, method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 20,
             min_dist = 0.1,
@@ -4104,9 +4073,9 @@ ump_df_str40 <- data.frame(data='Astral 40',type='Structure',
                            UMAP2 = ump$layout[, 2])
 # ******** seq40
 df <- readRDS("Data/rds/E210.seq_astral40.rds")
-df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
-df <- df[,-c(1:4,6:8)]
-dis <- as.matrix(proxy::dist(df[,-c(1)], method = manhat))
+df <- df[df$class %in% c("a","b")& df$length > 10 & !is.na(df$FF),]
+df <- df[,c(5,3,9:218)]
+dis <- as.matrix(proxy::dist(df[,-c(1)]/df$length, method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 20,
             min_dist = 0.1,
@@ -4117,9 +4086,9 @@ ump_df_seq40 <- data.frame(data='Astral 40',type='Sequence',
                            UMAP2 = ump$layout[, 2])
 # ******** str95
 df <- readRDS("Data/rds/E210.astral_95.rds")
-df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
-df <- df[,-c(1:4,6:8)]
-dis <- as.matrix(proxy::dist(df[,-c(1)], method = manhat))
+df <- df[df$class %in% c("a","b")& df$length > 10 & !is.na(df$FF),]
+df <- df[,c(5,3,9:218)]
+dis <- as.matrix(proxy::dist(df[,-c(1)]/df$length, method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 20,
             min_dist = 0.1,
@@ -4130,9 +4099,9 @@ ump_df_str95 <- data.frame(data='Astral 95',type='Structure',
                            UMAP2 = ump$layout[, 2])
 # ******** seq40
 df <- readRDS("Data/rds/E210.seq_astral_95.rds")
-df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
-df <- df[,-c(1:4,6:8)]
-dis <- as.matrix(proxy::dist(df[,-c(1)], method = manhat))
+df <- df[df$class %in% c("a","b")& df$length > 10 & !is.na(df$FF),]
+df <- df[,c(5,3,9:218)]
+dis <- as.matrix(proxy::dist(df[,-c(1)]/df$length, method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 20,
             min_dist = 0.1,
