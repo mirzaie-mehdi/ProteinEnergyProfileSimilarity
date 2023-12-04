@@ -1,8 +1,8 @@
 NetworkFrame <- function(PDB){  #, AtomSelect
   Tdist <- 5; start <- 0.75; binw <- 0.5; Tseqsep <- 1
-  pdb <- PDB$atom #[AtomSelect$atom,]
+  pdb <- PDB$atom#[AtomSelect$atom,]
   resnum <- length(unique(pdb$resno))
-  xyz3 <- PDB$xyz #[,AtomSelect$xyz]
+  xyz3 <- PDB$xyz#[,AtomSelect$xyz]
   coordinate <- matrix(xyz3,ncol=3,byrow = TRUE)
   atnumber <- pdb$eleno
   atomname <- pdb$elety
