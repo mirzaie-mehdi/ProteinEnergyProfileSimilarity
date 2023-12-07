@@ -3540,11 +3540,11 @@ saveRDS(E210.CT_Ho,'Data/rds/E210.CT_Ho.rds')
 saveRDS(E210.seq_CT_Ho,'Data/rds/E210.seq_CT_Ho.rds')
 
 ###########################
-df <- readRDS('Data/rds/E210.seq_CT_Ho.rds')
+df <- readRDS('Data/rds/E210.CT_Ho.rds')
 df <- df[!is.na(df$FF),]
 twoSF <- unique(df$cathID)
 
-dis <- as.matrix(dist(df[,c(3,11:220)]/df$length, method = manhat))
+dis <- as.matrix(dist(df[,c(3,11:220)], method = manhat))
 diag(dis) <- NA
 
 im <- apply(dis,1, FUN = which.min)
@@ -3559,6 +3559,17 @@ for (sf in twoSF) {
   cm[sf,names(z)]<-z
 }
 round(sum(diag(cm))/sum(cm),2)
+# --------------
+ump <- umap(d = dis,
+            n_neighbors = 50,
+            min_dist = 0.1,
+            input="dist")
+ump_df <- data.frame(class=df$cathID,
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+ggplot(ump_df,aes(UMAP1, UMAP2, color= class)) +
+    geom_point(alpha=.7) + 
+  mythem
 ```
 
 # five superfamily
@@ -3740,30 +3751,79 @@ df_tot$class[df_tot$class=='c']<-'alpha/beta'
 df_tot$class[df_tot$class=='d']<-'alpha+beta'
 
 AB <- ggplot(df_tot,aes(class,str/length,fill=class))+
-        geom_boxplot(outlier.alpha = .01)+
-        theme_bw(base_line_size = .1)+facet_wrap(vars(data))+
-        xlab('')+ylab('Total energy (structure)')+
-        coord_cartesian(ylim = c(-15, -4))+
-             theme(axis.title = element_text(size=20),
-                   axis.text.y = element_text(size=15),
-                   axis.text.x = element_blank(),
-                   strip.text = element_text(size = 20),
-                   legend.title = element_blank(),
-                   legend.text = element_text(size = 20),
-                   panel.spacing = unit(2, "lines"))
+  geom_boxplot(outlier.alpha = .01)+
+  theme_bw(base_line_size = .1)+facet_wrap(vars(data))+
+  xlab('')+ylab('Total energy (structure)')+
+  coord_cartesian(ylim = c(-15, -4))+
+  theme(axis.title = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.text.x = element_blank(),
+        strip.text = element_text(size = 20),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 20),
+        panel.spacing = unit(2, "lines"))
 
 CD <- ggplot(df_tot,aes(class,seq/(2*length),fill=class))+
-        geom_boxplot(outlier.alpha = .1)+
-        theme_bw(base_line_size = .3)+facet_wrap(vars(data))+
-        xlab('')+ylab('Total energy (sequence)')+
-        coord_cartesian(ylim = c(-15, -6))+
-             theme(axis.title = element_text(size=20),
-                   axis.text.y = element_text(size=15),
-                   axis.text.x = element_blank(),
-                   strip.text = element_text(size = 20),
-                   legend.title = element_blank(),
-                   legend.text = element_text(size = 20),
-                   panel.spacing = unit(2, "lines"))
+  geom_boxplot(outlier.alpha = .1)+
+  theme_bw(base_line_size = .3)+facet_wrap(vars(data))+
+  xlab('')+ylab('Total energy (sequence)')+
+  coord_cartesian(ylim = c(-15, -6))+
+  theme(axis.title = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.text.x = element_blank(),
+        strip.text = element_text(size = 20),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 20),
+        panel.spacing = unit(2, "lines"))
+#  ------------- add pValue
+df_tot2 <- df_tot
+df_tot2$str <- df_tot2$str/df_tot2$length
+df_tot2$seq <- df_tot2$seq/(2*df_tot2$length)
+
+my_comparisons <- list(c('All_alpha','All_beta'),
+                       c('All_alpha','alpha/beta'),
+                       c('All_alpha','alpha+beta'),
+                       c('All_beta','alpha/beta'),
+                       c('All_beta','alpha+beta'),
+                       c('alpha/beta','alpha+beta'))
+
+AB <- ggboxplot(df_tot2, x='class',y='str', 
+               fill = 'class',alpha=.8,outlier.shape = NA)+
+  theme_bw(base_line_size = .1)+facet_wrap(vars(data))+
+  xlab('')+ylab('Total energy (structure)')+
+  coord_cartesian(ylim = c(-14, -2))+
+  theme(axis.title = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.text.x = element_blank(),
+        strip.text = element_text(size = 20),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 20),
+        panel.spacing = unit(2, "lines"))+
+  stat_compare_means(comparisons = my_comparisons,
+                     method = 't.test',
+                     size=7,label = "p.signif",
+                     label.y = c(-7.3,-6.8,-6.3,-5.8,-5.3,-4.8),
+                     tip.length = 0,vjust = .8,bracket.size = .1)
+
+
+CD <- ggboxplot(df_tot2, x='class',y='seq', 
+          fill = 'class',alpha=.8,outlier.shape = NA)+
+  theme_bw(base_line_size = .1)+facet_wrap(vars(data))+
+  xlab('')+ylab('Total energy (structure)')+
+  coord_cartesian(ylim = c(-14, -4))+
+  theme(axis.title = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.text.x = element_blank(),
+        strip.text = element_text(size = 20),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 20),
+        panel.spacing = unit(2, "lines"))+
+  stat_compare_means(comparisons = my_comparisons,
+                     method = 't.test',
+                     size=7,label = "p.signif",
+                     label.y = c(-7.4,-6.9,-6.4,-5.9,-5.4,-4.9),
+                     tip.length = 0,vjust = .8,bracket.size = .1)
+
 ggarrange(
     AB, NULL,CD, ncol = 1,
     heights = c(1, 0.1, 1),
@@ -3772,9 +3832,10 @@ ggarrange(
     font.label = list(size = 20) # color = "red"
     )
 
+# save 13x12
 ```
 
-## Fig3EF
+## Fig5EF
 
 ```{r}
 my_comparisons<-list(c('within','between'))
@@ -3800,7 +3861,7 @@ for (i in 1:length(fa)) {
   x <- x[!is.na(x)]   
   between<-c(between,x) 
 }
-df_family_str <- data.frame(data='Astral 40-family a.29.3',type='Structure',
+df_family_str <- data.frame(data='Astral 40-superfamily a.29.3',type='SEP',
                             gr=rep(c('within','between'),
                                    c(length(within),length(between))),
                             distance=c(within,between)) 
@@ -3825,7 +3886,7 @@ for (i in 1:length(fa)) {
   x <- x[!is.na(x)]   
   between<-c(between,x) 
 }
-df_family_seq <- data.frame(data='Astral 40-family a.29.3',type='Sequence',
+df_family_seq <- data.frame(data='Astral 40-superfamily a.29.3',type='CEP',
                             gr=rep(c('within','between'),
                                    c(length(within),length(between))),
                             distance=c(within,between)) 
@@ -3839,7 +3900,7 @@ E <- ggboxplot(df_family, x='gr',y='distance',
   theme_bw(base_line_size = .2)+mythem+
   theme(legend.position = 'none',
         axis.text.x = element_blank(),
-        strip.text = element_text(size = 20))+
+        strip.text = element_text(size = 30))+
   scale_fill_viridis(discrete = TRUE, alpha=0.6)+
   stat_compare_means(comparisons = my_comparisons, method = 't.test',size=7)+
   facet_nested(~ data + type)
@@ -3865,7 +3926,7 @@ for (i in 1:length(fa)) {
   x <- x[!is.na(x)]   
   between<-c(between,x) 
 }
-df_family_str <- data.frame(data='Astral 95-family a.29.3',type='Structure',
+df_family_str <- data.frame(data='Astral 95-superfamily a.29.3',type='SEP',
                             gr=rep(c('within','between'),
                                    c(length(within),length(between))),
                             distance=c(within,between)) 
@@ -3890,7 +3951,7 @@ for (i in 1:length(fa)) {
   x <- x[!is.na(x)]   
   between<-c(between,x) 
 }
-df_family_seq <- data.frame(data='Astral 95-family a.29.3',type='Sequence',
+df_family_seq <- data.frame(data='Astral 95-superfamily a.29.3',type='CEP',
                             gr=rep(c('within','between'),
                                    c(length(within),length(between))),
                             distance=c(within,between)) 
@@ -3904,20 +3965,20 @@ FF <- ggboxplot(df_family, x='gr',y='distance',
   theme_bw(base_line_size = .2)+mythem+
   theme(legend.position = 'none',
         axis.text.x = element_blank(),
-        strip.text = element_text(size = 20))+
+        strip.text = element_text(size = 30))+
   scale_fill_viridis(discrete = TRUE, alpha=0.6)+
   stat_compare_means(comparisons = my_comparisons, method = 't.test',size=7)+
   facet_nested(~ data + type)
 # ********
-ggarrange(
+EF<-ggarrange(
   E, NULL,FF, nrow = 1,
   widths = c(1, 0.3, 1),
   labels = c("E", "", "F"),
-  font.label = list(size = 20) # color = "red"
+  font.label = list(size = 30) # color = "red"
 )
 ```
 
-## Fig3CD
+## Fig5CD
 
 ```{r}
 my_comparisons<-list(c('within','between'))
@@ -3943,7 +4004,7 @@ for (i in 1:length(sf)) {
   x <- x[!is.na(x)]   
   between<-c(between,x) 
 }
-df_superfamily_str <- data.frame(data='Astral 40-superfamily a.29',type='Structure',
+df_superfamily_str <- data.frame(data='Astral 40-fold a.29',type='SEP',
                             gr=rep(c('within','between'),
                                    c(length(within),length(between))),
                             distance=c(within,between)) 
@@ -3968,7 +4029,7 @@ for (i in 1:length(sf)) {
   x <- x[!is.na(x)]   
   between<-c(between,x) 
 }
-df_superfamily_seq <- data.frame(data='Astral 40-superfamily a.29',type='Sequence',
+df_superfamily_seq <- data.frame(data='Astral 40-fold a.29',type='CEP',
                             gr=rep(c('within','between'),
                                    c(length(within),length(between))),
                             distance=c(within,between)) 
@@ -3982,7 +4043,7 @@ C <- ggboxplot(df_superfamily, x='gr',y='distance',
   theme_bw(base_line_size = .2)+mythem+
   theme(legend.position = 'none',
         axis.text.x = element_blank(),
-        strip.text = element_text(size = 20))+
+        strip.text = element_text(size = 30))+
   scale_fill_viridis(discrete = TRUE, alpha=0.6)+
   stat_compare_means(comparisons = my_comparisons, method = 't.test',size=7)+
   facet_nested(~ data + type)
@@ -4008,7 +4069,7 @@ for (i in 1:length(sf)) {
   x <- x[!is.na(x)]   
   between<-c(between,x) 
 }
-df_superfamily_str <- data.frame(data='Astral 95-superfamily a.29',type='Structure',
+df_superfamily_str <- data.frame(data='Astral 95-fold a.29',type='SEP',
                             gr=rep(c('within','between'),
                                    c(length(within),length(between))),
                             distance=c(within,between)) 
@@ -4033,7 +4094,7 @@ for (i in 1:length(sf)) {
   x <- x[!is.na(x)]   
   between<-c(between,x) 
 }
-df_superfamily_seq <- data.frame(data='Astral 95-superfamily a.29',type='Sequence',
+df_superfamily_seq <- data.frame(data='Astral 95-fold a.29',type='CEP',
                             gr=rep(c('within','between'),
                                    c(length(within),length(between))),
                             distance=c(within,between)) 
@@ -4047,20 +4108,20 @@ D <- ggboxplot(df_superfamily, x='gr',y='distance',
   theme_bw(base_line_size = .2)+mythem+
   theme(legend.position = 'none',
         axis.text.x = element_blank(),
-        strip.text = element_text(size = 20))+
+        strip.text = element_text(size = 30))+
   scale_fill_viridis(discrete = TRUE, alpha=0.6)+
   stat_compare_means(comparisons = my_comparisons, method = 't.test',size=7)+
   facet_nested(~ data + type)
 # ********
-ggarrange(
+CD<-ggarrange(
   C, NULL,D, nrow = 1,
   widths = c(1, 0.3, 1),
   labels = c("C", "", "D"),
-  font.label = list(size = 20) # color = "red"
+  font.label = list(size = 30) # color = "red"
 )
 ```
 
-## Fig3AB
+## Fig5AB
 
 ```{r}
 my_comparisons<-list(c('within','between'))
@@ -4088,7 +4149,7 @@ for (i in 1:length(fo)) {
 }
 wit <- within[sample(length(within),1000)] 
 bet <- between[sample(length(between),1000)] 
-df_fold_str <- data.frame(data='Astral 40-class alpha',type='Structure',
+df_fold_str <- data.frame(data='Astral 40-class alpha',type='SEP',
                             gr=rep(c('within','between'),c(1000,1000)),
                             distance=c(wit,bet)) 
 # ****** sequence40
@@ -4114,7 +4175,7 @@ for (i in 1:length(fo)) {
 }
 wit <- within[sample(length(within),1000)] 
 bet <- between[sample(length(between),1000)] 
-df_fold_seq <- data.frame(data='Astral 40-class alpha',type='Sequence',
+df_fold_seq <- data.frame(data='Astral 40-class alpha',type='CEP',
                             gr=rep(c('within','between'),c(1000,1000)),
                             distance=c(wit,bet))
 # **********
@@ -4127,7 +4188,7 @@ A <- ggboxplot(df_fold, x='gr',y='distance',
   theme_bw(base_line_size = .2)+mythem+
   theme(legend.position = 'none',
         axis.text.x = element_blank(),
-        strip.text = element_text(size = 20))+
+        strip.text = element_text(size = 30))+
   scale_fill_viridis(discrete = TRUE, alpha=0.6)+
   stat_compare_means(comparisons = my_comparisons, method = 't.test',size=7,
                      label.y = 34, tip.length = .01)+
@@ -4157,7 +4218,7 @@ for (i in 1:length(fo)) {
 }
 wit <- within[sample(length(within),1000)] 
 bet <- between[sample(length(between),1000)] 
-df_fold_str <- data.frame(data='Astral 95-class alpha',type='Structure',
+df_fold_str <- data.frame(data='Astral 95-class alpha',type='SEP',
                             gr=rep(c('within','between'),c(1000,1000)),
                             distance=c(wit,bet))
 # ****** sequence95
@@ -4183,7 +4244,7 @@ for (i in 1:length(fo)) {
 }
 wit <- within[sample(length(within),1000)] 
 bet <- between[sample(length(between),1000)] 
-df_fold_seq <- data.frame(data='Astral 95-class alpha',type='Sequence',
+df_fold_seq <- data.frame(data='Astral 95-class alpha',type='CEP',
                             gr=rep(c('within','between'),c(1000,1000)),
                             distance=c(wit,bet)) 
 # **********
@@ -4196,22 +4257,28 @@ B <- ggboxplot(df_fold, x='gr',y='distance',
   theme_bw(base_line_size = .2)+mythem+
   theme(legend.position = 'none',
         axis.text.x = element_blank(),
-        strip.text = element_text(size = 20))+
+        strip.text = element_text(size = 30))+
   scale_fill_viridis(discrete = TRUE, alpha=0.6)+
   stat_compare_means(comparisons = my_comparisons, method = 't.test',size=7,
                      label.y = 34, tip.length = .01)+
   facet_nested(~ data + type)+
   coord_cartesian(ylim = c(0, 40))
 # ********
-ggarrange(
-  A, NULL,B, ncol = 1,
-  heights = c(1, 0.05, 1),
+AB<-ggarrange(
+  A, NULL,B, nrow = 1,
+  widths = c(1, 0.3, 1),
   labels = c("A", "", "B"),
-  font.label = list(size = 20) # color = "red"
+  font.label = list(size = 30) # color = "red"
 )
 ```
 
-## Fig4
+##Fig4All
+
+```{r}
+ggarrange(AB,CD,EF,ncol = 1)
+```
+
+## Fig3
 
 ```{r}
 # ******** str40
@@ -4282,41 +4349,49 @@ ump_df <- rbind(ump_df_str40,ump_df_seq40,
                 ump_df_str95,ump_df_seq95)
 
 save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95,file = 'Data/rds/UMPs.RData')
+load('Data/rds/UMPs.RData')
+ump_df_str40$type <- ifelse(ump_df_str40$type=='Structure','SEP','CEP')
+ump_df_seq40$type <- ifelse(ump_df_seq40$type=='Structure','SEP','CEP')
+ump_df_str95$type <- ifelse(ump_df_str95$type=='Structure','SEP','CEP')
+ump_df_seq95$type <- ifelse(ump_df_seq95$type=='Structure','SEP','CEP')
 p1<-ggplot(ump_df_str40,aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7) + 
+  geom_point(alpha=.7,size=.5) + 
   facet_grid( ~ type)+xlab('')+
   mythem+scale_color_manual(values = c('green','magenta'))+
   theme(strip.text = element_text(size = 20))
 
 p2<-ggplot(ump_df_seq40,aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7) + 
+  geom_point(alpha=.7,size=.5) + 
   facet_grid(data ~ type)+xlab('')+ylab('')+
   mythem+scale_color_manual(values = c('green','magenta'))+
   theme(strip.text = element_text(size = 20))
 
 p3<-ggplot(ump_df_str95,aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7) +
+  geom_point(alpha=.7,size=.5) +
   mythem+scale_color_manual(values = c('green','magenta'))+
   theme(strip.text = element_text(size = 20))
 
 
 p4<-ggplot(ump_df_seq95,aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7) + 
+  geom_point(alpha=.7,size=.5) + l
   facet_grid(rows = vars(data))+ylab('')+
   mythem+scale_color_manual(values = c('green','magenta'))+
   theme(strip.text = element_text(size = 20))
-
 
 # ********
 ggarrange(p1,NULL,p2,
           NULL,NULL,NULL,
           p3,NULL,p4,
           common.legend = T,
+          labels = c("A", "", "B",
+                     '','','',
+                     'C','','D'),
+          font.label = list(size = 20),
           widths = c(1, 0.12, 1),
           heights = c(1, 0.12, 1))
 ```
 
-## Fig5A
+## Fig4A
 
 ```{r}
 # ******** str40
@@ -4324,12 +4399,13 @@ df <- readRDS("Data/rds/E210.astral40.rds")
 df <- df[df$fold%in%c('a.100','a.104'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(6,3,9:218)]
+df$length <- as.numeric(df$length)
 dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
             input="dist")
-ump_df_str <- data.frame(data='Astral 40',type='Structure',
+ump_df_str <- data.frame(data='Astral 40',type='SEP',
                            class=df[,1],
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
@@ -4339,12 +4415,13 @@ df <- readRDS("Data/rds/E210.seq_astral40.rds")
 df <- df[df$fold%in%c('a.100','a.104'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(6,3,9:218)]
+df$length <- as.numeric(df$length)
 dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
             input="dist")
-ump_df_seq <- data.frame(data='Astral 40',type='Sequence',
+ump_df_seq <- data.frame(data='Astral 40',type='CEP',
                            class=df[,1],
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
@@ -4363,12 +4440,13 @@ df <- readRDS("Data/rds/E210.astral_95.rds")
 df <- df[df$fold%in%c('a.100','a.104'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(6,3,9:218)]
+df$length <- as.numeric(df$length)
 dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
             input="dist")
-ump_df_str <- data.frame(data='Astral 95',type='Structure',
+ump_df_str <- data.frame(data='Astral 95',type='SEP',
                            class=df[,1],
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
@@ -4378,12 +4456,13 @@ df <- readRDS("Data/rds/E210.seq_astral_95.rds")
 df <- df[df$fold%in%c('a.100','a.104'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(6,3,9:218)]
+df$length <- as.numeric(df$length)
 dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
             input="dist")
-ump_df_seq <- data.frame(data='Astral 95',type='Sequence',
+ump_df_seq <- data.frame(data='Astral 95',type='CEP',
                            class=df[,1],
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
@@ -4397,14 +4476,14 @@ p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
         axis.text.y = element_blank(),
         axis.text.x = element_blank())
 
-ggarrange(p1,NULL,p2,nrow = 1,
+A<-ggarrange(p1,NULL,p2,nrow = 1,
           common.legend = T,legend = 'right',
           widths = c(1, 0.0, 1),
           labels = c("A", "", ""),
   font.label = list(size = 20))
 ```
 
-## Fig5B
+## Fig4B
 
 ```{r}
 # ******** str40
@@ -4412,12 +4491,13 @@ df <- readRDS("Data/rds/E210.astral40.rds")
 df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(7,3,9:218)]
+df$length <- as.numeric(df$length)
 dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
             input="dist")
-ump_df_str <- data.frame(data='Astral 40',type='Structure',
+ump_df_str <- data.frame(data='Astral 40',type='SEP',
                            class=df[,1],
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
@@ -4427,12 +4507,13 @@ df <- readRDS("Data/rds/E210.seq_astral40.rds")
 df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(7,3,9:218)]
+df$length <- as.numeric(df$length)
 dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
             input="dist")
-ump_df_seq <- data.frame(data='Astral 40',type='Sequence',
+ump_df_seq <- data.frame(data='Astral 40',type='CEP',
                            class=df[,1],
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
@@ -4451,12 +4532,13 @@ df <- readRDS("Data/rds/E210.astral_95.rds")
 df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(7,3,9:218)]
+df$length <- as.numeric(df$length)
 dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
             input="dist")
-ump_df_str <- data.frame(data='Astral 95',type='Structure',
+ump_df_str <- data.frame(data='Astral 95',type='SEP',
                            class=df[,1],
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
@@ -4466,12 +4548,13 @@ df <- readRDS("Data/rds/E210.seq_astral_95.rds")
 df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(7,3,9:218)]
+df$length <- as.numeric(df$length)
 dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
             input="dist")
-ump_df_seq <- data.frame(data='Astral 95',type='Sequence',
+ump_df_seq <- data.frame(data='Astral 95',type='CEP',
                            class=df[,1],
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
@@ -4485,14 +4568,14 @@ p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
         axis.text.y = element_blank(),
         axis.text.x = element_blank())
 
-ggarrange(p1,NULL,p2,nrow = 1,
+B <- ggarrange(p1,NULL,p2,nrow = 1,
           common.legend = T,legend = 'right',
           widths = c(1, 0.0, 1),
           labels = c("B", "", ""),
   font.label = list(size = 20))
 ```
 
-## Fig5C
+## Fig4C
 
 ```{r}
 # ******** str40
@@ -4500,12 +4583,13 @@ df <- readRDS("Data/rds/E210.astral40.rds")
 df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(8,3,9:218)]
+df$length <- as.numeric(df$length)
 dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 10,
             min_dist = 0.1,
             input="dist")
-ump_df_str <- data.frame(data='Astral 40',type='Structure',
+ump_df_str <- data.frame(data='Astral 40',type='SEP',
                            class=df[,1],
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
@@ -4515,12 +4599,13 @@ df <- readRDS("Data/rds/E210.seq_astral40.rds")
 df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(8,3,9:218)]
+df$length <- as.numeric(df$length)
 dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 10,
             min_dist = 0.1,
             input="dist")
-ump_df_seq <- data.frame(data='Astral 40',type='Sequence',
+ump_df_seq <- data.frame(data='Astral 40',type='CEP',
                            class=df[,1],
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
@@ -4539,12 +4624,13 @@ df <- readRDS("Data/rds/E210.astral_95.rds")
 df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(8,3,9:218)]
+df$length <- as.numeric(df$length)
 dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 10,
             min_dist = 0.1,
             input="dist")
-ump_df_str <- data.frame(data='Astral 95',type='Structure',
+ump_df_str <- data.frame(data='Astral 95',type='SEP',
                            class=df[,1],
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
@@ -4554,12 +4640,13 @@ df <- readRDS("Data/rds/E210.seq_astral_95.rds")
 df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(8,3,9:218)]
+df$length <- as.numeric(df$length)
 dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 10,
             min_dist = 0.1,
             input="dist")
-ump_df_seq <- data.frame(data='Astral 95',type='Sequence',
+ump_df_seq <- data.frame(data='Astral 95',type='CEP',
                            class=df[,1],
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
@@ -4573,11 +4660,17 @@ p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
         axis.text.y = element_blank(),
         axis.text.x = element_blank())
 
-ggarrange(p1,NULL,p2,nrow = 1,
+C <- ggarrange(p1,NULL,p2,nrow = 1,
           common.legend = T,legend = 'right',
           widths = c(1, 0.0, 1),
           labels = c("C", "", ""),
   font.label = list(size = 20))
+```
+
+##Fig4ABC
+
+```{r}
+ggarrange(A,B,C,ncol = 1)
 ```
 
 ## Fig6
@@ -4613,7 +4706,7 @@ legend("topright", legend = as.character(unique(ord_sml)),
        col = unique(group_cols),horiz = FALSE,xpd = TRUE)
 ```
 
-## Fig7
+## Fig8
 
 ```{r}
 df <- readRDS("Data/rds/E210.seq_bacteriocin.rds") 
@@ -4647,11 +4740,14 @@ p1<-ggboxplot(df_same_diff, x='gr',y='distance',
   stat_summary(fun.y=mean, geom="point", shape=8,
                size=2, color="red", fill="red")+xlab('')+
   theme_bw(base_line_size = .2)+mythem+
-  theme(legend.position = 'none')+
+  theme(legend.position = 'none',
+        axis.text.x = element_text(size=13),
+        axis.text.y = element_text(size=13),
+        axis.title.y = element_text(size=20))+
   scale_fill_viridis(discrete = TRUE, alpha=0.6)+
-  coord_cartesian(ylim = c(0, 45))+
+  coord_cartesian(ylim = c(0, 40))+
   stat_compare_means(comparisons = my_comparisons, method = 't.test',
-                     label.y = 40,tip.length = 0.01)
+                     label.y = 35,tip.length = 0.01)
 
 ######## umap
 dis <- as.matrix(proxy::dist(df[,-c(1)], method = manhat))
@@ -4665,6 +4761,8 @@ ump_df <- data.frame(df[,1:2],
 p2 <- ggplot(ump_df,aes(UMAP1, UMAP2, color= class)) +
   geom_point(alpha=.7, size=1,show.legend = F) + 
   mythem+
+  theme(axis.title.y = element_text(size=20),
+        axis.title.x = element_text(size=20))+
   scale_color_manual(values = c('green','magenta','blue'))
 ################### total ###################
 df2<-df
@@ -4673,33 +4771,39 @@ my_comparisons<-list(c('class1','class2'),
                      c('class2','class3'),
                      c('class1','class3'))
 
-
+df2$total<-df2$total/1000
 p3<-ggboxplot(df2, x='class',y='total', 
           fill = 'class',alpha=.5,outlier.shape = NA)+
   stat_summary(fun.y=mean, geom="point", shape=8,
                size=2, color="red", fill="red")+xlab('')+
   theme_bw(base_line_size = .2)+mythem+ylab('Total energy')+
-  theme(legend.position = 'none')+ylim(-6500,2000)+
+  theme(legend.position = 'none',
+        axis.text.x = element_text(size=13),
+        axis.text.y = element_text(size=13),
+        axis.title.y = element_text(size=20))+
+  ylim(-6.5,2)+
   scale_fill_viridis(discrete = TRUE, alpha=0.6)+
   stat_compare_means(comparisons = my_comparisons, method = 't.test',
-                     #label.y = c(-6000,-8000,-10000),
+                     label.y = c(-1,-.5,0),
                      step.increase = .03,tip.length = 0.005)+
   scale_fill_manual(values = c('green','magenta','blue'))
 
 
 p13<-ggarrange(p1,NULL,p3,nrow = 1,
           widths = c(1, 0.12, 1),
-          labels = c("A", "", "B"),
-    font.label = list(size = 20) )
+          labels = c("B", "", "C"),
+    font.label = list(size = 30),
+    hjust = -.5,vjust = 0)
 
 
-ggarrange(p13,p2,ncol = 1,
-          #widths = c(1, 0.12, 1),
-          labels = c('', "C"),
-    font.label = list(size = 20) )
+ggarrange(p2,NULL,p13,ncol = 1,
+          heights = c(1, 0.1, 1),
+          labels = c('A', ""),
+          font.label = list(size = 30),
+          hjust = -.5,vjust = 1.2)
 ```
 
-##Fig8
+##Fig7
 
 ```{r}
 E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
@@ -4796,7 +4900,6 @@ ggplot(df2, aes(x=group,y=total, fill=group))+
 ##Fig9
 
 ```{r}
-
 library(rentrez)
 get_protids_from_geneids <- function(gene_ids) {
   # Get the protein elink.
