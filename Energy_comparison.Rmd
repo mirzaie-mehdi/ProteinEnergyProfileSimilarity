@@ -146,9 +146,7 @@ for (i in 1:20) {
 } 
 aaenergy <- read.csv("Data/csv/Pij.csv", header = F,sep = ";")
 aaenergy <- (aaenergy + t(aaenergy))/2
-colnames(aaenergy) = rownames(aaenergy)<- 
-  c("F","L","I","V","W","Y","M","C","H","T","R","A","N","Q","P","S","D","G","K","E")
-
+colnames(aaenergy) = rownames(aaenergy)<- letters_list
 aa210 <- aaenergy[lower.tri(aaenergy,diag = T)]
 # ----------------------------------------
 sig_int <- c('FF', 'FL', 'FI', 'FV', 'FW', 'FY', 'LL', 'LI', 
@@ -2982,11 +2980,12 @@ letters_list <- tolower(row.names(aaenergy))
 nprotein <- nrow(bacteriocin)
 aa210<-aaenergy[lower.tri(aaenergy,diag = T)]
 num_columns <- 210
-E210.seq_bacteriocin <- data.frame(class = bacteriocin$class,length = rep(NA,nprotein),
+E210.seq_bacteriocin <- data.frame(class = bacteriocin$class,seq=bacteriocin$seq,
+                                   length = rep(NA,nprotein),
                                    matrix(NA, ncol = num_columns,nrow = nrow(bacteriocin)))
 for (i in 1:nprotein){
   print(i)
-  seq = unlist(strsplit(tolower(bacteriocin$seq[i]), ""))
+  seq = unlist(strsplit(tolower(E210.seq_bacteriocin$seq[i]), ""))
   freq = c()
   for (j in 1:20){
   freq[j] <-  length(grep(letters_list[j],seq))
@@ -2996,8 +2995,8 @@ en_fr <- aaenergy * freq_matrix
 en_fr <- en_fr/length(seq)
 pair_es <- diag(freq) %*% as.matrix(en_fr)
 aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-E210.seq_bacteriocin[i,3:212] <- aa210_p
-E210.seq_bacteriocin[i,2] <- length(seq)
+E210.seq_bacteriocin[i,4:213] <- aa210_p
+E210.seq_bacteriocin[i,3] <- length(seq)
 }
 
 saveRDS(E210.seq_bacteriocin,'Data/rds/E210.seq_bacteriocin.rds')
@@ -3005,7 +3004,7 @@ E210.seq_bacteriocin = readRDS("Data/rds/E210.seq_bacteriocin.rds")
 df = E210.seq_bacteriocin
 df1 <- df[,-seq(1:1)]
 
-dis <- as.matrix(proxy::dist(df1, method = manhat_norm_maxl))
+dis <- as.matrix(proxy::dist(df1, method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 40,
             min_dist = 0.01,
@@ -3646,6 +3645,158 @@ rownames(res) <- c(paste0("Fold_",1:length(kfolds)),'Average')
 colnames(res)[-1] <- gsub('.Class','',colnames(res)[-1])
 ```
 
+# Tm-Vec
+
+```{r}
+tm <- read.csv('Data/csv/tm-vec.csv')
+nprotein <- nrow(tm)
+
+for (i in 1:nprotein){
+  if(i%%100==0)print(i)
+  # ---- seq1
+  seq = unlist(strsplit(tolower(tm$Seq_x[i]), ""))
+  freq = c()
+  for (j in 1:20){
+  freq[j] <-  length(grep(letters_list[j],seq))
+  }
+  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+  en_fr <- aaenergy * freq_matrix
+  en_fr <- en_fr/length(seq)
+  pair_es <- diag(freq) %*% as.matrix(en_fr)
+  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+  CEP_x <- c(length(seq),aa210_p)
+  # ---- seq2
+  seq = unlist(strsplit(tolower(tm$Seq_y[i]), ""))
+  freq = c()
+  for (j in 1:20){
+  freq[j] <-  length(grep(letters_list[j],seq))
+  }
+  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+  en_fr <- aaenergy * freq_matrix
+  en_fr <- en_fr/length(seq)
+  pair_es <- diag(freq) %*% as.matrix(en_fr)
+  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+  CEP_y <- c(length(seq),aa210_p)
+  # ----------
+  tm$CEP_dis[i] <- manhat(CEP_x,CEP_y)
+  tm$CEP_dis_normLen[i] <- manhat(CEP_x/CEP_x[1],CEP_y/CEP_y[1])
+}
+
+tm$CEP_dis_MaxMin <- (tm$CEP_dis-min(tm$CEP_dis))/(max(tm$CEP_dis)-min(tm$CEP_dis))
+tm$CEP_dis_normLen_MaxMin <- (tm$CEP_dis_normLen-min(tm$CEP_dis_normLen))/
+  (max(tm$CEP_dis_normLen)-min(tm$CEP_dis_normLen))
+tm$CEP_dis_MaxMin1 <- 1-(tm$CEP_dis_MaxMin)
+tm$CEP_dis_normLen_MaxMin1 <- 1-(tm$CEP_dis_normLen_MaxMin)
+tm$status <- if_else(tm$class_x==tm$class_y,'same class','different class')
+tm$status2 <- if_else(tm$Subclass_x==tm$Subclass_y&tm$class_x=='Class_1'&tm$class_y=='Class_1','same class(sub class1)',NA)
+
+saveRDS(tm,'Data/rds/bacteriocin_tm-vec.RDS')
+tm <- readRDS('Data/rds/bacteriocin_tm-vec.RDS')
+
+tm$CEP_dis_MaxMin1 <- tm$CEP_dis_MaxMin1-.37
+tm2 <- tm[!is.na(tm$status2),-28]
+colnames(tm2)[28]<-'status'
+tm2 <- rbind(tm[,-29],tm2)
+
+
+
+tm2 <- tm2[,c(5,20,21,6,26,28)]
+colnames(tm2)[-6] <- c('Alphafold2','Omegafold','ESMfold','TM_vec','CEP_dis')
+tm2 <- melt(tm2,variable.name = 'method',value.name = 'score')
+tm2$method <- factor(tm2$method,levels = c('Alphafold2','Omegafold','ESMfold','TM_vec','CEP_dis'))
+p1<-ggplot(tm2, aes(status,score,fill=method))+geom_boxplot(outlier.shape = NA)+coord_cartesian(ylim = c(0, 1))+
+  xlab('')+
+  mythem+
+  theme(axis.text.y = element_text(size = 15),
+        axis.text.x = element_text(size=20),
+        legend.text = element_text(size = 20))
+
+# ---------------------------------------
+tm_unique <- tm[!duplicated(tm$ID_x),]
+nprotein <- nrow(tm_unique)
+tm_unique <- data.frame(tm_unique[,c(1,7,8,9,14)], 
+                        length=nchar(tm_unique$Seq_x),
+                        matrix(NA,nrow=nprotein,ncol=210))
+colnames(tm_unique)[-c(1:6)] <- pair_inter
+
+for (i in 1:nprotein){
+  print(i)
+  seq = unlist(strsplit(tolower(tm_unique$Seq_x[i]), ""))
+  freq = c()
+  for (j in 1:20){
+  freq[j] <-  length(grep(tolower(letters_list[j]),seq))
+  }
+freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+en_fr <- aaenergy * freq_matrix
+en_fr <- en_fr/length(seq)
+pair_es <- diag(freq) %*% as.matrix(en_fr)
+aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+tm_unique[i,7:216] <- aa210_p
+}
+
+df <- tm_unique[,-c(1:5)]
+dis <- as.matrix(proxy::dist(df, method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 100,
+            min_dist = 0.1,
+            input="dist")
+
+ump_df <- data.frame(class=tm_unique$class_x,
+                     subclass=tm_unique$Subclass_x,
+                     UMAP1 = ump$layout[, 1],
+                     UMAP2 = ump$layout[, 2])
+
+p2<-ggplot(ump_df,
+       aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7, size=2,show.legend = F) + 
+  mythem+
+  theme(axis.title.y = element_text(size=20),
+        axis.title.x = element_text(size=20))+
+  scale_color_manual(values = c('green','magenta','blue'))
+
+
+# ------------------
+################### total ###################
+df2<-df
+df2$total<-rowSums(df2[,-c(1)])
+my_comparisons<-list(c('Class_1','Class_2'),
+                     c('Class_2','Class_3'),
+                     c('Class_1','Class_3'))
+
+df2$total<-df2$total/1000
+df2 <- data.frame(class=tm_unique$class_x,df2)
+df2 $class <- factor(df2$class, levels = c('Class_1','Class_2','Class_3'))
+p3<-ggboxplot(df2, x='class',y='total', 
+          fill = 'class',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  theme_bw(base_line_size = .2)+mythem+ylab('Total energy')+
+  theme(legend.position = 'none',
+        axis.text.x = element_text(size=13),
+        axis.text.y = element_text(size=13),
+        axis.title.y = element_text(size=20))+
+  ylim(-6.5,2)+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',
+                     label.y = c(-1,-.5,0),
+                     step.increase = .03,tip.length = 0.005)+
+  scale_fill_manual(values = c('green','magenta','blue'))
+
+p23<-ggarrange(p2,NULL,p3,nrow = 1,
+          widths = c(1, 0.1,1),    
+          labels = c('A', "",'B'),
+          font.label = list(size = 30),
+          hjust = -.5,vjust = 1.2)
+
+ggarrange(p23,NULL,p1,ncol = 1,
+          heights = c(1, 0.2, 1),
+          labels = c('', "C"),
+          font.label = list(size = 30),
+          hjust = -.5,vjust = 1.2)
+
+
+```
+
 # Figures
 
 ```{r}
@@ -3697,7 +3848,7 @@ df_tot <- rbind(df_tot40, df_tot95)
 saveRDS(df_tot, 'manuscript/fig_data/df_total_energy.rds')
 ```
 
-## fig1
+## Fig1
 
 ```{r}
 # ************** total energy 40 and 95
@@ -3717,6 +3868,9 @@ AB <- ggplot(df_tot, aes(seq/2000,str/1000))+
              panel.spacing = unit(2, "lines"))
 
 # ************** distance 40 and 95
+df_dis40<-readRDS('manuscript/fig_data/dis_40_manhat.rds')
+df_dis95<-readRDS('manuscript/fig_data/dis_95_manhat.rds')
+
 df_dis <- rbind(df_dis40, df_dis95)
 CD <- ggplot(df_dis, aes(dis_seq,dis_str))+
        geom_pointdensity(adjust = .1,alpha=.3,show.legend = T)+
@@ -4713,13 +4867,14 @@ group_cols <- labcol[as.factor(ord_sml)]
 
 dend2 <- dend %>%
   color_labels(col =   group_cols) %>%
-  set("labels_cex", 0.3) 
+  set("labels_cex", 0.4) 
 
 
-plot(dend2, ylab = "Height")
+plot(dend2, ylab = "Height",
+     main='Coronaviruse Spike Clustering Based On SPE')
 legend("topright", legend = as.character(unique(ord_sml)),
        pch = 15, pt.cex = 2.3, cex = 1.4, bty = 'n',
-       inset = c(-.5, -.4), y.intersp=0.2, #c(.3, -.1)
+       inset = c(-.8, -.2), y.intersp=0.1, x.intersp = .2,
        col = unique(group_cols),horiz = FALSE,xpd = TRUE)
 ```
 
@@ -4860,8 +5015,8 @@ t = groupOTU(p_data, grp, "groups") + aes(color=groups) +
                                                            "#00A9FF","#FF61CC","#C77CFF" ))
 
                       
-g <- ggplot_build(t)
-cols<-unlist(unique(g$data[[1]]["colour"]))
+#g <- ggplot_build(t)
+#cols<-unlist(unique(g$data[[1]]["colour"]))
 nnet <- neighborNet(dis)
 ggsplitnet(nnet) + geom_tiplab2(aes(label=label),
                                 hjust=-.1,size=5,fontface="bold")
