@@ -1,2 +1,0 @@
-The motif in 1l6r: two strands are insertions; hybrid motif in a Rossmann structure.
-The motif in 1nrv: core motif in SH2 fold.
