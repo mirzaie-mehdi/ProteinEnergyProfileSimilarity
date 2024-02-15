@@ -3704,12 +3704,13 @@ tm2 <- tm2[,c(5,20,21,6,26,28)]
 colnames(tm2)[-6] <- c('Alphafold2','Omegafold','ESMfold','TM_vec','CEP_dis')
 tm2 <- melt(tm2,variable.name = 'method',value.name = 'score')
 tm2$method <- factor(tm2$method,levels = c('Alphafold2','Omegafold','ESMfold','TM_vec','CEP_dis'))
-p1<-ggplot(tm2, aes(status,score,fill=method))+geom_boxplot(outlier.shape = NA)+coord_cartesian(ylim = c(0, 1))+
+p1 <- ggplot(tm2, aes(status,score,fill=method))+
+  geom_boxplot(outlier.shape = NA)+coord_cartesian(ylim = c(0, 1))+
   xlab('')+
   mythem+
   theme(axis.text.y = element_text(size = 15),
-        axis.text.x = element_text(size=20),
-        legend.text = element_text(size = 20))
+        axis.text.x = element_text(size=15),
+        legend.text = element_text(size = 15))
 
 # ---------------------------------------
 tm_unique <- tm[!duplicated(tm$ID_x),]
@@ -3746,12 +3747,12 @@ ump_df <- data.frame(class=tm_unique$class_x,
                      UMAP1 = ump$layout[, 1],
                      UMAP2 = ump$layout[, 2])
 
-p2<-ggplot(ump_df,
+p2 <- ggplot(ump_df,
        aes(UMAP1, UMAP2, color= class)) +
   geom_point(alpha=.7, size=2,show.legend = F) + 
   mythem+
-  theme(axis.title.y = element_text(size=20),
-        axis.title.x = element_text(size=20))+
+  theme(axis.title.y = element_text(size=15),
+        axis.title.x = element_text(size=15))+
   scale_color_manual(values = c('green','magenta','blue'))
 
 
@@ -3794,6 +3795,11 @@ ggarrange(p23,NULL,p1,ncol = 1,
           font.label = list(size = 30),
           hjust = -.5,vjust = 1.2)
 
+ggarrange(p2,p1,ncol = 2,
+          heights = c(1, 0.2, 1),
+          labels = c('A', "B"),
+          font.label = list(size = 30),
+          hjust = -.5,vjust = 1.2)
 
 ```
 
@@ -5214,4 +5220,121 @@ p2<-ggplot(df3,aes(mids,my_sAB))+
   xlab('sAB (PPI)')+ylab('sAB (CPE)')
 
 ```
+# Globin
+```{r}
+df <- readRDS("data/rds/E210.seq_astral_95.rds")
+df <- readRDS("data/rds/E210.astral_95.rds")
+
+aaenergy <- read.csv("Data/csv/Pij.csv", header = F,sep = ";")
+aaenergy <- (aaenergy + t(aaenergy))/2
+colnames(aaenergy) = rownames(aaenergy)<-c("F","L","I","V","W","Y","M","C","H","T","R","A","N","Q","P","S","D","G","K","E")
+letters_list <- (row.names(aaenergy))
+df11 = df[df$superfamily %in% "a.1.1",]
+df11 = df[df$superfamily %in% "b.40.4",]
+
+table(df11$family)
+df1 = df11[df11$family %in% c("a.1.1.2","a.1.1.3","a.1.1.1"),]
+df1 = df11[df11$family %in% c("b.40.4.3","b.40.4.5"),]
+
+table(df1$family)
+df1 = df1[,-c(1:2,4:7)]
+# ***********
+manhat <- function(X, Y){
+x = X[-1]; y = Y[-1]
+xy = abs(x - y)
+xy = xy[xy != 0]
+if(length(xy)==0){
+d <- 0
+}else{
+d = sum(xy)/length(xy)
+#d = sum(xy)/(abs(X[1]-Y[1])+1)
+}
+return(d)
+}
+dis <- as.matrix(proxy::dist(df1[,-c(2)], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 10,
+            min_dist = 0.001,
+            input="dist")
+ump_df <- data.frame(family = df1[,2],
+                     UMAP1 = ump$layout[, 1],
+                     UMAP2 = ump$layout[, 2])
+ggplot(ump_df,aes(UMAP1, UMAP2, color= family)) +
+  geom_point(alpha=.7) +
+  ylim(-15,15) +
+  xlim(-10,20)
+
+
+scope_2.08 <- read.delim("Data/csv/dir.cla.scope.2.08-stable.txt", 
+                         header=FALSE, comment.char="#")
+colnames(scope_2.08) <- c("scopeID","pdb","Position","ID_scope","description")
+globin =  scope_2.08[scope_2.08$ID_scope %in% c("a.1.1.0","a.1.1.1","a.1.1.2","a.1.1.3","a.1.1.4"),]
+Nprotein = dim(globin)[1]
+E210.globin <- data.frame(pdbID = rep(NA,Nprotein),length = rep(NA,Nprotein),
+                            family = rep(NA,Nprotein),
+                                         matrix(NA, ncol = 210, nrow = Nprotein))
+aac.globin <- data.frame(pdbID = rep(NA,Nprotein),length = rep(NA,Nprotein),
+                            family = rep(NA,Nprotein),
+                                         matrix(NA, ncol = 20, nrow = Nprotein))
+NP = 173
+for (NP in 1:Nprotein) {
+  print(NP)
+  pdbname <- globin$pdb[NP]
+  parts <- unlist(strsplit(globin$Position[NP], "[:-]"))
+  ch <- parts[1]  # B
+  start <- as.integer(parts[2])  # 141
+  end <- as.integer(parts[length(parts)]) 
+  E210.globin$pdbID[NP] <- pdbname
+  E210.globin$family[NP] <- globin$ID_scope[NP]
+  aac.globin$pdbID[NP] <- pdbname
+  aac.globin$family[NP] <- globin$ID_scope[NP]
+  tryCatch({
+    pdb0 <- read.pdb(pdbname)
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
+    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+    sele4 <- atom.select(pdb0, "noh")
+    sele <- combine.select(sele1, sele2,sele4, operator="AND")
+    if (!is.na(start)){
+      st <- start
+      en <- end
+      sele3 <- atom.select(pdb0,  resno=st:en, verbose=TRUE)
+      sele <- combine.select(sele1, sele2,sele3,sele4, operator="AND")
+    }
+    pdbX <- pdb0$atom[sele$atom,]
+    
+    pdbXca <- pdbX[pdbX$elety == "CA",]
+    seq = aa321(pdbXca$resid)
+    E210.globin$length[NP] = length(unique(pdbX$resno))
+    aac.globin$length[NP] = length(unique(pdbX$resno))
+    freq = c()
+    for (j in 1:20){
+        freq[j] <-  length(grep(letters_list[j],seq))
+    }
+    aac.globin[NP,4:23] <- freq
+    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+    en_fr <- aaenergy * freq_matrix
+    en_fr <- en_fr/length(seq)
+    pair_es <- diag(freq) %*% as.matrix(en_fr)
+    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+    E210.globin[NP,4:213] <- aa210_p
+    }
+    , error = function(e) {
+     cat("Error downloading file:", e$message, "\n")
+    })
+}
+df1 = aac.globin
+dis <- as.matrix(proxy::dist(df1[,-c(1,3)], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 10,
+            min_dist = 0.1,
+            input="dist")
+ump_df <- data.frame(family = df1[,3],
+                     UMAP1 = ump$layout[, 1],
+                     UMAP2 = ump$layout[, 2])
+ggplot(ump_df,aes(UMAP1, UMAP2, color= family)) +
+  geom_point(alpha=.7) 
+
+
+```
+
 
