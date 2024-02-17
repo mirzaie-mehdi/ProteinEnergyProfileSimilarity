@@ -1,54 +1,54 @@
-pdbID;group;start;end;Species;Scope;Description;Res;chainID
-1bcf;Bac;;;Escherichia coli;a.25.1.1;bacterioferritin;2.9A;A
-1jgc;Bac;;;Rhodobacter capsulatus;a.25.1.1;bacterioferritin;2.6A;A
-1nfv;Bac;;;Desulfovibrio desulfuricans;a.25.1.1;bacterioferritin;1.95A;A
-2fkz;Bac;;;Azotobacter vinelandi;a.25.1.1;bacterioferritin;2A;A
-3e1q;Bac;;;Escherichia coli;a.25.1.1;bacterioferritin;2.6A;A
-1mty;BMA;;;Methylococcus capsulatus;a.25.1.2;methane monooxygenase hydroxylase;1.7A;D
-3dhg;BMA;;;Pseudomonas mendocina;a.25.1.2;toluene 4-monooxygenase hydroxylase alpha subunit;1.85A;A
-1mty;BMB;;;Methylococcus capsulatus;a.25.1.2;methane monooxygenase hydroxylase;1.7A;B
-2inc;BMB;;;Pseudomonas stutzeri;a.25.1.2;Toluene, o-xylene monooxygenase oxygenase subunit;1.85A;B
-2inp;BMB;;;;;;;C
-1dps;Dps;;;Escherichia coli;a.25.1.1;dps;1.6 A;A
-1ji4;Dps;;;Helicobacter;a.25.1.1;neutrophil-activating protein a;2.52A;A
-1ji5;Dps;;;Bacillus anthracis;a.25.1.1;Dlp-1;2.5A;A
-1jig;Dps;;;Bacillus anthracis;a.25.1.1;Dlp-2;1.46A;A
-1jts;Dps;;;Escherichia coli;a.25.1.1;DNA protection during starvation protein;2.6A;A
-1n1q;Dps;;;Bacillus brevis;a.25.1.1;DPS Protein;2.2A;A
-1o9r;Dps;;;Agrobacterium tumefaciens;a.25.1.1;DPagrobacterium tumefaciens dpsS Protein;1.45A;A
-1qgh;Dps;;;Listeria innocua;a.25.1.1;non-heme iron-containing ferritin;2.35A;A
-1tjo;Dps;;;Halobacterium salinarum;a.25.1.1;Iron-rich dpsA-homolog protein;1.6A;A
-1tk6;Dps;;;Halobacterium salinarum;a.25.1.1;Iron-rich dpsA-homolog protein;2.2A;A
-1uvh;Dps;;;Mycobacterium smegmatis;a.25.1.1;starvation-induced DNA protecting protein;2.8A;A
-2chp;Dps;;;Bacillus subtilis;a.25.1.0;metalloregulation DNA-binding stress protein;2A;A
-2fjc;Dps;27;177;Treponema pallidum;a.25.1.1;Antigen TpF1;;A
-2ux1;Dps;;;Streptococcus suis;a.25.1.1;DNA protection during starvation protein;1.8A;A
-2vzb;Dps;;;;;;;A
-1afr;FAA;;;Castor bean;a.25.1.2;delta9 stearoyl-acyl carrier protein desaturase;;A
-1za0;FAA;8;274;Mycobacterium tuberculosis;a.25.1.2;desaturase desa2 (acyl-[acp] desaturase) ;;A
-2uw1;FAA;;;Hedera helix;a.25.1.2;delta4 multifunctional acyl-acyl carrier protein desaturase;;A
-2uw1;FAA;;;Hedera helix;a.25.1.2;plastid delta4 multifunctional acyl-acyl carrier protein desaturase;;B
-1bg7;Fer;;;Bullfrog;a.25.1.1;Ferritin;1.85 Å;A
-1eum;Fer;;;Escherichia coli;a.25.1.1;ferritin;2.05A;A
-1krq;Fer;;;Campylobacter jejuni;a.25.1.1;Ferritin;2.7A;A
-1lb3;Fer;;;Mus musculus;a.25.1.1;ferritin light chain 1;1.21A;A
-1r03;Fer;;;Human;a.25.1.1;mitochondrial ferritin;1.7A;A
-1vlg;Fer;;;Thermotoga maritima;a.25.1.1;Ferritin;2A;A
-1z6o;Fer;13;212;Trichoplusia ni;a.25.1.1;ferritin light chain;1.91A;A
-1z6o;Fer;1;191;Trichoplusia ni;a.25.1.1;ferritin heavy chain;1.91A;M
-2jd7;Fer;;;Pyrococcus furiosus;a.25.1.0;ferritin homolog;2.8A;A
-2za7;Fer;;;horse;a.25.1.1;ferritin light chain;1.4A;A
-3e6s;Fer;;;Pseudo-nitzschia multiseries;a.25.1.1;Ferritin;1.95A;A
-1lko;Manganese cataleses;2;147;Desulfovibrio vulgaris;a.25.1.1;Rubrerythrin all-iron(II) form;1.63A;A
-1yuz;Manganese cataleses;23;157;Desulfovibrio vulgaris;a.25.1.1;Nigerythrin;1.4A;A
-2fzf;Manganese cataleses;10;167;Pyrococcus furiosus;a.25.1.1;hypothetical protein;2.7A;A
-3qhb;Manganese cataleses;;;;;;;A
-1otk;Manganese cataleses;3;244;Escherichia coli;a.25.1.2;Phenylacetic acid degradation protein paaC;2A;A
-1jk0;RNR;;;Saccharomyces cerevisiae;a.25.1.2;ribonucleoside-diphosphate reductase small chain 1;2.8A;A
-1mxr;RNR;;;Escherichia coli;a.25.1.2;ribonucleotide reductase r2;1.42A;A
-1oqu;RNR;;;Corynebacterium ammoniagenes;a.25.1.2;Ribonucleotide reductase subunit R2F;2A;A
-1r2f;RNR;;;Salmonella typhimurium;a.25.1.2;ribonucleotide reductase r2;2.1A;A
-1uzr;RNR;;;Mycobacterium tuberculosis;a.25.1.2;ribonucleotide reductase r2-2 small subunit;2.2A;A
-1w68;RNR;;;Mouse;a.25.1.2;ribonucleoside-diphosphate reductase m2 chain;2.2A;A
-2uw2;RNR;66;350;Human;a.25.1.2;ribonucleoside-diphosphate reductase m2 subunit;2.8A;A
-3ee4;RNR;;;;;;;A
+pdbID,group,start,end,Species,Scope,Description,Res,chainID
+1bcf,Bac,,,Escherichia coli,a.25.1.1,bacterioferritin,2.9A,A
+1jgc,Bac,,,Rhodobacter capsulatus,a.25.1.1,bacterioferritin,2.6A,A
+1nfv,Bac,,,Desulfovibrio desulfuricans,a.25.1.1,bacterioferritin,1.95A,A
+2fkz,Bac,,,Azotobacter vinelandi,a.25.1.1,bacterioferritin,2A,A
+3e1q,Bac,,,Escherichia coli,a.25.1.1,bacterioferritin,2.6A,A
+1mty,BMA,,,Methylococcus capsulatus,a.25.1.2,methane monooxygenase hydroxylase,1.7A,D
+3dhg,BMA,,,Pseudomonas mendocina,a.25.1.2,toluene 4-monooxygenase hydroxylase alpha subunit,1.85A,A
+1mty,BMB,,,Methylococcus capsulatus,a.25.1.2,methane monooxygenase hydroxylase,1.7A,B
+2inc,BMB,,,Pseudomonas stutzeri,a.25.1.2,Toluene  o-xylene monooxygenase oxygenase subunit ,1.85A,B
+2inp,BMB,,,,,,,C
+1dps,Dps,,,Escherichia coli,a.25.1.1,dps,1.6 A,A
+1ji4,Dps,,,Helicobacter,a.25.1.1,neutrophil-activating protein a,2.52A,A
+1ji5,Dps,,,Bacillus anthracis,a.25.1.1,Dlp-1,2.5A,A
+1jig,Dps,,,Bacillus anthracis,a.25.1.1,Dlp-2,1.46A,A
+1jts,Dps,,,Escherichia coli,a.25.1.1,DNA protection during starvation protein,2.6A,A
+1n1q,Dps,,,Bacillus brevis,a.25.1.1,DPS Protein,2.2A,A
+1o9r,Dps,,,Agrobacterium tumefaciens,a.25.1.1,DPagrobacterium tumefaciens dpsS Protein,1.45A,A
+1qgh,Dps,,,Listeria innocua,a.25.1.1,non-heme iron-containing ferritin,2.35A,A
+1tjo,Dps,,,Halobacterium salinarum,a.25.1.1,Iron-rich dpsA-homolog protein,1.6A,A
+1tk6,Dps,,,Halobacterium salinarum,a.25.1.1,Iron-rich dpsA-homolog protein,2.2A,A
+1uvh,Dps,,,Mycobacterium smegmatis,a.25.1.1,starvation-induced DNA protecting protein,2.8A,A
+2chp,Dps,,,Bacillus subtilis,a.25.1.0,metalloregulation DNA-binding stress protein,2A,A
+2fjc,Dps,27,177,Treponema pallidum,a.25.1.1,Antigen TpF1,,A
+2ux1,Dps,,,Streptococcus suis,a.25.1.1,DNA protection during starvation protein,1.8A,A
+2vzb,Dps,,,,,,,A
+1afr,FAA,,,Castor bean,a.25.1.2,delta9 stearoyl-acyl carrier protein desaturase,,A
+1za0,FAA,8,274,Mycobacterium tuberculosis,a.25.1.2,desaturase desa2 (acyl-[acp] desaturase),,A
+2uw1,FAA,,,Hedera helix,a.25.1.2,delta4 multifunctional acyl-acyl carrier protein desaturase,,A
+2uw1,FAA,,,Hedera helix,a.25.1.2,plastid delta4 multifunctional acyl-acyl carrier protein desaturase,,B
+1bg7,Fer,,,Bullfrog,a.25.1.1,Ferritin,1.85 A,A
+1eum,Fer,,,Escherichia coli,a.25.1.1,ferritin,2.05A,A
+1krq,Fer,,,Campylobacter jejuni,a.25.1.1,Ferritin,2.7A,A
+1lb3,Fer,,,Mus musculus,a.25.1.1,ferritin light chain 1,1.21A,A
+1r03,Fer,,,Human,a.25.1.1,mitochondrial ferritin,1.7A,A
+1vlg,Fer,,,Thermotoga maritima,a.25.1.1,Ferritin,2A,A
+1z6o,Fer,13,212,Trichoplusia ni,a.25.1.1,ferritin light chain,1.91A,A
+1z6o,Fer,1,191,Trichoplusia ni,a.25.1.1,ferritin heavy chain,1.91A,M
+2jd7,Fer,,,Pyrococcus furiosus,a.25.1.0,ferritin homolog,2.8A,A
+2za7,Fer,,,horse,a.25.1.1,ferritin light chain,1.4A,A
+3e6s,Fer,,,Pseudo-nitzschia multiseries,a.25.1.1,Ferritin,1.95A,A
+1lko,Rubrerythrin,2,147,Desulfovibrio vulgaris,a.25.1.1,Rubrerythrin all-iron(II) form,1.63A,A
+1yuz,Rubrerythrin,23,157,Desulfovibrio vulgaris,a.25.1.1,Nigerythrin,1.4A,A
+2fzf,Rubrerythrin,10,167,Pyrococcus furiosus,a.25.1.1,hypothetical protein,2.7A,A
+3qhb,Rubrerythrin,,,,,,,A
+1otk,Rubrerythrin,3,244,Escherichia coli,a.25.1.2,Phenylacetic acid degradation protein paaC,2A,A
+1jk0,RNR,,,Saccharomyces cerevisiae,a.25.1.2,ribonucleoside-diphosphate reductase small chain 1,2.8A,A
+1mxr,RNR,,,Escherichia coli,a.25.1.2,ribonucleotide reductase r2,1.42A,A
+1oqu,RNR,,,Corynebacterium ammoniagenes,a.25.1.2,Ribonucleotide reductase subunit R2F,2A,A
+1r2f,RNR,,,Salmonella typhimurium,a.25.1.2,ribonucleotide reductase r2,2.1A,A
+1uzr,RNR,,,Mycobacterium tuberculosis,a.25.1.2,ribonucleotide reductase r2-2 small subunit,2.2A,A
+1w68,RNR,,,Mouse,a.25.1.2,ribonucleoside-diphosphate reductase m2 chain,2.2A,A
+2uw2,RNR,66,350,Human,a.25.1.2,ribonucleoside-diphosphate reductase m2 subunit,2.8A,A
+3ee4,RNR,,,,,,,A
