@@ -3422,4 +3422,3 @@ p2<-ggplot(df3,aes(mids,my_sAB))+
 
 ggarrange(p1,p2,ncol = 1)
 ```
-
