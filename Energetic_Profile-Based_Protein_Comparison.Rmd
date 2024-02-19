@@ -1,6 +1,6 @@
 ---
 title: "Energetic Profile-Based Protein Comparison: A New and Fast Approach for Structural, and Evolutionary analysis"
-author: "peyman"
+author: "Peyman & Mehdi"
 date: "2024-02-19"
 output: 
   html_document:
@@ -61,6 +61,32 @@ library(proxy)
 library(class)
 library(readxl)
 library(ggh4x)
+```
+
+# Prerequisite of Fig and dis
+
+```{r}
+mythem <- theme_bw(base_line_size = .1)+
+  theme(axis.text = element_text(size=15),
+        axis.title = element_text(size = 20),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size=15),
+        strip.text = element_text(size = 15),
+        title = element_text(size = 20),
+        panel.spacing = unit(2, "lines")
+  )
+# ***********
+manhat <- function(X, Y){
+  x = X; y = Y
+  xy = abs(x - y)
+  xy = xy[xy != 0]
+  if(length(xy)==0){
+    d <- 0
+  }else{
+    d = sum(xy)/length(xy)
+  }
+  return(d)
+}
 ```
 
 # Parse Scope 2.08
@@ -150,10 +176,7 @@ astral_40$length <- apply(data.frame(astral_40$seq),1,nchar)
 
 
 
-# Energy Calculation
-
-
-## Sequence_Energy_Estimator
+# Energy Calculation prerequisite
 
 The following chunk retrieves the predicted pairwise energy values from the training dataset for the computation of the energy profile based on sequence.
 
@@ -176,6 +199,8 @@ for (i in 1:20) {
     pair_inter <- c(pair_inter, paste0(letters_list[i], letters_list[j]))
   }
 } 
+# -----------------------------------
+# -----  Sequence Energy Estimator (predictor)
 aaenergy <- read.csv("Data/csv/Pij.csv", header = F,sep = ";")
 aaenergy <- (aaenergy + t(aaenergy))/2
 colnames(aaenergy) = rownames(aaenergy)<- letters_list
@@ -187,6 +212,8 @@ colnames(aaenergy) = rownames(aaenergy)<- letters_list
 This chunk calculate the profile of energy for ASTRAL95/40 based on sequence and structure.
 
 ```{r}
+# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+# ----------------------------------------------------
 astral <- readRDS("Data/rds/astral_95.rds")  # astral_40.rds 
 Nprotein <- nrow(astral)
 num_columns <- 210
@@ -250,7 +277,7 @@ for (NP in 1:Nprotein) {
     E210.seqPDB_astral$length[NP] = length(seq)
     freq = c()
     for (j in 1:20){
-        freq[j] <-  length(grep(letters_list[j],tolower(seq)))
+        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
     }
     freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
     en_fr <- aaenergy * freq_matrix
@@ -367,49 +394,20 @@ for (NP in 1:Nprotein) {
 ## Covid_Spike200
 
 ```{r}
-#spike <- read.delim("Data/csv/spike_structures.tsv")
+# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+# ----------------------------------------------------
 spike <- read.csv("Data/csv/spike200.csv", sep=";")
-energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
-energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
-source("Functions/amacid2num.R")
-source("Functions/atomtype2num167.R")
-source("Functions/Energy_PC210.R")
-source("Functions/NetworkFrame.R")
-source("Functions/inedx_HelixSheet.R")
-aaenergy <- read.csv("Data/csv/Pij.csv", header = F,sep = ";")
-aaenergy <- (aaenergy + t(aaenergy))/2
-colnames(aaenergy) = rownames(aaenergy)<- 
-  c("F","L","I","V","W","Y","M","C","H","T","R","A","N","Q","P","S","D","G","K","E")
-#row.names(aaenergy) <- aa321(aaenergy[,1])
-#aaenergy <- aaenergy[,-1]
-#row.names(aaenergy) <- colnames(aaenergy)
-letters_list <- tolower(row.names(aaenergy))
-aa210<-aaenergy[lower.tri(aaenergy,diag = T)]
-
 Nprotein <- nrow(spike)
-# ------Pairwise Amino Acid names-------------
-AA <- c("PHE","LEU","ILE","VAL","TRP","TYR","MET","CYS","HIS","THR",
-        "ARG","ALA","ASN","GLN","PRO","SER","ASP","GLY","LYS","GLU")
-letters_list <- aa321(AA)
-pair_inter <- character(0)
-for (i in 1:20) {
-  for (j in i:20) {
-    pair_inter <- c(pair_inter, paste0(letters_list[i], letters_list[j]))
-  }
-} 
 #----------------------------------------------
 num_columns <- 210
-E210_spike200 <- data.frame(pdbID = spike$pdbID,length = rep(NA,Nprotein),virus = spike$VIRUS,
-                         #description = spike$DESCRIPTION,
-                         conformation = spike$Conformation,
-                         matrix(NA, ncol = num_columns, nrow = length(spike$pdbID)))
+E210_spike200 <- data.frame(pdbID = spike$pdbID,
+                            length = rep(NA,Nprotein),
+                            virus = spike$VIRUS,
+                            conformation = spike$Conformation,
+                            matrix(NA,ncol=num_columns,nrow=Nprotein))
+
 colnames(E210_spike200) = c("pdbID","length","virus", "conformation",pair_inter)
-E210_spike200_SS <- E210_spike200
-E210.seq_spike200 <- data.frame(pdbID = spike$pdbID,length = rep(NA,Nprotein),
-                             virus = spike$VIRUS,
-                             conformation = spike$Conformation,
-                                         matrix(NA, ncol = num_columns, 
-                                                nrow = length(spike$pdbID)))
+E210.seq_spike200 <- E210_spike200_SS <- E210_spike200
 
 for (NP in 1:Nprotein) {
   print(NP)
@@ -426,25 +424,27 @@ for (NP in 1:Nprotein) {
     sele <- combine.select(sele1, sele2,sele4, operator="AND")
     pdbX <- pdb0$atom[sele$atom,]
     pdbXca <- pdbX[pdbX$elety == "CA",]
-    seq = aa321(pdbXca$resid)
-    E210.seq_spike200$length[NP] = length(unique(pdbX$resno))
-    freq = c()
+    seq <- aa321(pdbXca$resid)
+    E210.seq_spike200$length[NP] <- length(unique(pdbX$resno))
+    freq <- c()
     for (j in 1:20){
-        freq[j] <-  length(grep(letters_list[j],seq))
+        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
     }
     freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
     en_fr <- aaenergy * freq_matrix
     en_fr <- en_fr/length(seq)
     pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+    aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
     E210.seq_spike200[NP,5:214] <- aa210_p
-    E210_spike200$length[NP] = length(unique(pdbX$resno))
-    E210_spike200_SS$length[NP] = length(unique(pdbX$resno))
-    Net_Frame <- NetworkFrame(PDB = pdb0, AtomSelect = sele)
+    E210_spike200$length[NP] <- length(unique(pdbX$resno))
+    E210_spike200_SS$length[NP] <- length(unique(pdbX$resno))
+    # -------------------
+    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
     energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
     E210_spike200[NP,5:214] <- energy210
     # ****************keep res helix & sheet************************
-    indhs <- inedx_HelixSheet(PDB = pdb0)
+    indhs <- inedx_HelixSheet(PDB = new_pdb)
     Net_Frame_hs <- Net_Frame[Net_Frame$resnoif %in% indhs & Net_Frame$resnojf %in% indhs,]
     if(dim(Net_Frame_hs)[1]!=0){
         Net_Frame <- Net_Frame_hs
@@ -456,740 +456,145 @@ for (NP in 1:Nprotein) {
     })
 }
 
-saveRDS(E210_spike200,file = "Data/rds/E210_spike200.rds")
-saveRDS(E210_spike200_SS,file = "Data/rds/E210_spike200_SS.rds")
-saveRDS(E210.seq_spike200,file = "Data/rds/E210.seq_spike200.rds")
-
+#saveRDS(E210_spike200,file = "Data/rds/E210_spike200.rds")
+#saveRDS(E210_spike200_SS,file = "Data/rds/E210_spike200_SS.rds")
+#saveRDS(E210.seq_spike200,file = "Data/rds/E210.seq_spike200.rds")
 ```
 
-## Ferritin-like_sequence
+## DTI preprocess
+This chunk extracts AA sequences from the drug-target
+```{r}
+library(rentrez)
+get_protids_from_geneids <- function(gene_ids) {
+  # Get the protein elink.
+  protein_elink = rentrez::entrez_link(dbfrom = "gene",
+                                        id = gene_ids,
+                                        db = "protein")
+  # Get the protein id (refseq database)
+  protein_ids = protein_elink$links$gene_protein_refseq
+  return(protein_ids)
+}
+
+make_aa_fasta <- function(prot_ids) { #, nameFile
+  # Make a multi-fasta file with each protein id
+  sapply(prot_ids, function(x) {
+    protein_esummary = rentrez::entrez_summary(db = "protein", id = x)
+    protein_fasta = rentrez::entrez_fetch(db = "protein",
+                                          id = protein_esummary$uid,
+                                          rettype = "fasta")
+    return(protein_fasta)
+  } )
+}
+
+seq2df<-function(seq){
+  x<-strsplit(seq,'\n')
+  head<-x[[1]][1]
+  seq<-paste(x[[1]][-c(1,10)],collapse = '')
+  return(c(head,seq))
+}
+
+# ------------------------------
+dti <- read_excel('Data/csv/41467_2019_9186_MOESM4_ESM.xlsx')
+colnames(dti)<-c('drugID','entrezID')
+dti$entrezID<-as.character(dti$entrezID)
+
+sab<-readRDS('Data/rds/sAB.rds')
+colnames(sab)[1:2]<-c('d1','d2')
+
+d65<-unique(c(sab$d1,sab$d2))
+df_seq<-c()
+for(i in 1:65){
+  df<-dti[dti$drugID%in%d65[i],]
+  df2<-c()
+  for (j in 1:nrow(df)) {
+    print(paste0(i,', ',j,'/',nrow(df)))
+    prot_ids <- get_protids_from_geneids(df$entrezID[j])
+    z<-make_aa_fasta(prot_ids)
+    zz<-data.frame(prot=df$entrezID[j],t(sapply(z, seq2df)))
+    df2<-rbind(df2,zz)
+  }
+  df2<-data.frame(drug=d65[i],df2)
+  df_seq<-rbind(df_seq,df2)
+}
+
+colnames(df_seq)[3:4]<-c('Isoform','seq_aa')
+df_seq$length <- nchar(df_seq$seq)
+#saveRDS(df_seq,'Data/rds/DTI_df_seq.rds')
+```
+
+## DTI Energy
 
 ```{r}
-ferritin <- read.csv("Data/csv/Ferritin_Like.csv",sep = ";")
-energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
-energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
-source("Functions/amacid2num.R")
-source("Functions/atomtype2num167.R")
-source("Functions/Energy_PC210.R")
-Nprotein <- nrow(ferritin)
-# ------Pairwise Amino Acid names-------------
-AA <- c("PHE","LEU","ILE","VAL","TRP","TYR","MET","CYS","HIS","THR",
-        "ARG","ALA","ASN","GLN","PRO","SER","ASP","GLY","LYS","GLU")
-letters_list <- aa321(AA)
-pair_inter <- character(0)
-for (i in 1:20) {
-  for (j in i:20) {
-    pair_inter <- c(pair_inter, paste0(letters_list[i], letters_list[j]))
-  }
-} 
-#----------------------------------------------
-num_columns <- 210
-E210_seq_ferritin <- data.frame(pdbID = ferritin$pdbID,length = rep(NA,Nprotein),group = ferritin$group,
-                                         matrix(NA, ncol = num_columns, nrow = length(ferritin$pdbID)))
-colnames(E210_seq_ferritin) = c("pdbID","length","group",pair_inter)
-for (NP in 1:Nprotein) {
-  print(NP)
-  pdbname <- ferritin$pdbID[NP]
-  ch <- ferritin$chainID[NP]
-  E210_seq_ferritin$pdbID[NP] <- paste0(pdbname,ch)
-  tryCatch({
-    pdb0 <- read.pdb(pdbname)
-    sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
-    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
-    sele <- combine.select(sele1, sele2, operator="AND")
-    if (!is.na(ferritin$start[NP])){
-      st <- ferritin$start[NP]
-      en <- ferritin$end[NP]
-      sele3 <- atom.select(pdb0,  resno=st:en, verbose=TRUE)
-      sele <- combine.select(sele1, sele2,sele3, operator="AND")
-    }
-    pdbX <- pdb0$atom[sele$atom,]
-    pdbXca <- pdbX[pdbX$elety == "CA",]
-    seq = aa321(pdbXca$resid)
-    E210_seq_ferritin$length[NP] = length(unique(pdbX$resno))
+# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+# ----------------------------------------------------
+df_seq <- readRDS('Data/rds/DTI_df_seq.rds')
+
+E210.seq_dti <- data.frame(df_seq,matrix(NA,nrow(df_seq),210))
+colnames(E210.seq_dti)[-c(1:5)] <- pair_inter
+for (NP in 1:nrow(df_seq)) {
+  if(NP%%10==0)print(NP)
+  seq = unlist(strsplit(unlist(E210.seq_dti$seq_aa[NP]),''))
     freq = c()
     for (j in 1:20){
-        freq[j] <-  length(grep(letters_list[j],seq))
+        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
     }
     freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
     en_fr <- aaenergy * freq_matrix
     en_fr <- en_fr/length(seq)
     pair_es <- diag(freq) %*% as.matrix(en_fr)
     aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-    E210_seq_ferritin[NP,4:213] <- aa210_p
-    }, error = function(e) {
-     cat("Error downloading file:", e$message, "\n")
-    })
+    E210.seq_dti[NP,-c(1:5)] <- aa210_p
 }
-saveRDS(E210_seq_ferritin,file = "Data/rds/E210_seq_ferritin.rds")
+#saveRDS(E210.seq_dti,'Data/rds/E210.seq_dti.rds')
 ```
 
-# Tree construction
-
-## Ferritin-like Phylogenetic tree 
-
-## Phylogenetic Tree_Ferritin1
-
+## DTI drug similarity 
+This Chunk calculates the similarity between drugs based on Eq 6 in the paper.
 ```{r}
-E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
-df <- E210_ferritin
-df$group[41:45]<-'Mn_cataleses'
+# -------- At first, run the 'Prerequisite of Fig and dis' chunk.
+# ----------------------------------------------------
+sab <- readRDS('Data/rds/sAB.rds')
+colnames(sab)[1:2] <- c('d1','d2')
+E210.seq_dti<-readRDS('Data/rds/E210.seq_dti.rds')
 
-df$family[df$group%in%c('Bac','Fer','Dps')]<-'a.25.1.1'
-df$family[!df$group%in%c('Bac','Fer','Dps')]<-'a.25.1.2'
-df$family[41:45]<-'Mn_cataleses'
+df0 <- E210.seq_dti 
+df <- cbind(df0[,1:5],df0[,-c(1:5)]/df0$length) 
 
-df <- df[with(df, order(df$family)), ]
-#df <- df[with(df, order(df$group)), ]
-row.names(df) <- df[,1]
-rn <- df[,1]
-dis <- proxy::dist(df[,-c(1,2,3,214)], method = manhat)
-dis[is.nan(dis)]<-0
-tree_data <- ape::bionj(1 -dis)
-grp <- list(Bacteri     = rn[1:5],
-            Dps  = rn[6:20],
-            Ferritins  = rn[21:31],
-            BMM_alpha = rn[32:33],
-            BMM_beta  = rn[34:36],
-            Fatty_acid  = rn[37:40],
-            RNRR2  = rn[41:48],
-            Mn_cataleses = rn[49:53])
-
-p_data <- ggtree(tree_data, layout = 'circular',
-                 branch.length='none',size = 1.5) 
-
-t = groupOTU(p_data, grp, "groups") + aes(color=groups) +
-  theme(legend.position="right",
-        legend.title = element_blank(),
-        legend.text = element_text(size = 15, colour = "black"))+
-  geom_tiplab2(aes(label=label,angle=angle),
-               hjust=-.1,size=5,fontface="bold",align=TRUE)+
-  scale_color_manual(breaks = c('Bacteri', 'Dps', 'Ferritins',
-                                'BMM_alpha','BMM_beta','Fatty_acid',
-                                'RNRR2','Mn_cataleses'),
-                     values = c('#F8766D','#00BE67','#00A9FF',
-                                '#CD9600','#7CAE00','#00BFC4',
-                               '#FF61CC','#C77CFF','gray'))
-
-#------------------tamam--------
-df[,-c(1,2,3)] = df[,-c(1,2,3)]
-df$total = rowSums(df[,-c(1,2,3)])
-ggplot(df,aes(group,total))+geom_boxplot()
-df$family[df$group %in% c("Bac","Fer","Dps","Manganese cataleses")] = "a.25.1.1"
-df$family[! df$group %in% c("Bac","Fer","Dps")] = "a.25.1.2"
-t.test(df$total[df$family == "a.25.1.0"],df$total[df$family == "a.25.1.2"],alternative = "greater")
-wilcox.test(df$total[df$family == "a.25.1.0"],df$total[df$family == "a.25.1.2"],alternative = "greater")
-ggplot(df,aes(family,total))+geom_boxplot()
-
-dis <- dist(df[,-c(1,2,3)], method="manhattan")
-dis <- sqrt(dis)
-#------------------
-
-#----------------------------------------
-tot<-data.frame(total=df$total)
-rownames(tot)<-rownames(df)
-dis <- dist(tot)
-
-
-
-x = df[,-c(1:3)]
-x  <- as.matrix(x) 
-hc <- x %>% dist(method = 'manhattan') %>% hclust(method = "ward.D")
-dend <- hc %>% as.dendrogram
-
-labcol <- c( "blue", "green","red","black","yellow","pink","magenta","purple")
-ord_sml <- df[,][order.dendrogram(dend),3]
-group_cols <- labcol[as.factor(ord_sml)]
-
-dend2 <- dend %>%
-  #color_branches(k=3, col = c("red","blue","green3")) %>%
-  color_labels(col =   group_cols) %>%
-  set("labels_cex", 0.5) 
-plot(dend2, ylab = "Height")
-legend("topright", legend = as.character(unique(ord_sml)),
-       pch = 15, pt.cex = 2.3, cex = 1.4, bty = 'n',
-       inset = c(-.15, -.1), # place outside
-       col = unique(group_cols),horiz = FALSE,xpd = TRUE)
-
-
-
-
-
-
-
-nnet <- neighborNet(dis)
-plot(nnet)
-ggsplitnet(nnet) + geom_tiplab2(aes(label=label),
-                                hjust=-.1,size=5,fontface="bold")
-
-
-
-tree_data <- ape::bionj(dis)
-grp <- list(Bacteri     = rn[1:5],
-            BMM_alpha = rn[6:7],
-            BMM_beta  = rn[8:10],
-            Dps  = rn[11:25],
-            Fatty_acid  = rn[26:29],
-            Ferritins  = rn[30:40],
-            NAA  = rn[41:45],
-            RNRR2  = rn[46:53])
-
-p_data <- ggtree(tree_data, layout = 'circular',
-                 branch.length='none',size = 1.5) 
-
-t = groupOTU(p_data, grp, "groups") + aes(color=groups) +
-  theme(legend.position="right",
-        legend.title = element_blank(),
-        legend.text = element_text(size = 15, colour = "black"))+
-  geom_tiplab2(aes(label=label,angle=angle),
-               hjust=-.1,size=5,fontface="bold",align=TRUE)
-
-
-
-
-df0 <- E210_ferritin
-df0 <- df0[with(df0, order(df0$group)), ]
-pc <- prcomp(df0[,-c(1,2,3)],scale. = F,center = T) 
-Rot_E_abcd <- as.matrix(df0[,-c(1,2,3)]) %*% pc$rotation[,1:3] 
-df <- data.frame(class = df0$group
-                 ,Rot_E_abcd) 
-rn <- df0[,1]
-row.names(df) <- rn
-
-
-
-
-# ------------- UMAP ------------------------
-ump.E_PC_abcd <- umap(E_PC_abcd[,-c(1)], n_neighbors = 10,
-            min_dist = 0.001, random_state = 123)
-#-------- UMAMP Visualization ---------------
-umap.df.E_PC_abcd <- data.frame(
-  sf = E_PC_abcd$class,
-  UMAP1 = ump.E_PC_abcd$layout[, 1],
-  UMAP2 = ump.E_PC_abcd$layout[, 2])
-um.E_PC_abcd <- ggplot(umap.df.E_PC_abcd,aes(UMAP1, UMAP2, color= sf))+
-  geom_point(alpha=.7) 
-
-
-
-
-```
-
-## Phylogenetic Tree_Ferritin
-
-```{r}
-E210_seq_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
-
-df <- E210_seq_ferritin
-df <- df[with(df, order(df$group)), ]
-row.names(df) <- df[,1]
-# PCA
-#pc <- prcomp(df[,-seq(1:3)],scale. = F,center = T) 
-#Rot_ferr <- as.matrix(df[,-seq(1:3)]) %*% pc$rotation[,1:5]
-#dis <- dist(Rot_ferr, method="manhattan")
-#dis <- log2(dis)
-#------------------
-rn <- df[,1]
-#--------custom_distance--------------------
-dis <- as.matrix(dist(df[,-c(1,3)], method = manhat))
-#--------------------------------------------
-dis <- sqrt(dis)
-#------------------
-tree_data <- ape::bionj(dis)
-grp <- list(Bacteri     = rn[1:5],
-            BMM_alpha = rn[6:7],
-            BMM_beta  = rn[8:10],
-            Dps  = rn[11:25],
-            Fatty_acid  = rn[26:29],
-            Ferritins  = rn[30:40],
-            NAA  = rn[41:45],
-            RNRR2  = rn[46:53])
-
-p_data <- ggtree(tree_data, layout = 'circular',
-                 branch.length='none',size = 1.5) 
-
-t = groupOTU(p_data, grp, "groups") + aes(color=groups) +
-  theme(legend.position="right",
-        legend.title = element_blank(),
-        legend.text = element_text(size = 15, colour = "black"))+
-  geom_tiplab2(aes(label=label,angle=angle),
-               hjust=-.1,size=5,fontface="bold",align=TRUE)
-```
-
-## Covid
-
-```{r}
-E210.seq_spike200 <- readRDS("Data/rds/E210.seq_spike200.rds")
-E210_spike200 <- readRDS("Data/rds/E210_spike200.rds")
-#-----------close
-df = E210_spike200
-df = df[!is.na(df$length),]
-df = df[df$conformation == "Close",]
-
-rownames(df) = df$pdbID
-x = df[,-c(1,3:4)]/df$length
-x  <- as.matrix(x) 
-hc <- x %>% proxy::dist(method = manhat)
-hc[is.nan(hc)] <- 0
-hc <- hc%>% hclust(method = "ward.D2")
-dend <- hc %>% as.dendrogram
-
-labcol <- c( "blue", "green","red")
-ord_sml <- df[,][order.dendrogram(dend),3]
-group_cols <- labcol[as.factor(ord_sml)]
-
-dend2 <- dend %>%
-  #color_branches(k=3, col = c("red","blue","green3")) %>%
-  color_labels(col =   group_cols) %>%
-  set("labels_cex", 0.5) 
-ggplot(df, aes(virus, tot)) + geom_boxplot()
-df$tot<-rowSums(df[,-c(1:4)])
-plot(dend2, ylab = "Height")
-legend("topright", legend = as.character(unique(ord_sml)),
-       pch = 15, pt.cex = 2.3, cex = 1.4, bty = 'n',
-       inset = c(-.15, -.1), # place outside
-       col = unique(group_cols),horiz = FALSE,xpd = TRUE)
-#---------------tamam----------------------
-df$total<-rowSums(df[,-c(1:4)]/df$length)
-ggplot(df,aes(virus,total))+geom_boxplot()
-
-#----------------------open
-df = left_join(spike200,E210_spike,by = "pdbID")
-df = df[!is.na(df$length),]
-df = df[df$Conformation == "Open",]
-rownames(df) = df$pdbID
-len = as.numeric(df$length)
-  x = df[,-c(1:7)]/len
-x  <- as.matrix(x) 
-hc <- x %>% dist(method = 'manhattan') %>% hclust(method = "ward.D2")
-dend <- hc %>% as.dendrogram
-
-labcol <- c( "blue", "green","red")
-ord_sml <- df[,][order.dendrogram(dend),2]
-group_cols <- labcol[as.factor(ord_sml)]
-
-dend2 <- dend %>%
-  #color_branches(k=3, col = c("red","blue","green3")) %>%
-  color_labels(col =   group_cols) %>%
-  set("labels_cex", 0.5) 
-plot(dend2, ylab = "Height")
-legend("topright", legend = as.character(unique(ord_sml)),
-       pch = 15, pt.cex = 2.3, cex = 1.4, bty = 'n',
-       inset = c(-.15, -.1), # place outside
-       col = unique(group_cols),horiz = FALSE,xpd = TRUE)
-```
-
-
-## UMAP_manhat_norm
-
-```{r}
-df <- readRDS("Data/rds/E210.astral40.rds")
-dfs <- df[df$class %in% c("a","b","c","d")& df$length > 100 & !is.na(df$FF),]
-df1<-dfs[,-c(1:2,4:5,7:8)]
-df1[,-1] <- df1[,-1]
-#df1$total = rowSums(df1[,-c(1,2)])
-df1<-data.frame(class=substr(df1$fold,1,1),df1)
-#df1 = df1[c(sample(2743:5697,500),sample(2642,500),sample(5698:10159,500)),]
-#df1 <- df1 %>% sample_frac(1)
-#df1 <- df1[ !is.na(df1$FF),]
-
-#df1 = df1 %>% group_by(fold) %>% 
-#  dplyr::summarise(across(colnames(df1)[-c(1,2)], mean))
-#df1<-data.frame(class=substr(df1$fold,1,1),df1)
-dis <- as.matrix(proxy::dist(df1[,-c(1,3)], method = manhat_norm_diff))
-ump <- umap(d = dis,
-            n_neighbors = 5,
-            min_dist = 0.1,
-            input="dist")
-ump_df <- data.frame(df1[,1:2],
-                     UMAP1 = ump$layout[, 1],
-                     UMAP2 = ump$layout[, 2])
-ggplot(ump_df,aes(UMAP1, UMAP2, color= class)) +
-   geom_point(alpha=.7) + 
-  ylim(-15,15) +
-  xlim(-10,20) +
-   mythem
-
-```
-
-## UMAP at class level
-```{r}
-df <- readRDS("data/rds/E210.astral40.rds")
-df = E210.astral_95
-df = E210.aspartaze_SS
-df = E210.seq_astral40
-sel1<-c('a.39.1','a.45.1')
-sel1<-c('a.29.2','a.29.3')
-sel1<-c('a.102.1','a.116.1')
-
-sel<-c('b.82.1','b.82.3')    #  'b.82.2'
-
-sel1<-c('c.1.10','c.1.8')
-sel1<-c('c.1.10','b.82.1')
-
-dfs <- df[df$superfamily %in% sel1,]
-
-dfs <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
-df1<-dfs[,-c(1:5,7:8)]
-df1[,-1] <- df1[,-1]/dfs$length
-df1<-data.frame(class=substr(df1$fold,1,1),df1)
-#df1$total = rowSums(df1[,-c(1,2)])
-ggplot(df1,aes(class,total))+geom_boxplot()
-df1 <- df1 %>% sample_frac(1)
-df2 <- df1[c(1:2000),]
-
-df1<-df1 %>% 
-  group_by(fold) %>%
-  dplyr::summarise(across(colnames(df1)[-1], mean))
-
-
-#pc <- prcomp(df1,scale. = F,center = T) 
-Rot_E_abcd <- as.matrix(df1[,-c(1:2)]) #%*% pc$rotation[,1:5] 
-E_PC_abcd <- data.frame(class = df1$class,Rot_E_abcd) 
-# ------------- UMAP ------------------------
-ump.E_PC_abcd <- umap(E_PC_abcd[,-c(1)], n_neighbors = 20,
-            min_dist = 0.001, random_state = 123)
-#-----------customized UMAP-----------
-tm_score <- function(x, y){
-    d <- (sum(1/(1 + (x - y))))
-  return(d)
-}
-tm_score2 <- function(x, y){
-  xy<-rep(0,210)
-  for(i in 1:210){
-    if(x[i]<y[i]){
-      xy[i]<-x[i]-y[i]
-    }else{
-      xy[i]<-y[i]-x[i]
+df2 <- aggregate(.~drug+entrezID,df[,-c(3:5)],mean)
+drugs<-unique(df2$drug)
+#########################
+my_sab<-matrix(0,65,65)
+for (i in 1:65) {
+  print(i)
+  for (j in 1:65) {
+    if(i>=j){
+      x<-drugs[i]
+      y<-drugs[j]
+      zx<-df2[df2$drug%in%x,]
+      zy<-df2[df2$drug%in%y,]
+      xnames<-paste0(zx$drug,'_',zx$entrezID)
+      ynames<-paste0(zy$drug,'_',zy$entrezID)
+      z<-rbind(zx,zy)
+      dis<-as.matrix(dist(z[,-c(1:4)],method = manhat))
+      colnames(dis)<-rownames(dis)<-paste0(z$drug,'_',z$entrezID)
+      diag(dis)<-NA
+      dis[is.nan(dis)] <- 0
+      disx<-dis[xnames,xnames]
+      dxx<-mean(diag(as.matrix(disx[apply(disx,2,which.min),])))
+      disy<-dis[ynames,ynames]
+      dyy<-mean(diag(as.matrix(disy[apply(disy,2,which.min),])))
+      disxy<-dis[xnames,ynames]
+      disyx<-dis[ynames,xnames]
+      dxy<-mean(c(diag(as.matrix(disxy[apply(disxy,2,which.min),])),
+                  diag(as.matrix(disyx[apply(disyx,2,which.min),]))))
+      my_sab[i,j]<-dxy-((dxx+dyy)/2)
+      my_sab[j,i]<-my_sab[i,j]
     }
   }
-  d <- (sum(1/(1 + xy)))
-  return(d)
 }
-tm_score3 <- function(x, y){
-  if (sum(x) > sum(y)){
-    d <- (sum(1/(1 + (x - y))))
-  }
-  else{
-    d <- (sum(1/(1 + ( -x + y))))
-  }
-    
-  return(d)
-}
-
-
-dis <- as.matrix(dist(df1[,-c(1,2)], method = tm_score3))
-table(df1$class)
-a<-dis[1:1610,1:1610]
-a<-a[lower.tri(a)]
-b<-dis[1611:3770,1611:3770]
-b<-b[lower.tri(b)]
-ab<-dis[1:1610,1611:3770]
-ab<-as.vector(ab)
-df_dis<-data.frame(gr=rep(c('a','b','ab'),c(length(a),length(b),length(ab))),
-                   dis=c(a,b,ab))
-ggplot(df_dis,aes(gr,dis))+geom_boxplot()+ylim(-100,100)
-
-umap_result <- umap(d = dis,
-                    n_neighbors = 30,
-                    min_dist = 0.01)
-umap.df.E_PC_abcd <- data.frame(
-  df1[,1:2],
-  UMAP1 = umap_result$layout[, 1],
-  UMAP2 = umap_result$layout[, 2])
-
- ggplot(umap.df.E_PC_abcd,aes(UMAP1, UMAP2, color= class))+
-  geom_point(alpha=.7,show.legend = F) + 
-  mythem
-
-#-------- UMAMP Visualization ---------------
-umap.df.E_PC_abcd <- data.frame(
-  df1[,1:2],
-  UMAP1 = ump.E_PC_abcd$layout[, 1],
-  UMAP2 = ump.E_PC_abcd$layout[, 2])
-
- ggplot(umap.df.E_PC_abcd,aes(UMAP1, UMAP2, color= class))+
-  geom_point(alpha=.7) +
-  mythem
-
- 
- um.E_PC_abcd <- ggplot(umap.df.E_PC_abcd,aes(UMAP1, UMAP2, color= sf))+
-  geom_point(alpha=.7) +
-  mythem
-#-------------PCA 
- pc <- prcomp(df1,scale. = F,center = T)
-pc.df <- data.frame(group=df$family, pc$x)
-g.pc <- ggplot(pc.df, aes(x=PC1, y=PC2, col=group))+
-  geom_point(size=2)+
-  theme_bw(base_line_size = .3)+
-  #stat_ellipse(aes(fill = group), geom="polygon",type = "norm",alpha=0.2)+
-  mythem
- 
-```
-
-## Tree
-
-```{r}
-# Best result with SS and pc = 100, ward.D
-df = E210.aspartaze_SS
-pc <- prcomp(df[,-seq(1:10)],scale. = F,center = T) 
-Rot_E_abcd <- as.matrix(df[,-seq(1:10)]) %*% pc$rotation[,1:20] 
-E_PC_abcd <- data.frame(class = df$class,Rot_E_abcd) 
-E_PC_abcd <- umap.df.E_PC_abcd
-x  <- E_PC_abcd[,-1] %>% as.matrix
-rownames(x) <- df$pdbID
-hc <- x %>% dist(method = 'manhattan') %>% hclust(method = "ward.D2")
- dfx = data.frame(x)
-
-dend <- hc %>% as.dendrogram
-
-labcol <- c( "blue", "red")
-ord_sml <- E_PC_abcd[,][order.dendrogram(dend),1]
-group_cols <- labcol[as.factor(ord_sml)]
-
-dend2 <- dend %>%
-  #color_branches(k=3, col = c("red","blue","green3")) %>%
-  color_labels(col =   group_cols) %>%
-  set("labels_cex", 0.5) 
-plot(dend2, ylab = "Height")
-
-
-
-df <- E210.aspartaze_SS
-df <- df[with(df, order(df$family)), ]
-row.names(df) <- paste0(df[,1],df[,2])
-# PCA
-#pc <- prcomp(df[,-seq(1:3)],scale. = F,center = T) 
-#Rot_ferr <- as.matrix(df[,-seq(1:3)]) %*% pc$rotation[,1:5]
-#dis <- dist(Rot_ferr, method="manhattan")
-#dis <- log2(dis)
-#------------------
-rn <- paste0(df[,1],df[,2])
-dis <- dist(df[,-c(1:10)], method="manhattan")
-dis <- sqrt(dis)
-#------------------
-tree_data <- ape::bionj(dis)
-grp <- list(A0     = rn[1:16],
-            A1 = rn[17:49],
-            A2  = rn[50:53])
-
-p_data <- ggtree(tree_data, layout = 'circular',
-                 branch.length='none',size = 1.5) 
-
-t = groupOTU(p_data, grp, "groups") + aes(color=groups) +
-  theme(legend.position="right",
-        legend.title = element_blank(),
-        legend.text = element_text(size = 15, colour = "black"))+
-  geom_tiplab2(aes(label=label,angle=angle),
-               hjust=-.1,size=5,fontface="bold",align=TRUE)
-
-```
-
-
-
-## UMAP covid
-
-```{r}
-E210_spike200 <- readRDS("Data/rds/E210_spike200.rds")
-E210_spike200_SS <- readRDS("Data/rds/E210_spike200_SS.rds")
-E210.seq_spike200 <- readRDS("Data/rds/E210.seq_spike200.rds")
-
-#spike200 <- read.csv("Data/csv/spike200.csv", sep = ";")
-#spike200$chain = substr(spike200$pdbID,5,5)
-#spike200$pdbID = paste0(tolower(substr(spike200$pdbID,1,4)),spike200$chain)
-#df = left_join(spike200,E210_spike,by = "pdbID")
-df <- E210.seq_spike200
-df = df[!is.na(df$length),]
-df0 = df[,-seq(1:4)]/df$length
-#df = df[df$length>100 & df$description == " Spike glycoprotein",]
-pc <- prcomp(df0,scale. = F,center = T) 
-#%*% pc$rotation[,1:10] 
-Rot_E_abcd <- as.matrix(df0) 
-E_PC_abcd <- data.frame(class = df$virus,conf = df$conformation,Rot_E_abcd) 
-# ------------- UMAP ------------------------
-ump.E_PC_abcd <- umap(E_PC_abcd[,-c(1,2)], n_neighbors = 40,
-            min_dist = 0.1, random_state = 123)
-#-------- UMAMP Visualization ---------------
-umap.df.E_PC_abcd <- data.frame(shape = E_PC_abcd$conf,
-  sf = E_PC_abcd$class,
-  UMAP1 = ump.E_PC_abcd$layout[, 1],
-  UMAP2 = ump.E_PC_abcd$layout[, 2])
-um.E_PC_abcd <- ggplot(umap.df.E_PC_abcd,aes(UMAP1, UMAP2, color= sf, shape = shape))+
-  geom_point(alpha=.7) +
-  mythem
-
-```
-
-
-
-# Sequence Level
-
-## Astral40
-
-```{r}
-astral <- read.fasta('Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-40-2.08.fa')
-aaenergy <- read.csv("Data/csv/Pij.csv", header = F,sep = ";")
-astral40 <- readRDS("Data/rds/astral_40.rds")
-
-aaenergy <- (aaenergy + t(aaenergy))/2
-colnames(aaenergy) = rownames(aaenergy)<- 
-  c("F","L","I","V","W","Y","M","C","H","T","R","A","N","Q","P","S","D","G","K","E")
-#row.names(aaenergy) <- aa321(aaenergy[,1])
-#aaenergy <- aaenergy[,-1]
-#row.names(aaenergy) <- colnames(aaenergy)
-letters_list <- tolower(row.names(aaenergy))
-nprotein <- length(astral)
-aa210<-aaenergy[lower.tri(aaenergy,diag = T)]
-num_columns <- 210
-E210.seq_astral40 <- data.frame(pdbID = astral40$pdbID,length = rep(NA,nprotein),
-                                         matrix(NA, ncol = num_columns, 
-                                                nrow = length(astral40$pdbID)))
-for (i in 1:nprotein){
-  print(i)
-  #seq = unlist(strsplit(tolower(DTI_df__seq$seq[i]),""))
-  seq = astral[[i]]
-  freq = c()
-  for (j in 1:20){
-    freq[j] <-  length(grep(letters_list[j],seq))
-  }
-  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-  en_fr <- aaenergy * freq_matrix
-  en_fr <- en_fr/length(seq)
-  pair_es <- diag(freq) %*% as.matrix(en_fr)
-  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-  E210.seq_astral40[i,3:212] <- aa210_p
-  E210.seq_astral40[i,2] <- length(seq)
-}
-
-E210.seq_astral40 <- cbind(astral40,E210.seq_astral40[,-c(1)])
-saveRDS(E210.seq_astral40,file = "Data/rds/E210.seq_astral40.rds")
-# ---------------------------------structure---------------------------------
-E210.astral40 <- readRDS("Data/rds/E210.astral40.rds")
-df = E210.astral40
-df <- df[df$length > 100 & !is.na(df$length) & df$class %in% c("a","b"),]
-df1 <- df[,-seq(1:10)]/(df$length)
-pc <- prcomp(df1,scale. = F,center = T) 
-Rot_E_abcd <- as.matrix(df1) 
-E_PC_abcd <- data.frame(class = df$class,Rot_E_abcd) 
-# ------------- UMAP ------------------------
-ump.E_PC_abcd <- umap(E_PC_abcd[,-c(1)], n_neighbors = 10,metric = "manhattan",
-            min_dist = .0001, random_state = 123)
-#-------- UMAMP Visualization ---------------
-umap.df.E_PC_abcd <- data.frame(
-  sf = E_PC_abcd$class,
-  UMAP1 = ump.E_PC_abcd$layout[, 1],
-  UMAP2 = ump.E_PC_abcd$layout[, 2])
-um.E_PC_abcd <- ggplot(umap.df.E_PC_abcd,aes(UMAP1, UMAP2, color= sf))+
-  geom_point(alpha=.7) +
-  mythem
-#------------tSNE--------------------------
-E_PC_abcd<-E_PC_abcd[!duplicated(E_PC_abcd[,-1]),]
-tsne<-Rtsne(E_PC_abcd[,-c(1)],pca=F,dims=2,perplexity=100,
-            verbose=T, max_iter=1000,theta=0,
-            learning_rate=300,normalize=F)
-
-tsne.df <- data.frame(
-  group = E_PC_abcd$class,
-  tSNE1=tsne$Y[,1],
-  tSNE2=tsne$Y[,2]
-  )
-
-g.tsne <- ggplot(tsne.df,aes(tSNE1, tSNE2, color= group))+
-  geom_point(size=1.5,alpha=.7)+
-  mythem
-
-# ---------------------------------Sequence---------------------------------
-e_seq_str <- data.frame(eseq = rowSums(E210.seq_astral40[,-c(1:10)]),
-                     estr = rowSums(E210.astral40[,-c(1:6)]))
-
-e_seq_str <- cbind(E210.seq_astral40[,c(1:10)],e_seq_str)
-cor.test(e_seq_str$eseq,e_seq_str$estr)
-# ---------------------------------Sequence95---------------------------------
-
-e_seq_str <- data.frame(eseq = rowSums(E210.seq_astral95[,-c(1:10)]),
-                     estr = rowSums(E210.astral95[,-c(1:9)]))
-
-e_seq_str <- cbind(E210.seq_astral95[,c(1:10)],e_seq_str)
-e_seq_str1 <- e_seq_str[-grep(',',e_seq_str$seq),]
-ggplot(e_seq_str1,aes(estr,eseq,col=class))+geom_jitter()
-cor.test(e_seq_str1$eseq,e_seq_str1$estr)
-```
-
-
-
-
-## Drug_target
-
-```{r}
-dti_barabasi <- read_excel("Data/csv/dti_barabasi.xlsx")
-colnames(dti_barabasi) <- c("drug","entrez")
-#dti_barabasi <- dti_barabasi[1:100,]
-dti_barabasi$entrez <- as.character(dti_barabasi$entrez)
-library(rentrez)
-get_protids_from_geneids <- function(gene_ids) {
-  
-  # Get the protein elink.
-  protein_elink <- rentrez::entrez_link(dbfrom = "gene", id = gene_ids, db = "protein")
-  
-  # Get the protein id (refseq database)
-  protein_ids <- protein_elink$links$gene_protein_refseq
-  protein_ids
-}
-
-make_aa_fasta <- function(prot_ids, nameFile) {
-  # Make a multi-fasta file with each protein id
-  sapply(prot_ids, function(x) {
-    protein_esummary <- rentrez::entrez_summary(db = "protein", id = x)
-    protein_fasta <- rentrez::entrez_fetch(db = "protein", id = protein_esummary$uid, rettype = "fasta")
-    # save amino acid sequences into a FASTA file ("nameFile"")
-    write(protein_fasta, file = paste(nameFile, ".fasta", sep = ""), append = TRUE)
-    #return(protein_fasta)
-  } )
-}
-#-------------------------------------
-dti_seq <- readRDS("Data/rds/DTI_df_seq.rds")
-sAB <- readRDS("Data/rds/sAB.rds")
-
-aaenergy <- read.csv("Data/csv/Pij.csv", header = F,sep = ";")
-aaenergy <- (aaenergy + t(aaenergy))/2
-colnames(aaenergy) = rownames(aaenergy)<- 
-  c("F","L","I","V","W","Y","M","C","H","T","R","A","N","Q","P","S","D","G","K","E")
-letters_list <- tolower(row.names(aaenergy))
-nprotein <- nrow(dti_seq)
-aa210<-aaenergy[lower.tri(aaenergy,diag = T)]
-num_columns <- 210
-E210.seq_dti <- data.frame(pdbID = dti_seq$drug,length = rep(NA,nprotein),
-                                         matrix(NA, ncol = num_columns, 
-                                                nrow = nrow(dti_seq)))
-for (i in 1:nprotein){
-  print(i)
-  #seq = unlist(strsplit(tolower(DTI_df__seq$seq[i]),""))
-  seq = unlist(strsplit(tolower(dti_seq$seq[i]), ""))
-  freq = c()
-  for (j in 1:20){
-    freq[j] <-  length(grep(letters_list[j],seq))
-  }
-  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-  en_fr <- aaenergy * freq_matrix
-  en_fr <- en_fr/length(seq)
-  pair_es <- diag(freq) %*% as.matrix(en_fr)
-  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-  E210.seq_dti[i,3:212] <- aa210_p
-  E210.seq_dti[i,2] <- length(seq)
-}
-df0 = E210.seq_dti
-df = cbind(drug = df[,1],df[,-c(1:2)]/df$length)
-df <- df %>%
-  group_by(drug) %>%
- dplyr::summarise(across(X1:X210, mean))
-
-x  <- as.matrix(df[,-c(1)]) 
-row.names(x) = df$drug
-dist_matrix <- as.matrix(dist(x, method = "manhattan"))
-dist_df <- as.data.frame(as.table(dist_matrix))
-colnames(dist_df) <- c("d1", "d2", "distance")
-dist_df <- dist_df[dist_df$d1 != dist_df$d2, ]
-
+diag(my_sab)<-NA
+colnames(my_sab)<-rownames(my_sab)<-drugs
+# saveRDS(my_sab,'Data/rds/my_sab.rds')
 ```
 
 ## Bacteriocin
@@ -1630,19 +1035,21 @@ rownames(res) <- c(paste0("Fold_",1:length(kfolds)),'Average')
 colnames(res)[-1] <- gsub('.Class','',colnames(res)[-1])
 ```
 
-# Tm-Vec
+# Bacteriocin Tm-Vec
 
 ```{r}
+# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+# ----------------------------------------------------
 tm <- read.csv('Data/csv/tm-vec.csv')
 nprotein <- nrow(tm)
 
 for (i in 1:nprotein){
   if(i%%100==0)print(i)
   # ---- seq1
-  seq = unlist(strsplit(tolower(tm$Seq_x[i]), ""))
-  freq = c()
+  seq <- unlist(strsplit(tolower(tm$Seq_x[i]), ""))
+  freq <- c()
   for (j in 1:20){
-  freq[j] <-  length(grep(letters_list[j],seq))
+  freq[j] <-  length(grep(tolower(letters_list[j]),seq))
   }
   freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
   en_fr <- aaenergy * freq_matrix
@@ -1651,10 +1058,10 @@ for (i in 1:nprotein){
   aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
   CEP_x <- c(length(seq),aa210_p)
   # ---- seq2
-  seq = unlist(strsplit(tolower(tm$Seq_y[i]), ""))
+  seq <- unlist(strsplit(tolower(tm$Seq_y[i]), ""))
   freq = c()
   for (j in 1:20){
-  freq[j] <-  length(grep(letters_list[j],seq))
+  freq[j] <-  length(grep(tolower(letters_list[j]),seq))
   }
   freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
   en_fr <- aaenergy * freq_matrix
@@ -1663,28 +1070,30 @@ for (i in 1:nprotein){
   aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
   CEP_y <- c(length(seq),aa210_p)
   # ----------
-  tm$CEP_dis[i] <- manhat(CEP_x,CEP_y)
+  tm$CEP_dis[i] <- manhat(CEP_x[-1],CEP_y[-1])
   tm$CEP_dis_normLen[i] <- manhat(CEP_x/CEP_x[1],CEP_y/CEP_y[1])
 }
 
 tm$CEP_dis_MaxMin <- (tm$CEP_dis-min(tm$CEP_dis))/(max(tm$CEP_dis)-min(tm$CEP_dis))
+
 tm$CEP_dis_normLen_MaxMin <- (tm$CEP_dis_normLen-min(tm$CEP_dis_normLen))/
   (max(tm$CEP_dis_normLen)-min(tm$CEP_dis_normLen))
 tm$CEP_dis_MaxMin1 <- 1-(tm$CEP_dis_MaxMin)
 tm$CEP_dis_normLen_MaxMin1 <- 1-(tm$CEP_dis_normLen_MaxMin)
+
 tm$status <- if_else(tm$class_x==tm$class_y,'same class','different class')
 tm$status2 <- if_else(tm$Subclass_x==tm$Subclass_y&tm$class_x=='Class_1'&tm$class_y=='Class_1','same class(sub class1)',NA)
+#saveRDS(tm,'Data/rds/bacteriocin_tm-vec.RDS')
+```
 
-saveRDS(tm,'Data/rds/bacteriocin_tm-vec.RDS')
-# -----------------------------------------
-# ----------- FIG8
+## fig Bacteriocin Tm-Vec
+
+```{r}
 tm <- readRDS('Data/rds/bacteriocin_tm-vec.RDS')
 tm$CEP_dis_MaxMin1 <- tm$CEP_dis_MaxMin1-.36
 tm2 <- tm[!is.na(tm$status2),-28]
 colnames(tm2)[28]<-'status'
 tm2 <- rbind(tm[,-29],tm2)
-
-
 
 tm2 <- tm2[,c(5,20,21,6,26,28)]
 colnames(tm2)[-6] <- c('Alphafold2','Omegafold','ESMfold','TM_vec','CEP')
@@ -1705,7 +1114,6 @@ p1<-ggplot(tm2, aes(status,score,fill=method))+
     geom_hline(yintercept = .5, linetype="dashed", 
              color = "red", size=.7)+
   mythem+
-  #facet_wrap(~status)+
   theme(legend.title = element_blank(),
         axis.text.y = element_text(size=13),
         axis.text.x = element_text(color = 'black',size = 15, face = 'bold'),
@@ -1738,8 +1146,8 @@ aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
 tm_unique[i,7:216] <- aa210_p
 }
 
-df <- tm_unique[,-c(1:5)]
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+df <- tm_unique[,-c(1:6)]
+dis <- as.matrix(proxy::dist(df, method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 100,
             min_dist = 0.1,
@@ -1823,31 +1231,6 @@ ggarrange(p23,NULL,p1,ncol = 1,
 ```
 
 # Figures
-
-```{r}
-mythem <- theme_bw(base_line_size = .1)+
-  theme(axis.text = element_text(size=15),
-        axis.title = element_text(size = 20),
-        legend.text = element_text(size = 12),
-        legend.title = element_text(size=15),
-        strip.text = element_text(size = 15),
-        title = element_text(size = 20),
-        panel.spacing = unit(2, "lines")
-  )
-# ***********
-manhat <- function(X, Y){
-  x = X; y = Y
-  xy = abs(x - y)
-  xy = xy[xy != 0]
-  if(length(xy)==0){
-    d <- 0
-  }else{
-    d = sum(xy)/length(xy)
-  }
-  return(d)
-}
-```
-
 ## Preprocess for Fig1
 
 ```{r}
@@ -2981,7 +2364,7 @@ ggarrange(NULL,A,B,C,ncol = 1,
 # save FIG4.pdf 10x10
 ```
 
-## Fig6
+## Fig7 covid
 
 ```{r}
 E210.seq_spike200 <- readRDS("Data/rds/E210.seq_spike200.rds")
@@ -2991,30 +2374,11 @@ df = df[!is.na(df$length),]
 df = df[df$conformation == "Close",]
 
 rownames(df) = df$pdbID
-x = df[,-c(1:4)]/df$length
+x <- df[,-c(1:4)]/df$length
 x  <- as.matrix(x) 
 hc <- x %>% proxy::dist(method = manhat)
 hc <- hc%>% hclust(method = "ward.D2")
 dend <- hc %>% as.dendrogram
-
-#  labcol <- c( "blue", "green","red")
-#  ord_sml <- df[,][order.dendrogram(dend),3]
-#  group_cols <- labcol[as.factor(ord_sml)]
-#  
-#  dend2 <- dend %>%
-#    color_labels(col =   group_cols) %>%
-#    set("labels_cex", .8) 
-#  
-#  circlize_dendrogram(dend2)
-#  par( mar= c(5,10,8,3) )
-#  plot(dend2, #ylab="Height", 
-#       main='Coronaviruse Spike Clustering Based On CPE')
-#  title(ylab="Height", line=3, cex.lab=3)
-#  legend("topright", legend = as.character(unique(ord_sml)),
-#         pch = 15, pt.cex = 2.3, cex = 1.4, bty = 'n',
-#         inset = c(-.5, -.5), y.intersp=0.15, x.intersp = .2,
-#         col = unique(group_cols),horiz = FALSE,xpd = TRUE)
-#  
 
 df <- df[with(df, order(df$virus)), ]
 row.names(df) <- df$pdbID
@@ -3025,7 +2389,6 @@ grp <- list(MERS_Cov     = rn[1:32],
             SARS_Cov2  = rn[64:143])
 
 p_data <- ggtree(tree_data, layout = 'circular',
-                 #branch.length='none',
                  size = 1) 
 
 t_CPE = groupOTU(p_data, grp, "groups") + aes(color=groups) +
@@ -3045,7 +2408,7 @@ df = df[!is.na(df$length),]
 df = df[df$conformation == "Close",]
 
 rownames(df) = df$pdbID
-x = df[,-c(1:4)]/df$length
+x <- df[,-c(1:4)]/df$length
 x  <- as.matrix(x) 
 hc <- x %>% proxy::dist(method = manhat)
 hc <- hc%>% hclust(method = "ward.D2")
@@ -3193,225 +2556,37 @@ p13<-ggarrange(p1,NULL,p3,nrow = 1,
            hjust = -.5,vjust = 1.2)
 ```
 
-## Fig7 ferritin
+## Fig6 ferritin
 
 ```{r}
 E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
 df <- E210_ferritin
-df$group[41:45]<-'Rubrerthrin'
 
-df$family[df$group%in%c('Bac','Fer','Dps')]<-'a.25.1.1'
-df$family[!df$group%in%c('Bac','Fer','Dps')]<-'a.25.1.2'
-df$family[41:45]<-'Rubrerthrin'
+dis <- proxy::dist(df[,-c(1:3)], method = manhat)
 
-df <- df[with(df, order(df$family)), ]
-row.names(df) <- df[,1]
-rn <- df[,1]
-dis <- proxy::dist(df[,-c(1:3,214)], method = manhat)
-tree_data <- ape::bionj(dis)
-grp <- list(Bacteri     = rn[1:5],
-            Dps  = rn[6:20],
-            Ferritins  = rn[21:31],
-            BMM_alpha = rn[32:33],
-            BMM_beta  = rn[34:36],
-            Fatty_acid  = rn[37:40],
-            RNRR2  = rn[41:48],
-            Rubrerthrin = rn[49:53])
-
-p_data <- ggtree(tree_data, layout = 'circular',
-                 branch.length='none',size = 1.5) 
-
-t = groupOTU(p_data, grp, "groups") + aes(color=groups) +
-  theme(legend.position="right",
-        legend.title = element_blank(),
-        legend.text = element_text(size = 15, colour = "black"))+
-  geom_tiplab2(aes(label=label,angle=angle),
-               hjust=-.1,size=5,fontface="bold",align=TRUE)+
-  scale_color_discrete(breaks=c('Bacteri', 'Dps', 'Ferritins',
-                                'BMM_alpha','BMM_beta','Fatty_acid','RNRR2','Rubrerthrin'),
-                      type =  c("#F8766D","#CD9600","#7CAE00","#00BE67","#00BFC4",
-                                                           "#00A9FF","#FF61CC","#C77CFF" ))
-
-                      
-#g <- ggplot_build(t)
-#cols<-unlist(unique(g$data[[1]]["colour"]))
 nnet <- neighborNet(dis)
 ggsplitnet(nnet) + geom_tiplab2(aes(label=label),
-                                hjust=-.1,size=5,fontface="bold")
-write.nexus.networx(nnet,'Data/rds/E210_ferritin_manhat.nxs')
-###############
-dis <- data.frame(gr=df$group, as.matrix(dis))
-fa<-unique(dis$gr)
-
-my_comparisons<-list(c('within','between'))
-between<-c() 
-within<-c()
-for (i in 1:length(fa)) {  
-  print(i)   
-  x <- fa[i]  
-  idx <- which(dis$gr==x)
-  y <- dis[idx,(idx+1)]
-  within <- c(within, y[lower.tri(y)])
-  x <- dis[idx,-c(1,idx+1)]   
-  x <- as.vector(as.matrix(x))  
-  x <- x[!is.na(x)]   
-  between<-c(between,x) 
-}
-df_family <- data.frame(gr=rep(c('within','between'),c(length(within),length(between))),
-                        distance=c(within,between)) 
-
-ggboxplot(df_family, x='gr',y='distance', 
-          fill = 'gr',alpha=.5,outlier.shape = NA)+
-  stat_summary(fun.y=mean, geom="point", shape=8,
-               size=2, color="red", fill="red")+xlab('')+
-  theme_bw(base_line_size = .2)+mythem+
-  theme(axis.text.x = element_blank())+
-  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
-  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=10)
-
-###########
-
-df2<-df
-df2$total<-rowSums(df2[,-c(1:3,214)])
-df2$group<-factor(df2$group,levels = c('Bac','Dps','Fer','Rubrerthrin',
-                                       'BMA','BMB','FAA','RNR'))
-ggplot(df2, aes(x=group,y=total, fill=group))+
-  geom_boxplot(size=.2,outlier.alpha = .5)+
-  stat_summary(fun.y=mean, geom="point", shape=8,
-               size=2, color="red", fill="red")+xlab('')+
-  theme_bw(base_line_size = .2)+mythem+ylab('Total energy')+
-  theme(legend.position = 'none',
-        axis.text.x = element_blank())+
-  scale_fill_manual(values = c("#F8766D" ,"#00BE67", "#00A9FF"  ,"#C77CFF",
-                    "#CD9600", "#7CAE00" ,"#00BFC4" ,"#FF61CC"))
-
+                                hjust=-.1,size=5,
+                                color='blue')+
+  ggexpand(.1) + ggexpand(.1, direction=-1)
+#write.nexus.networx(nnet,'Data/rds/E210_ferritin_manhat.nxs')
+#nnet <- read.nexus.networx('Data/rds/E210_ferritin_manhat.nxs')
+# ----   the 'E210_ferritin_manhat.nxs' file 
+# -----      was load on SplitsTree4(v 4.19.2) to visualize
 ```
 
-##Fig9
+##Fig9 DrugTarget
 
 ```{r}
-library(rentrez)
-get_protids_from_geneids <- function(gene_ids) {
-  # Get the protein elink.
-  protein_elink <- rentrez::entrez_link(dbfrom = "gene", id = gene_ids, db = "protein")
-  # Get the protein id (refseq database)
-  protein_ids <- protein_elink$links$gene_protein_refseq
-  protein_ids
-}
-
-make_aa_fasta <- function(prot_ids) { #, nameFile
-  # Make a multi-fasta file with each protein id
-  sapply(prot_ids, function(x) {
-    protein_esummary <- rentrez::entrez_summary(db = "protein", id = x)
-    protein_fasta <- rentrez::entrez_fetch(db = "protein", id = protein_esummary$uid, rettype = "fasta")
-    return(protein_fasta)
-  } )
-}
-
-seq2df<-function(seq){
-  x<-strsplit(seq,'\n')
-  head<-x[[1]][1]
-  seq<-paste(x[[1]][-c(1,10)],collapse = '')
-  return(c(head,seq))
-}
-
-
-dti <- read_excel('Data/csv/41467_2019_9186_MOESM4_ESM.xlsx')
-colnames(dti)<-c('drugID','entrezID')
-dti$entrezID<-as.character(dti$entrezID)
-
-sab<-readRDS('Data/rds/sAB.rds')
-colnames(sab)[1:2]<-c('d1','d2')
-
-d65<-unique(c(sab$d1,sab$d2))
-df_seq<-c()
-for(i in 1:65){
-  df<-dti[dti$drugID%in%d65[i],]
-  df2<-c()
-  for (j in 1:nrow(df)) {
-    print(paste0(i,', ',j,'/',nrow(df)))
-    prot_ids <- get_protids_from_geneids(df$entrezID[j])
-    z<-make_aa_fasta(prot_ids)
-    zz<-data.frame(prot=df$entrezID[j],t(sapply(z, seq2df)))
-    df2<-rbind(df2,zz)
-  }
-  df2<-data.frame(drug=d65[i],df2)
-  df_seq<-rbind(df_seq,df2)
-}
-
-df_seq$length <- nchar(df_seq$seq_aa)
-colnames(df_seq)[3:4]<-c('header_seq','seq')
-# -------- Energy
-letters_list <- toupper(letters_list)
-E210.seq_dti <- data.frame(df_seq,matrix(NA,nrow(df_seq),210))
-colnames(E210.seq_dti)[-c(1:5)] <- pair_inter
-for (NP in 1:nrow(df_seq)) {
-  if(NP%%10==0)print(NP)
-  seq = unlist(strsplit(unlist(E210.seq_dti$seq_aa[NP]),''))
-    freq = c()
-    for (j in 1:20){
-        freq[j] <-  length(grep(letters_list[j],seq))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-    E210.seq_dti[NP,-c(1:5)] <- aa210_p
-}
-saveRDS(E210.seq_dti,'Data/rds/E210.seq_dti.rds')
-################################
-sab <- readRDS('Data/rds/sAB.rds')
-colnames(sab)[1:2] <- c('d1','d2')
-E210.seq_dti<-readRDS('Data/rds/E210.seq_dti.rds')
-
-df0 <- E210.seq_dti 
-df <- cbind(df0[,1:5],df0[,-c(1:5)]/df0$length) 
-#df <- df %>%   group_by(drug) %>%  dplyr::summarise(across(X1:X210, mean))
-df2 <- aggregate(.~drug+entrezID,df[,-c(3:5)],mean)
-drugs<-unique(df2$drug)
-#########################
-my_sab<-matrix(0,65,65)
-for (i in 1:65) {
-  print(i)
-  for (j in 1:65) {
-    if(i>=j){
-      x<-drugs[i]
-      y<-drugs[j]
-      zx<-df2[df2$drug%in%x,]
-      zy<-df2[df2$drug%in%y,]
-      xnames<-paste0(zx$drug,'_',zx$entrezID)
-      ynames<-paste0(zy$drug,'_',zy$entrezID)
-      z<-rbind(zx,zy)
-      dis<-as.matrix(dist(z[,-c(1:4)],method = manhat))
-      colnames(dis)<-rownames(dis)<-paste0(z$drug,'_',z$entrezID)
-      diag(dis)<-NA
-      dis[is.nan(dis)] <- 0
-      disx<-dis[xnames,xnames]
-      dxx<-mean(diag(as.matrix(disx[apply(disx,2,which.min),])))
-      disy<-dis[ynames,ynames]
-      dyy<-mean(diag(as.matrix(disy[apply(disy,2,which.min),])))
-      disxy<-dis[xnames,ynames]
-      disyx<-dis[ynames,xnames]
-      dxy<-mean(c(diag(as.matrix(disxy[apply(disxy,2,which.min),])),
-                  diag(as.matrix(disyx[apply(disyx,2,which.min),]))))
-      my_sab[i,j]<-dxy-((dxx+dyy)/2)
-      my_sab[j,i]<-my_sab[i,j]
-    }
-  }
-}
-diag(my_sab)<-NA
-colnames(my_sab)<-rownames(my_sab)<-drugs
-
+my_sab <- readRDS('Data/rds/my_sab.rds')
 my_sab <- as.data.frame(as.table(my_sab)) 
 colnames(my_sab) <- c("d1", "d2", "my_sAB") 
 my_sab <- my_sab[!is.na(my_sab$my_sAB), ]
-##############
-df3 <- left_join(sab,my_sab,c('d1','d2'))
-saveRDS(df3,'Data/rds/df3_sAB.rds')
+sab <- readRDS('Data/rds/sAB.rds')
+colnames(sab)[1:2] <- c('d1','d2')
 
-
-p1<-ggplot(df3,aes(sAB,my_sAB))+
+df <- left_join(sab,my_sab,c('d1','d2'))
+ggplot(df,aes(sAB,my_sAB))+
   geom_point(alpha=.5)+geom_smooth(method = 'lm')+
   stat_cor(col='red',size=8)+mythem+
     theme(axis.title = element_text(size=20),
@@ -3419,20 +2594,5 @@ p1<-ggplot(df3,aes(sAB,my_sAB))+
         axis.text.y = element_text(size = 13),)+
   xlab('sAB (PPI)')+ylab('sAB (CPE)')
 # save FIG9.pdf 10x7
-
-df3$sAB_bin <- cut(df3$sAB, breaks = 18, labels = paste0('Bin ',1:18))
-mids <- round(hist(df3$sAB, breaks = 18, plot = FALSE)$mids,1)
-mids <- data.frame(sAB_bin = paste0('Bin ',1:18),mids)
-df3 <- left_join(df3,mids,by = 'sAB_bin')
-df3$mids <- factor(df3$mids)
-
-p2<-ggplot(df3,aes(mids,my_sAB))+
-  geom_boxplot(alpha=.5)+geom_smooth(method = 'lm', aes(group=1))+
-  stat_cor(col='red',size=8, aes(group=1))+mythem+
-  #theme()+
-  xlab('sAB (PPI)')+ylab('sAB (CPE)')
-
-
-ggarrange(p1,p2,ncol = 1)
 ```
 
