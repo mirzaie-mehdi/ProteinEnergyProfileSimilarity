@@ -229,9 +229,7 @@ E210.astral <- data.frame(pdbID = astral$pdbID,
 colnames(E210.astral)[9:218] = pair_inter
 E210.astral_SS <- E210.seq_astral <- E210.seqPDB_astral <- E210.astral 
 for (NP in 1:Nprotein) {
-#  if (NP %% 50 == 0) {
-   print(NP)
-#  }
+  if (NP %% 50 == 0) {print(NP)}
   chain_resno <- split_position(astral$Position[NP])
   pdbname <- astral$pdbID[NP]
   tryCatch({
@@ -734,100 +732,66 @@ for(NP in 1:nrow(E210.CT_Ho)){
 }
 # saveRDS(E210.CT_Ho,'Data/rds/E210.CT_Ho.rds')
 # saveRDS(E210.seq_CT_Ho,'Data/rds/E210.seq_CT_Ho.rds')
-
-df <- readRDS('Data/rds/E210.seq_CT_Ho.rds')
-df <- df[!is.na(df$FF),]
-twoSF <- unique(df$cathID)
-
-dis <- as.matrix(dist(df[,-c(1:10)]/df$length, method = manhat))
-diag(dis) <- NA
-
-im <- apply(dis,1, FUN = which.min)
-res <- data.frame(sorce=df$cathID, target=df$cathID[im])
-#res$pred <- ifelse(res[,1]==res[,2],"1","0")
-## ----------
-cm <- matrix(0,2,2)
-colnames(cm) <- rownames(cm) <- twoSF
-for (sf in twoSF) {
-  x <- res[res$sorce%in%sf,]
-  z <- table(x$target)
-  cm[sf,names(z)]<-z
-}
-round(sum(diag(cm))/sum(cm),2)
 ```
 
-# five superfamily
+## five superfamily
 
 ```{r}
-# -------- 5 sf
-win <- 'a.4.5'
-imu <- 'b.1.1'
-ph <- 'b.55.1'
-ub <- 'd.15.1'
-ntf <- 'd.17.4'
+# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+# ----------------------------------------------------
+df5 <- readRDS('Data/rds/fiveSF.rds')
+Nprotein <- nrow(df5)
+#----------------------------------------------
+num_columns <- 210
+E210.seq_df5 <- data.frame(df5,
+                       matrix(NA,ncol=num_columns,nrow=Nprotein))
 
-fiveSF <- c(win,imu,ph,ub,ntf)
-#############
-df5 <- readRDS('Data/rds/E210.seq_df5.rds')
-df5 <- df5[!is.na(df5$FF),]
-###############
-dis <- as.matrix(dist(df5[,c(3,9:218)],method = manhat))
-diag(dis) <- NA
-
-im <- apply(dis,1, FUN = which.min)
-res <- data.frame(sorce=df5$superfamily, target=df5$superfamily[im])
-#res$pred <- ifelse(res[,1]==res[,2],"1","0")
-cm <- matrix(0,5,5)
-colnames(cm) <- rownames(cm) <- fiveSF
-for (sf in fiveSF) {
-  x <- res[res$sorce%in%sf,]
-  z <- table(x$target)
-  cm[sf,names(z)]<-z
+for (NP in 1:Nprotein) {
+  print(NP)
+  chain_resno <- split_position(df5$position[NP])
+  pdbname <- df5$pdbID[NP]
+  tryCatch({
+    pdb0 <- read.pdb(pdbname,verbose = FALSE)
+    pdblist = list()
+    for (ind in 1:dim(chain_resno)[1]){
+      sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=chain_resno$chain[ind])
+      sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+      sele4 <- atom.select(pdb0, "noh")
+      sele <- combine.select(sele1, sele2,sele4, operator="AND")
+      if (!(chain_resno$start[ind]=="NA") & !(chain_resno$end[ind])=="NA"){
+         st <- chain_resno$start[ind]
+         en <- chain_resno$end[ind]
+         sele3 <- atom.select(pdb0,  resno=st:en, verbose=FALSE)
+         sele <- combine.select(sele1, sele2,sele3,sele4, operator="AND")
+      }
+      pdblist[[ind]] <- trim.pdb(pdb0, sele,verbose = FALSE)
+    }
+    new_pdb = pdblist[[1]]
+    if (dim(chain_resno)[1] > 1) {
+      for (ind in 2:dim(chain_resno)[1]){
+      new_pdb <- cat.pdb(new_pdb, pdblist[[ind]], rechain=FALSE)
+      }
+    }
+    pdbX <- new_pdb$atom
+    #-----------sequence enregy based on PDB--------
+    pdbXca <- pdbX[pdbX$elety == "CA",]
+    seq <- aa321(pdbXca$resid)
+    freq = c()
+    for (j in 1:20){
+        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+    }
+    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+    en_fr <- aaenergy * freq_matrix
+    en_fr <- en_fr/length(seq)
+    pair_es <- diag(freq) %*% as.matrix(en_fr)
+    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+    E210.seq_df5[NP,9:218] <- aa210_p
+    }, error = function(e) {
+     cat("Error downloading file:", e$message, "\n")
+    })
 }
-sum(diag(cm))/sum(cm)
-Precision <- diag(cm)/colSums(cm)
-Recall <- diag(cm)/rowSums(cm)
-F1 <- (2 * Precision * Recall) /(Precision + Recall)
-round(F1,2)
-# ------------------------------------
-trainControl <- trainControl(method="repeatedcv", number=10, repeats=3)
-metric <- "Accuracy"
 
-df5$superfamily<-factor(df5$superfamily)
-validationIndex <- createDataPartition(df5$superfamily, p=0.70, list=FALSE)
-
-train <- df5[validationIndex,c(7,9:218)] # 70% of data to training
-test <- df5[-validationIndex,c(7,9:218)] 
-
-grid <- expand.grid(.k=seq(1,1,by=1))
-fit.knn <- train(superfamily~., data=train, method="knn", 
-                 metric=metric, tuneGrid=grid, trControl=trainControl)
-knn.k2 <- fit.knn$bestTune # keep this optimal k for testing with stand alone knn() function in next section
-print(fit.knn)
-
-prediction <- predict(fit.knn, newdata = test)
-cf <- confusionMatrix(prediction, test$superfamily)
-print(cf)
-cf$byClass[,'F1']
-#############
-kfolds <- createFolds(df5$superfamily, k = 10)
-res<-c()
-for (i in 1:10) {
-  print(i)
-  x <- kfolds[[i]]
-  tr <- df5[-x,c(7,9:218)]
-  te <- df5[x,c(7,9:218)]
-  #rf <- tuneRF(tr[,-1],tr$superfamily, stepFactor=1.5, improve=1e-5,plot = T,trace = T, doBest = T)
-  rf = randomForest(superfamily~.,data = tr)
-  p2 <- predict(rf, te)
-  cm2 <- confusionMatrix(p2, te$superfamily)
-  Accuracy <- c(cm2$overall['Accuracy'], F1=cm2$byClass[,'F1'])
-  res<-rbind(res,Accuracy)
-}
-res <- rbind(res,colMeans(res))
-res <- round(res,2)
-rownames(res) <- c(paste0("Fold_",1:length(kfolds)),'Average')
-colnames(res)[-1] <- gsub('.Class','',colnames(res)[-1])
+# saveRDS(E210.seq_df5,file = "Data/rds/E210.seq_df5.rds")
 ```
 
 # Figures
@@ -2171,5 +2135,87 @@ ggplot(df,aes(sAB,my_sAB))+
         axis.text.y = element_text(size = 13),)+
   xlab('sAB (PPI)')+ylab('sAB (CPE)')
 # save FIG9.pdf 10x7
+```
+
+## Table1 FiveSF
+
+```{r}
+# -------- 5 sf
+win <- 'a.4.5'
+imu <- 'b.1.1'
+ph <- 'b.55.1'
+ub <- 'd.15.1'
+ntf <- 'd.17.4'
+
+fiveSF <- c(win,imu,ph,ub,ntf)
+#############
+df5 <- readRDS('Data/rds/E210.seq_df5.rds')
+df5 <- df5[!is.na(df5$FF),]
+###############
+dis <- as.matrix(dist(df5[,-c(1:8)],method = manhat))
+diag(dis) <- NA
+
+im <- apply(dis,1, FUN = which.min)
+res <- data.frame(sorce=df5$superfamily, target=df5$superfamily[im])
+cm <- matrix(0,5,5)
+colnames(cm) <- rownames(cm) <- fiveSF
+for (sf in fiveSF) {
+  x <- res[res$sorce%in%sf,]
+  z <- table(x$target)
+  cm[sf,names(z)]<-z
+}
+Accuracy<-sum(diag(cm))/sum(cm)
+Precision <- diag(cm)/colSums(cm)
+Recall <- diag(cm)/rowSums(cm)
+F1 <- (2 * Precision * Recall) /(Precision + Recall)
+
+res1nn<-data.frame(t(round(c(Accuracy,F1),2)))
+# ------------------------------------
+df5$superfamily <- factor(df5$superfamily)
+kfolds <- createFolds(df5$superfamily, k = 10)
+res<-c()
+for (i in 1:10) {
+  print(i)
+  x <- kfolds[[i]]
+  tr <- df5[-x,c(7,9:218)]
+  te <- df5[x,c(7,9:218)]
+  rf = randomForest(superfamily~.,data = tr)
+  p2 <- predict(rf, te)
+  cm2 <- confusionMatrix(p2, te$superfamily)
+  Accuracy <- c(cm2$overall['Accuracy'], F1=cm2$byClass[,'F1'])
+  res<-rbind(res,Accuracy)
+}
+res <- rbind(res,colMeans(res))
+res <- round(res,2)
+rownames(res) <- c(paste0("Fold_",1:length(kfolds)),'Average')
+colnames(res)[-1] <- gsub('.Class','',colnames(res)[-1])
+# -----------------
+tab1 <- rbind(res1nn,res[11,])
+colnames(tab1)<-colnames(res)
+tab1 <- data.frame(method=c('1NN','RF'),tab1)
+```
+
+## Table2 CT_Ho
+
+```{r}
+# -------------------- 1NN 
+df <- readRDS('Data/rds/E210.seq_CT_Ho.rds')
+df <- df[!is.na(df$FF),]
+twoSF <- unique(df$cathID)
+
+dis <- as.matrix(dist(df[,-c(1:10)]/df$length, method = manhat))
+diag(dis) <- NA
+
+im <- apply(dis,1, FUN = which.min)
+res <- data.frame(sorce=df$cathID, target=df$cathID[im])
+## ----------
+cm <- matrix(0,2,2)
+colnames(cm) <- rownames(cm) <- twoSF
+for (sf in twoSF) {
+  x <- res[res$sorce%in%sf,]
+  z <- table(x$target)
+  cm[sf,names(z)]<-z
+}
+round(sum(diag(cm))/sum(cm),2)
 ```
 
