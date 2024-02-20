@@ -492,7 +492,7 @@ seq2df<-function(seq){
 }
 
 # ------------------------------
-dti <- read_excel('Data/csv/41467_2019_9186_MOESM4_ESM.xlsx')
+dti <- read_excel('Data/csv/41467_2019_9186_MOESM4_ESM_dti_barabasi.xlsx')
 colnames(dti)<-c('drugID','entrezID')
 dti$entrezID<-as.character(dti$entrezID)
 
@@ -818,7 +818,7 @@ idx <- sample(length(dis_str),100000)
 df_dis95 <- data.frame(data='Astral 95',
                        dis_str=as.vector(dis_str)[idx],
                        dis_seq=as.vector(dis_seq)[idx])
-saveRDS(df_dis95,'manuscript/fig_data/dis_95_manhat.rds')
+#saveRDS(df_dis95,'manuscript/fig_data/dis_95_manhat.rds')
 # ************************************************************
 # astral 40
 df_seq <- readRDS("Data/rds/E210.seq_astral40.rds") 
@@ -913,55 +913,6 @@ CD <- ggplot(df_tot,aes(class,seq/(2*length),fill=class))+
   mythem+theme(legend.title = element_blank(),
                axis.text.x = element_blank())
 
-#  ------------- add pValue
-#  df_tot2 <- df_tot
-#  df_tot2$str <- df_tot2$str/df_tot2$length
-#  df_tot2$seq <- df_tot2$seq/(2*df_tot2$length)
-#  
-#  my_comparisons <- list(c('All_alpha','All_beta'),
-#                         c('All_alpha','alpha/beta'),
-#                         c('All_alpha','alpha+beta'),
-#                         c('All_beta','alpha/beta'),
-#                         c('All_beta','alpha+beta'),
-#                         c('alpha/beta','alpha+beta'))
-#  
-#  AB <- ggboxplot(df_tot2, x='class',y='str', 
-#                 fill = 'class',alpha=.8,outlier.shape = NA)+
-#    theme_bw(base_line_size = .1)+facet_wrap(vars(data))+
-#    xlab('')+ylab('Total energy (structure)')+
-#    coord_cartesian(ylim = c(-14, -2))+
-#    theme(axis.title = element_text(size=20),
-#          axis.text.y = element_text(size=15),
-#          axis.text.x = element_blank(),
-#          strip.text = element_text(size = 20),
-#          legend.title = element_blank(),
-#          legend.text = element_text(size = 20),
-#          panel.spacing = unit(2, "lines"))+
-#    stat_compare_means(comparisons = my_comparisons,
-#                       method = 't.test',
-#                       size=7,label = "p.signif",
-#                       label.y = c(-7.3,-6.8,-6.3,-5.8,-5.3,-4.8),
-#                       tip.length = 0,vjust = .8,bracket.size = .1)
-#  
-#  
-#  CD <- ggboxplot(df_tot2, x='class',y='seq', 
-#            fill = 'class',alpha=.8,outlier.shape = NA)+
-#    theme_bw(base_line_size = .1)+facet_wrap(vars(data))+
-#    xlab('')+ylab('Total energy (structure)')+
-#    coord_cartesian(ylim = c(-14, -4))+
-#    theme(axis.title = element_text(size=20),
-#          axis.text.y = element_text(size=15),
-#          axis.text.x = element_blank(),
-#          strip.text = element_text(size = 20),
-#          legend.title = element_blank(),
-#          legend.text = element_text(size = 20),
-#          panel.spacing = unit(2, "lines"))+
-#    stat_compare_means(comparisons = my_comparisons,
-#                       method = 't.test',
-#                       size=7,label = "p.signif",
-#                       label.y = c(-7.4,-6.9,-6.4,-5.9,-5.4,-4.9),
-#                       tip.length = 0,vjust = .8,bracket.size = .1)
-#  
 
 ggarrange(NULL,
     AB, NULL,CD, ncol = 1,
@@ -1044,7 +995,8 @@ ump_df_seq95$class <- ifelse(ump_df_seq95$class=='a','All-alpha','All-beta')
 ump_df <- rbind(ump_df_str40,ump_df_seq40,
                 ump_df_str95,ump_df_seq95)
 
-save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95,file = 'manuscript/fig_data/UMPs.RData')
+# save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95,
+#      file = 'manuscript/fig_data/UMPs.RData')
 load('manuscript/fig_data/UMPs.RData')
 ump_df_str40$type <- ifelse(ump_df_str40$type=='Structure','SPE','CPE')
 ump_df_seq40$type <- ifelse(ump_df_seq40$type=='Structure','SPE','CPE')
@@ -1318,8 +1270,6 @@ B <- ggarrange(NULL,NULL,NULL,NULL,
                      '',"B", "", ""),
   font.label = list(size = 30),
   hjust = .2,vjust = 0)
-
-
 ```
 
 ## Fig4C
@@ -1941,10 +1891,12 @@ ggsplitnet(nnet) + geom_tiplab2(aes(label=label),
                                 hjust=-.1,size=5,
                                 color='blue')+
   ggexpand(.1) + ggexpand(.1, direction=-1)
-#write.nexus.networx(nnet,'Data/rds/E210_ferritin_manhat.nxs')
-#nnet <- read.nexus.networx('Data/rds/E210_ferritin_manhat.nxs')
+# write.nexus.networx(nnet,'Data/rds/E210_ferritin_manhat.nxs')
+# nnet <- read.nexus.networx('Data/rds/E210_ferritin_manhat.nxs')
+# --------------------------------------------------------------------
 # ----   the 'E210_ferritin_manhat.nxs' file 
 # -----      was load on SplitsTree4(v 4.19.2) to visualize
+# --------------------------------------------------------------------
 ```
 
 ## Fig7 covid

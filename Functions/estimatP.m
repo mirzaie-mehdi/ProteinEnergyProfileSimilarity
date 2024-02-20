@@ -1,7 +1,7 @@
  clear;clc
  tic
- path='Data/Dunbrack/';
- load('Data/rds/energy_dell_dunbrack.mat');
+ path='../../Dunbrack/';
+ load('../Data/rds/energy_dell_dunbrack.mat');
  Tdist=6;start=0.75;binw=0.5;seqsep =1;
  zi=cell(1,20);
  esk=cell(1,2);
@@ -13,7 +13,7 @@
  while ischar(filaname_chain)
      ff=lower(filaname_chain(1:4));
      disp(num2str(Nfile))
-     pdb=pdbread([path ff '.pdb']);
+     pdb=pdbread([path 'PDBs/' ff '.pdb']);
      if length(filaname_chain)==5
          chain=filaname_chain(end);
          for i=1:length(pdb.Sequence)
@@ -179,4 +179,4 @@ for i=1:20
         Pij(i,j) = vpa(slv_cel2{j},10);
     end
 end
-csvwrite([path '/Pij.csv'],Pij)
+writematrix(Pij,[path '/Pij.csv'])
