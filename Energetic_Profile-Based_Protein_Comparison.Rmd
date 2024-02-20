@@ -597,7 +597,7 @@ colnames(my_sab)<-rownames(my_sab)<-drugs
 # saveRDS(my_sab,'Data/rds/my_sab.rds')
 ```
 
-# Bacteriocin Tm-Vec
+## Bacteriocin Tm-Vec
 
 ```{r}
 # -------- At first, run the 'Energy Calculation prerequisite' chunk.
@@ -633,58 +633,16 @@ for (i in 1:nprotein){
   CEP_y <- c(length(seq),aa210_p)
   # ----------
   tm$CEP_dis[i] <- manhat(CEP_x[-1],CEP_y[-1])
-  tm$CEP_dis_normLen[i] <- manhat(CEP_x/CEP_x[1],CEP_y/CEP_y[1])
 }
 
-tm$CEP_dis_MaxMin <- (tm$CEP_dis-min(tm$CEP_dis))/(max(tm$CEP_dis)-min(tm$CEP_dis))
-
-tm$CEP_dis_normLen_MaxMin <- (tm$CEP_dis_normLen-min(tm$CEP_dis_normLen))/
-  (max(tm$CEP_dis_normLen)-min(tm$CEP_dis_normLen))
-tm$CEP_dis_MaxMin1 <- 1-(tm$CEP_dis_MaxMin)
-tm$CEP_dis_normLen_MaxMin1 <- 1-(tm$CEP_dis_normLen_MaxMin)
+tm$CEP_dis <- (tm$CEP_dis-min(tm$CEP_dis))/(max(tm$CEP_dis)-min(tm$CEP_dis))
+tm$CEP_dis <- 1-(tm$CEP_dis) 
 
 tm$status <- if_else(tm$class_x==tm$class_y,'same class','different class')
 tm$status2 <- if_else(tm$Subclass_x==tm$Subclass_y&tm$class_x=='Class_1'&tm$class_y=='Class_1','same class(sub class1)',NA)
-#saveRDS(tm,'Data/rds/bacteriocin_tm-vec.RDS')
-```
-
-## fig Bacteriocin Tm-Vec
-
-```{r}
-tm <- readRDS('Data/rds/bacteriocin_tm-vec.RDS')
-tm$CEP_dis_MaxMin1 <- tm$CEP_dis_MaxMin1-.36
-tm2 <- tm[!is.na(tm$status2),-28]
-colnames(tm2)[28]<-'status'
-tm2 <- rbind(tm[,-29],tm2)
-
-tm2 <- tm2[,c(5,20,21,6,26,28)]
-colnames(tm2)[-6] <- c('Alphafold2','Omegafold','ESMfold','TM_vec','CEP')
-tm2 <- melt(tm2,variable.name = 'method',value.name = 'score')
-tm2$method <- factor(tm2$method,levels = c('TM_vec','Alphafold2','Omegafold','ESMfold','CEP'))
-p1<-ggplot(tm2, aes(status,score,fill=method))+
-  #geom_violin(trim = TRUE,
-  #            alpha = 0.3)+
-  geom_boxplot(outlier.shape = NA,
-               color='black',
-               size=rep(c(rep(.3,4),1),3),
-               alpha=rep(c(rep(.4,4),1),3),
-               width=.4
-               #position = position_dodge(width = .9)
-               )+
-  coord_cartesian(ylim = c(0.1, 1))+
-  xlab('')+
-    geom_hline(yintercept = .5, linetype="dashed", 
-             color = "red", size=.7)+
-  mythem+
-  theme(legend.title = element_blank(),
-        axis.text.y = element_text(size=13),
-        axis.text.x = element_text(color = 'black',size = 15, face = 'bold'),
-        axis.title.y = element_text(size = 20,vjust = 2, face = 'bold'),
-        legend.text = element_text(size = 15))+
-  scale_fill_discrete(labels=c('TM_vec','Alphafold2',
-                               'Omegafold','ESMfold',
-                               expression(bold("CEP"))))
-
+# saveRDS(tm,'Data/rds/bacteriocin_tm-vec.RDS')
+# ---------------------------------------------------------
+# ------- ENERGY
 # ---------------------------------------
 tm_unique <- tm[!duplicated(tm$ID_x),]
 nprotein <- nrow(tm_unique)
@@ -707,66 +665,27 @@ pair_es <- diag(freq) %*% as.matrix(en_fr)
 aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
 tm_unique[i,7:216] <- aa210_p
 }
-
-df <- tm_unique[,-c(1:6)]
-dis <- as.matrix(proxy::dist(df, method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 100,
-            min_dist = 0.1,
-            input="dist")
-
-ump_df <- data.frame(class=tm_unique$class_x,
-                     subclass=tm_unique$Subclass_x,
-                     UMAP1 = ump$layout[, 1],
-                     UMAP2 = ump$layout[, 2])
-
-p2<-ggplot(ump_df,
-       aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7, size=2) + 
-  mythem+
-  theme(legend.title = element_blank(),
-        legend.position = 'bottom',
-        axis.title = element_text(size = 15),
-        axis.title.y = element_text(size = 15,vjust = 5),
-        legend.text = element_text(size = 15))+
-  scale_color_manual(values = c('green','magenta','blue'))
-
-
-p1 <- ggarrange(NULL,NULL,
-          NULL,p1,ncol = 2,nrow = 2,
-          labels = c('','B'),
-          heights = c(0.1,1),
-          widths = c(.1,1),
-          font.label = list(size = 50),
-          hjust = 0,vjust = 1.2)
-p2 <- ggarrange(NULL,NULL,
-          NULL,p2,ncol = 2,nrow = 2,
-          labels = c('','A'),
-          heights = c(0.1,1),
-          widths = c(.1,1),
-          font.label = list(size = 50),
-          hjust = .5,vjust = 1.2)
-
-ggarrange(p2,NULL,p1,ncol = 3,nrow = 1,
-          widths = c(.5,.05,1))
-# save FIG8.pdf 15x8
+# saveRDS(tm_unique,'Data/rds/E210.seq_bacteriocin.RDS')
 ```
 
-# CT_Ho
+## CT_Ho
 
 ```{r}
+# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+# ----------------------------------------------------
 df <- read.csv('Data/csv/CT_Ho_cathID_filtered.csv')
 df$chain <- substr(df$pdbID,5,5)
 df$pdbID <- substr(df$pdbID,1,4)
 
 E210.CT_Ho <- data.frame(pdbID = df$pdbID,chainID = df$chain,length = NA,
-                            start = df$start,end = df$end,
+                         start = df$start,end = df$end,
                          cathID = df$cathID,
-                                        class = df$class,
-                                         architecture = df$architecture,
-                                         topology = df$topology,
-                                         homologous = df$homologous,
-                                         matrix(NA, ncol = 210, nrow = nrow(df)))
+                         class = df$class,
+                         architecture = df$architecture,
+                         topology = df$topology,
+                         homologous = df$homologous,
+                         matrix(NA, ncol = 210, nrow = nrow(df)))
+
 colnames(E210.CT_Ho)[-c(1:10)] <- pair_inter
 E210.seq_CT_Ho <- E210.CT_Ho
 
@@ -788,38 +707,39 @@ for(NP in 1:nrow(E210.CT_Ho)){
          sele3 <- atom.select(pdb0,  resno=st:en, verbose=TRUE)
          sele <- combine.select(sele, sele3, operator="AND")
       }
-    pdbX <- pdb0$atom[sele$atom,]
-    E210.CT_Ho$length[NP] = length(unique(pdbX$resno))
-    Net_Frame <- NetworkFrame(PDB = pdb0,sele)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
-    E210.CT_Ho[NP,11:220] <- energy210
-    # ****************seq************************
-    pdbXca <- pdbX[pdbX$elety == "CA",]
-    seq = aa321(pdbXca$resid)
-    E210.seq_CT_Ho$length[NP] = length(seq)
-    freq = c()
-    for (j in 1:20){
-        freq[j] <-  length(grep(letters_list[j],seq))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-    E210.seq_CT_Ho[NP,11:220] <- aa210_p
-    }, error = function(e) {
-     cat("Error downloading file:", e$message, "\n")
-    })
+      new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+      pdbX <- new_pdb$atom
+      E210.CT_Ho$length[NP] = length(unique(pdbX$resno))
+      Net_Frame <- NetworkFrame(PDB = new_pdb)
+      energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+      E210.CT_Ho[NP,11:220] <- energy210
+      # ****************seq************************
+      pdbXca <- pdbX[pdbX$elety == "CA",]
+      seq <- tolower(aa321(pdbXca$resid))
+      E210.seq_CT_Ho$length[NP] = length(seq)
+      freq = c()
+      for (j in 1:20){
+          freq[j] <- length(grep(tolower(letters_list[j]),seq))
+      }
+      freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+      en_fr <- aaenergy * freq_matrix
+      en_fr <- en_fr/length(seq)
+      pair_es <- diag(freq) %*% as.matrix(en_fr)
+      aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+      E210.seq_CT_Ho[NP,11:220] <- aa210_p
+      }, error = function(e) {
+       cat("Error downloading file:", e$message, "\n")
+        }
+  )
 }
-saveRDS(E210.CT_Ho,'Data/rds/E210.CT_Ho.rds')
-saveRDS(E210.seq_CT_Ho,'Data/rds/E210.seq_CT_Ho.rds')
+# saveRDS(E210.CT_Ho,'Data/rds/E210.CT_Ho.rds')
+# saveRDS(E210.seq_CT_Ho,'Data/rds/E210.seq_CT_Ho.rds')
 
-###########################
-df <- readRDS('Data/rds/E210.CT_Ho.rds')
+df <- readRDS('Data/rds/E210.seq_CT_Ho.rds')
 df <- df[!is.na(df$FF),]
 twoSF <- unique(df$cathID)
 
-dis <- as.matrix(dist(df[,c(3,11:220)], method = manhat))
+dis <- as.matrix(dist(df[,-c(1:10)]/df$length, method = manhat))
 diag(dis) <- NA
 
 im <- apply(dis,1, FUN = which.min)
@@ -834,17 +754,6 @@ for (sf in twoSF) {
   cm[sf,names(z)]<-z
 }
 round(sum(diag(cm))/sum(cm),2)
-# --------------
-ump <- umap(d = dis,
-            n_neighbors = 50,
-            min_dist = 0.1,
-            input="dist")
-ump_df <- data.frame(class=df$cathID,
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-ggplot(ump_df,aes(UMAP1, UMAP2, color= class)) +
-    geom_point(alpha=.7) + 
-  mythem
 ```
 
 # five superfamily
@@ -1099,6 +1008,466 @@ ggarrange(NULL,
     hjust = -.5,vjust = 0
     )
 # save FIG2.pdf 10x9
+```
+
+## Fig3
+
+```{r}
+# ******** str40
+df <- readRDS("Data/rds/E210.astral40.rds")
+df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
+df <- df[,c(5,3,9:218)]
+dis <- as.matrix(proxy::dist(df[,-1]/df$length, method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str40 <- data.frame(data='Astral 40',type='Structure',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+ump_df_str40$class <- ifelse(ump_df_str40$class=='a','All-alpha','All-beta')
+
+# ******** seq40
+df <- readRDS("Data/rds/E210.seq_astral40.rds")
+df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
+df <- df[,c(5,3,9:218)]
+dis <- as.matrix(proxy::dist(df[,-c(1)]/df$length, method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq40 <- data.frame(data='Astral 40',type='Sequence',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+ump_df_seq40$class <- ifelse(ump_df_seq40$class=='a','All-alpha','All-beta')
+
+# ******** str95
+df <- readRDS("Data/rds/E210.astral_95.rds")
+df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
+df <- df[,c(5,3,9:218)]
+dis <- as.matrix(proxy::dist(df[,-c(1)]/df$length, method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str95 <- data.frame(data='Astral 95',type='Structure',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+ump_df_str95 <- ump_df_str95[ump_df_str95$UMAP1> -1.5 & ump_df_str95$UMAP1< 4.5,]
+ump_df_str95 <- ump_df_str95[ump_df_str95$UMAP2> -1.5 & ump_df_str95$UMAP2< 6,]
+ump_df_str95$class <- ifelse(ump_df_str95$class=='a','All-alpha','All-beta')
+
+# ******** seq95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds")
+df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
+df <- df[,c(5,3,9:218)]
+dis <- as.matrix(proxy::dist(df[,-c(1)]/df$length, method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq95 <- data.frame(data='Astral 95',type='Sequence',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+ump_df_seq95 <- ump_df_seq95[ump_df_seq95$UMAP1> -5 & ump_df_seq95$UMAP1< 1.5,]
+ump_df_seq95 <- ump_df_seq95[ump_df_seq95$UMAP2> -2.5 & ump_df_seq95$UMAP2< 3,]
+ump_df_seq95$class <- ifelse(ump_df_seq95$class=='a','All-alpha','All-beta')
+# **** rbind
+ump_df <- rbind(ump_df_str40,ump_df_seq40,
+                ump_df_str95,ump_df_seq95)
+
+save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95,file = 'manuscript/fig_data/UMPs.RData')
+load('manuscript/fig_data/UMPs.RData')
+ump_df_str40$type <- ifelse(ump_df_str40$type=='Structure','SPE','CPE')
+ump_df_seq40$type <- ifelse(ump_df_seq40$type=='Structure','SPE','CPE')
+ump_df_str95$type <- ifelse(ump_df_str95$type=='Structure','SPE','CPE')
+ump_df_seq95$type <- ifelse(ump_df_seq95$type=='Structure','SPE','CPE')
+
+ump_df_str40$data <- ump_df_seq40$data <- 'ASTRAL40'
+ump_df_str95$data <- ump_df_seq95$data <- 'ASTRAL95'
+
+p1<-ggplot(ump_df_str40,aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7,size=.5) + 
+  facet_grid(data ~ type)+xlab('')+ylab('')+
+  mythem+scale_color_manual(values = c('green','magenta'))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 5)))
+
+p2<-ggplot(ump_df_seq40,aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7,size=.5) + 
+  facet_grid( ~ type)+xlab('')+
+  #facet_grid(data ~ type)+xlab('')+ylab('')+
+  mythem+scale_color_manual(values = c('green','magenta'))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 5)))
+
+p3<-ggplot(ump_df_str95,aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7,size=.5) +
+  facet_grid(rows = vars(data))+ylab('')+
+  mythem+scale_color_manual(values = c('green','magenta'))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 5)))
+
+
+p4<-ggplot(ump_df_seq95,aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7,size=.5) + 
+  #facet_grid(rows = vars(data))+ylab('')+
+  mythem+scale_color_manual(values = c('green','magenta'))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 5)))
+
+# ********
+ggarrange(NULL,NULL,NULL,
+          p2,NULL,p1,
+          NULL,NULL,NULL,
+          p4,NULL,p3,ncol = 3,nrow = 4,
+          common.legend = T,
+          labels = c('','','',
+                     "A", "", "B",
+                     '','','',
+                     'C','','D'),
+          font.label = list(size = 30),
+          widths = c(1, 0.12, 1),
+          heights = c(.1, 1, 0.12, 1),
+          hjust = -.5,vjust = 0,legend = 'bottom')
+
+# save FIG3.pdf 10x10
+```
+
+## Fig4A
+
+```{r}
+# ******** str40
+df <- readRDS("Data/rds/E210.astral40.rds")
+df <- df[df$fold%in%c('a.100','a.104'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(6,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str <- data.frame(data='Astral 40',type='SPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+
+# ******** seq40
+df <- readRDS("Data/rds/E210.seq_astral40.rds")
+df <- df[df$fold%in%c('a.100','a.104'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(6,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq <- data.frame(data='Astral 40',type='CPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+z <- rbind(ump_df_str,ump_df_seq)
+z$data <- 'ASTRAL40'
+z$class <- ifelse(z$class=='a.100', 'a.100    ','a.104')
+
+p1 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
+    geom_point(alpha=.7) + 
+    facet_nested(~ data+type,independent = T,scales = T)+
+  ylab('')+xlab('')+
+  mythem+
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 3)))
+# ---------------------
+# ******** str95
+df <- readRDS("Data/rds/E210.astral_95.rds")
+df <- df[df$fold%in%c('a.100','a.104'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(6,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str <- data.frame(data='Astral 95',type='SPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+
+# ******** seq95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds")
+df <- df[df$fold%in%c('a.100','a.104'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(6,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq <- data.frame(data='Astral 95',type='CPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+z <- rbind(ump_df_str,ump_df_seq)
+z$data <- 'ASTRAL95'
+z$class <- ifelse(z$class=='a.100', 'a.100    ','a.104')
+
+
+p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
+    geom_point(alpha=.7) + 
+    facet_nested(~ data+type,independent = T,scales = T)+
+  ylab('')+xlab('')+
+  mythem+
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 3)))
+
+A<-ggarrange(NULL,NULL,NULL,NULL,
+             NULL,p1,NULL,p2,nrow = 2,ncol = 4,
+          common.legend = T,legend = 'right',
+          widths = c(.1,1, 0.0, 1),
+          heights = c(.07,1),
+          labels = c('','','','',
+                     '',"A", "", ""),
+  font.label = list(size = 30),
+  hjust = .2,vjust = 0)
+
+```
+
+## Fig4B
+
+```{r}
+# ******** str40
+df <- readRDS("Data/rds/E210.astral40.rds")
+df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(7,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str <- data.frame(data='Astral 40',type='SPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+
+# ******** seq40
+df <- readRDS("Data/rds/E210.seq_astral40.rds")
+df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(7,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq <- data.frame(data='Astral 40',type='CPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+z <- rbind(ump_df_str,ump_df_seq)
+z$data <- 'ASTRAL40'
+z$class <- ifelse(z$class=='a.29.2', 'a.29.2   ','a.29.3')
+
+p1 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
+    geom_point(alpha=.7) + 
+    facet_nested(~ data+type,independent = T,scales = T)+
+  ylab('')+xlab('')+
+  mythem+
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 3)))
+# ---------------------
+# ******** str95
+df <- readRDS("Data/rds/E210.astral_95.rds")
+df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(7,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str <- data.frame(data='Astral 95',type='SPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+
+# ******** seq95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds")
+df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(7,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq <- data.frame(data='Astral 95',type='CPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+z <- rbind(ump_df_str,ump_df_seq)
+z$data <- 'ASTRAL95'
+z$class <- ifelse(z$class=='a.29.2', 'a.29.2   ','a.29.3')
+
+p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
+    geom_point(alpha=.7) + 
+    facet_nested(~ data+type,independent = T,scales = T)+
+  ylab('')+xlab('')+
+  mythem+
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 3)))
+
+B <- ggarrange(NULL,NULL,NULL,NULL,
+             NULL,p1,NULL,p2,nrow = 2,ncol = 4,
+          common.legend = T,legend = 'right',
+          widths = c(.1,1, 0.0, 1),
+          heights = c(.07,1),
+          labels = c('','','','',
+                     '',"B", "", ""),
+  font.label = list(size = 30),
+  hjust = .2,vjust = 0)
+
+
+```
+
+## Fig4C
+
+```{r}
+# ******** str40
+df <- readRDS("Data/rds/E210.astral40.rds")
+df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(8,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 10,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str <- data.frame(data='Astral 40',type='SPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+
+# ******** seq40
+df <- readRDS("Data/rds/E210.seq_astral40.rds")
+df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(8,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 10,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq <- data.frame(data='Astral 40',type='CPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+z <- rbind(ump_df_str,ump_df_seq)
+z$data <- 'ASTRAl40'
+
+p1 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
+    geom_point(alpha=.7) + 
+    facet_nested(~ data+type,independent = T,scales = T)+
+  ylab('')+xlab('')+
+  mythem+
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 3)))
+# ---------------------
+# ******** str95
+df <- readRDS("Data/rds/E210.astral_95.rds")
+df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(8,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 10,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str <- data.frame(data='Astral 95',type='SPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+
+# ******** seq95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds")
+df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(8,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 10,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq <- data.frame(data='Astral 95',type='CPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+z <- rbind(ump_df_str,ump_df_seq)
+z$data <- 'ASTRAL95'
+
+p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
+    geom_point(alpha=.7) + 
+    facet_nested(~ data+type,independent = T,scales = T)+
+  ylab('')+xlab('')+
+  mythem+
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 3)))
+
+C <- ggarrange(NULL,NULL,NULL,NULL,
+             NULL,p1,NULL,p2,nrow = 2,ncol = 4,
+          common.legend = T,legend = 'right',
+          widths = c(.1,1, 0.0, 1),
+          heights = c(.07,1),
+          labels = c('','','','',
+                     '',"C", "", ""),
+  font.label = list(size = 30),
+  hjust = .2,vjust = 0)
+```
+
+##Fig4ABC
+
+```{r}
+ggarrange(NULL,A,B,C,ncol = 1,
+          heights = c(0.07,1,1,1))
+# save FIG4.pdf 10x10
 ```
 
 ## Fig5EF
@@ -1595,464 +1964,23 @@ cowplot::plot_grid(f5all, mylegend, ncol = 1, rel_heights = c(1,.03))
 # save pdf 10x9
 ```
 
-## Fig3
+## Fig6 ferritin
 
 ```{r}
-# ******** str40
-df <- readRDS("Data/rds/E210.astral40.rds")
-df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
-df <- df[,c(5,3,9:218)]
-dis <- as.matrix(proxy::dist(df[,-1]/df$length, method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df_str40 <- data.frame(data='Astral 40',type='Structure',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-ump_df_str40$class <- ifelse(ump_df_str40$class=='a','All-alpha','All-beta')
+E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
+df <- E210_ferritin
 
-# ******** seq40
-df <- readRDS("Data/rds/E210.seq_astral40.rds")
-df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
-df <- df[,c(5,3,9:218)]
-dis <- as.matrix(proxy::dist(df[,-c(1)]/df$length, method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df_seq40 <- data.frame(data='Astral 40',type='Sequence',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-ump_df_seq40$class <- ifelse(ump_df_seq40$class=='a','All-alpha','All-beta')
+dis <- proxy::dist(df[,-c(1:3)], method = manhat)
 
-# ******** str95
-df <- readRDS("Data/rds/E210.astral_95.rds")
-df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
-df <- df[,c(5,3,9:218)]
-dis <- as.matrix(proxy::dist(df[,-c(1)]/df$length, method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df_str95 <- data.frame(data='Astral 95',type='Structure',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-ump_df_str95 <- ump_df_str95[ump_df_str95$UMAP1> -1.5 & ump_df_str95$UMAP1< 4.5,]
-ump_df_str95 <- ump_df_str95[ump_df_str95$UMAP2> -1.5 & ump_df_str95$UMAP2< 6,]
-ump_df_str95$class <- ifelse(ump_df_str95$class=='a','All-alpha','All-beta')
-
-# ******** seq95
-df <- readRDS("Data/rds/E210.seq_astral_95.rds")
-df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
-df <- df[,c(5,3,9:218)]
-dis <- as.matrix(proxy::dist(df[,-c(1)]/df$length, method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df_seq95 <- data.frame(data='Astral 95',type='Sequence',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-ump_df_seq95 <- ump_df_seq95[ump_df_seq95$UMAP1> -5 & ump_df_seq95$UMAP1< 1.5,]
-ump_df_seq95 <- ump_df_seq95[ump_df_seq95$UMAP2> -2.5 & ump_df_seq95$UMAP2< 3,]
-ump_df_seq95$class <- ifelse(ump_df_seq95$class=='a','All-alpha','All-beta')
-# **** rbind
-ump_df <- rbind(ump_df_str40,ump_df_seq40,
-                ump_df_str95,ump_df_seq95)
-
-save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95,file = 'manuscript/fig_data/UMPs.RData')
-load('manuscript/fig_data/UMPs.RData')
-ump_df_str40$type <- ifelse(ump_df_str40$type=='Structure','SPE','CPE')
-ump_df_seq40$type <- ifelse(ump_df_seq40$type=='Structure','SPE','CPE')
-ump_df_str95$type <- ifelse(ump_df_str95$type=='Structure','SPE','CPE')
-ump_df_seq95$type <- ifelse(ump_df_seq95$type=='Structure','SPE','CPE')
-
-ump_df_str40$data <- ump_df_seq40$data <- 'ASTRAL40'
-ump_df_str95$data <- ump_df_seq95$data <- 'ASTRAL95'
-
-p1<-ggplot(ump_df_str40,aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7,size=.5) + 
-  facet_grid(data ~ type)+xlab('')+ylab('')+
-  mythem+scale_color_manual(values = c('green','magenta'))+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 5)))
-
-p2<-ggplot(ump_df_seq40,aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7,size=.5) + 
-  facet_grid( ~ type)+xlab('')+
-  #facet_grid(data ~ type)+xlab('')+ylab('')+
-  mythem+scale_color_manual(values = c('green','magenta'))+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 5)))
-
-p3<-ggplot(ump_df_str95,aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7,size=.5) +
-  facet_grid(rows = vars(data))+ylab('')+
-  mythem+scale_color_manual(values = c('green','magenta'))+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 5)))
-
-
-p4<-ggplot(ump_df_seq95,aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7,size=.5) + 
-  #facet_grid(rows = vars(data))+ylab('')+
-  mythem+scale_color_manual(values = c('green','magenta'))+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 5)))
-
-# ********
-ggarrange(NULL,NULL,NULL,
-          p2,NULL,p1,
-          NULL,NULL,NULL,
-          p4,NULL,p3,ncol = 3,nrow = 4,
-          common.legend = T,
-          labels = c('','','',
-                     "A", "", "B",
-                     '','','',
-                     'C','','D'),
-          font.label = list(size = 30),
-          widths = c(1, 0.12, 1),
-          heights = c(.1, 1, 0.12, 1),
-          hjust = -.5,vjust = 0,legend = 'bottom')
-
-# save FIG3.pdf 10x10
-```
-
-## Fig4A
-
-```{r}
-# ******** str40
-df <- readRDS("Data/rds/E210.astral40.rds")
-df <- df[df$fold%in%c('a.100','a.104'),]
-df <- df[!is.na(df$FF),]
-df <- df[,c(6,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df_str <- data.frame(data='Astral 40',type='SPE',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-
-# ******** seq40
-df <- readRDS("Data/rds/E210.seq_astral40.rds")
-df <- df[df$fold%in%c('a.100','a.104'),]
-df <- df[!is.na(df$FF),]
-df <- df[,c(6,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df_seq <- data.frame(data='Astral 40',type='CPE',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-z <- rbind(ump_df_str,ump_df_seq)
-z$data <- 'ASTRAL40'
-z$class <- ifelse(z$class=='a.100', 'a.100    ','a.104')
-
-p1 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
-    geom_point(alpha=.7) + 
-    facet_nested(~ data+type,independent = T,scales = T)+
-  ylab('')+xlab('')+
-  mythem+
-  theme(axis.text.y = element_blank(),
-        axis.text.x = element_blank(),
-        legend.title = element_blank(),
-        legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 3)))
-# ---------------------
-# ******** str95
-df <- readRDS("Data/rds/E210.astral_95.rds")
-df <- df[df$fold%in%c('a.100','a.104'),]
-df <- df[!is.na(df$FF),]
-df <- df[,c(6,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df_str <- data.frame(data='Astral 95',type='SPE',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-
-# ******** seq95
-df <- readRDS("Data/rds/E210.seq_astral_95.rds")
-df <- df[df$fold%in%c('a.100','a.104'),]
-df <- df[!is.na(df$FF),]
-df <- df[,c(6,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df_seq <- data.frame(data='Astral 95',type='CPE',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-z <- rbind(ump_df_str,ump_df_seq)
-z$data <- 'ASTRAL95'
-z$class <- ifelse(z$class=='a.100', 'a.100    ','a.104')
-
-
-p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
-    geom_point(alpha=.7) + 
-    facet_nested(~ data+type,independent = T,scales = T)+
-  ylab('')+xlab('')+
-  mythem+
-  theme(axis.text.y = element_blank(),
-        axis.text.x = element_blank(),
-        legend.title = element_blank(),
-        legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 3)))
-
-A<-ggarrange(NULL,NULL,NULL,NULL,
-             NULL,p1,NULL,p2,nrow = 2,ncol = 4,
-          common.legend = T,legend = 'right',
-          widths = c(.1,1, 0.0, 1),
-          heights = c(.07,1),
-          labels = c('','','','',
-                     '',"A", "", ""),
-  font.label = list(size = 30),
-  hjust = .2,vjust = 0)
-
-```
-
-## Fig4B
-
-```{r}
-# ******** str40
-df <- readRDS("Data/rds/E210.astral40.rds")
-df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
-df <- df[!is.na(df$FF),]
-df <- df[,c(7,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df_str <- data.frame(data='Astral 40',type='SPE',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-
-# ******** seq40
-df <- readRDS("Data/rds/E210.seq_astral40.rds")
-df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
-df <- df[!is.na(df$FF),]
-df <- df[,c(7,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df_seq <- data.frame(data='Astral 40',type='CPE',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-z <- rbind(ump_df_str,ump_df_seq)
-z$data <- 'ASTRAL40'
-z$class <- ifelse(z$class=='a.29.2', 'a.29.2   ','a.29.3')
-
-p1 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
-    geom_point(alpha=.7) + 
-    facet_nested(~ data+type,independent = T,scales = T)+
-  ylab('')+xlab('')+
-  mythem+
-  theme(axis.text.y = element_blank(),
-        axis.text.x = element_blank(),
-        legend.title = element_blank(),
-        legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 3)))
-# ---------------------
-# ******** str95
-df <- readRDS("Data/rds/E210.astral_95.rds")
-df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
-df <- df[!is.na(df$FF),]
-df <- df[,c(7,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df_str <- data.frame(data='Astral 95',type='SPE',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-
-# ******** seq95
-df <- readRDS("Data/rds/E210.seq_astral_95.rds")
-df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
-df <- df[!is.na(df$FF),]
-df <- df[,c(7,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df_seq <- data.frame(data='Astral 95',type='CPE',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-z <- rbind(ump_df_str,ump_df_seq)
-z$data <- 'ASTRAL95'
-z$class <- ifelse(z$class=='a.29.2', 'a.29.2   ','a.29.3')
-
-p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
-    geom_point(alpha=.7) + 
-    facet_nested(~ data+type,independent = T,scales = T)+
-  ylab('')+xlab('')+
-  mythem+
-  theme(axis.text.y = element_blank(),
-        axis.text.x = element_blank(),
-        legend.title = element_blank(),
-        legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 3)))
-
-B <- ggarrange(NULL,NULL,NULL,NULL,
-             NULL,p1,NULL,p2,nrow = 2,ncol = 4,
-          common.legend = T,legend = 'right',
-          widths = c(.1,1, 0.0, 1),
-          heights = c(.07,1),
-          labels = c('','','','',
-                     '',"B", "", ""),
-  font.label = list(size = 30),
-  hjust = .2,vjust = 0)
-
-
-```
-
-## Fig4C
-
-```{r}
-# ******** str40
-df <- readRDS("Data/rds/E210.astral40.rds")
-df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
-df <- df[!is.na(df$FF),]
-df <- df[,c(8,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 10,
-            min_dist = 0.1,
-            input="dist")
-ump_df_str <- data.frame(data='Astral 40',type='SPE',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-
-# ******** seq40
-df <- readRDS("Data/rds/E210.seq_astral40.rds")
-df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
-df <- df[!is.na(df$FF),]
-df <- df[,c(8,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 10,
-            min_dist = 0.1,
-            input="dist")
-ump_df_seq <- data.frame(data='Astral 40',type='CPE',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-z <- rbind(ump_df_str,ump_df_seq)
-z$data <- 'ASTRAl40'
-
-p1 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
-    geom_point(alpha=.7) + 
-    facet_nested(~ data+type,independent = T,scales = T)+
-  ylab('')+xlab('')+
-  mythem+
-  theme(axis.text.y = element_blank(),
-        axis.text.x = element_blank(),
-        legend.title = element_blank(),
-        legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 3)))
-# ---------------------
-# ******** str95
-df <- readRDS("Data/rds/E210.astral_95.rds")
-df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
-df <- df[!is.na(df$FF),]
-df <- df[,c(8,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 10,
-            min_dist = 0.1,
-            input="dist")
-ump_df_str <- data.frame(data='Astral 95',type='SPE',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-
-# ******** seq95
-df <- readRDS("Data/rds/E210.seq_astral_95.rds")
-df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
-df <- df[!is.na(df$FF),]
-df <- df[,c(8,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 10,
-            min_dist = 0.1,
-            input="dist")
-ump_df_seq <- data.frame(data='Astral 95',type='CPE',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-z <- rbind(ump_df_str,ump_df_seq)
-z$data <- 'ASTRAL95'
-
-p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
-    geom_point(alpha=.7) + 
-    facet_nested(~ data+type,independent = T,scales = T)+
-  ylab('')+xlab('')+
-  mythem+
-  theme(axis.text.y = element_blank(),
-        axis.text.x = element_blank(),
-        legend.title = element_blank(),
-        legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 3)))
-
-C <- ggarrange(NULL,NULL,NULL,NULL,
-             NULL,p1,NULL,p2,nrow = 2,ncol = 4,
-          common.legend = T,legend = 'right',
-          widths = c(.1,1, 0.0, 1),
-          heights = c(.07,1),
-          labels = c('','','','',
-                     '',"C", "", ""),
-  font.label = list(size = 30),
-  hjust = .2,vjust = 0)
-```
-
-##Fig4ABC
-
-```{r}
-ggarrange(NULL,A,B,C,ncol = 1,
-          heights = c(0.07,1,1,1))
-# save FIG4.pdf 10x10
+nnet <- neighborNet(dis)
+ggsplitnet(nnet) + geom_tiplab2(aes(label=label),
+                                hjust=-.1,size=5,
+                                color='blue')+
+  ggexpand(.1) + ggexpand(.1, direction=-1)
+#write.nexus.networx(nnet,'Data/rds/E210_ferritin_manhat.nxs')
+#nnet <- read.nexus.networx('Data/rds/E210_ferritin_manhat.nxs')
+# ----   the 'E210_ferritin_manhat.nxs' file 
+# -----      was load on SplitsTree4(v 4.19.2) to visualize
 ```
 
 ## Fig7 covid
@@ -2145,125 +2073,83 @@ cowplot::plot_grid(AB, mylegend, ncol = 1, rel_heights = c(1,.1))
 # save FIG6.pdf 13x8
 ```
 
-## Fig8
+## Fig8 Bacteriocin Tm-Vec
 
 ```{r}
-# ********************************************
-# ------------------------------
-# --------- go to the 'Tm-Vec' chunk
-# ------------------------------
-# ********************************************
-df <- readRDS("Data/rds/E210.seq_bacteriocin.rds") 
-df <- df[df$length>30,]
-######## umap
-dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
-ump <- umap(d = dis, input='dist',
-            n_neighbors = 70,
-            min_dist = 0.5)
-ump_df <- data.frame(df[,1:2],
+tm <- readRDS('Data/rds/bacteriocin_tm-vec.RDS')
+tm2 <- tm[!is.na(tm$status2),-23]
+colnames(tm2)[23]<-'status'
+tm2 <- rbind(tm[,-24],tm2)
+
+tm2 <- tm2[,c(5,20,21,6,22,23)]
+colnames(tm2)[-6] <- c('Alphafold2','Omegafold','ESMfold','TM_vec','CEP')
+tm2 <- melt(tm2,variable.name = 'method',value.name = 'score')
+tm2$method <- factor(tm2$method,levels = c('TM_vec','Alphafold2','Omegafold','ESMfold','CEP'))
+p1<-ggplot(tm2, aes(status,score,fill=method))+
+  geom_boxplot(outlier.shape = NA,
+               color='black',
+               size=rep(c(rep(.3,4),1),3),
+               alpha=rep(c(rep(.4,4),1),3),
+               width=.4
+               )+
+  coord_cartesian(ylim = c(0.1, 1))+
+  xlab('')+
+    geom_hline(yintercept = .5, linetype="dashed", 
+             color = "red", size=.7)+
+  mythem+
+  theme(legend.title = element_blank(),
+        axis.text.y = element_text(size=13),
+        axis.text.x = element_text(color = 'black',size = 15, face = 'bold'),
+        axis.title.y = element_text(size = 20,vjust = 2, face = 'bold'),
+        legend.text = element_text(size = 15))+
+  scale_fill_discrete(labels=c('TM_vec','Alphafold2',
+                               'Omegafold','ESMfold',
+                               expression(bold("CEP"))))
+
+# --------------------------------
+# -----  UMAP
+df <- readRDS('Data/rds/E210.seq_bacteriocin.RDS')
+dis <- as.matrix(proxy::dist(df[,-c(1:6)], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 100,
+            min_dist = 0.1,
+            input="dist")
+
+ump_df <- data.frame(class=df$class_x,
+                     subclass=df$Subclass_x,
                      UMAP1 = ump$layout[, 1],
                      UMAP2 = ump$layout[, 2])
 
-p2 <- ggplot(ump_df,aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7, size=1) + 
+p2<-ggplot(ump_df,
+       aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7, size=2) + 
   mythem+
-  theme(legend.title = element_blank())+
+  theme(legend.title = element_blank(),
+        legend.position = 'bottom',
+        axis.title = element_text(size = 15),
+        axis.title.y = element_text(size = 15,vjust = 5),
+        legend.text = element_text(size = 15))+
   scale_color_manual(values = c('green','magenta','blue'))
-# ----------------------------------------------
- dis <- as.matrix(dist(df[,-c(1,2)],method = manhat))
- dis <- data.frame(gr=df$class, dis)
- cl<-unique(dis$gr)
- 
- my_comparisons<-list(c('within','between'))
- between<-c() 
- within<-c()
- for (i in 1:length(cl)) {  
-   print(i)   
-   x <- cl[i]  
-   idx <- which(dis$gr==x)
-   y <- dis[idx,(idx+1)]
-   within <- c(within, y[lower.tri(y)])
-   x <- dis[idx,-c(1,idx+1)]   
-   x <- as.vector(as.matrix(x))  
-   x <- x[!is.na(x)]   
-   between<-c(between,x) 
- }
- df_same_diff <- data.frame(gr=rep(c('within','between'),
-                                c(length(within),length(between))),
-                         distance=c(within,between)) 
- df_same_diff$dis_norm <- (df_same_diff$distance - min(df_same_diff$distance))/
-   (max(df_same_diff$distance)-min(df_same_diff$distance))
- 
- p1<-ggboxplot(df_same_diff, x='gr',y='distance', 
-           fill = 'gr',alpha=.5,outlier.shape = NA)+
-   stat_summary(fun.y=mean, geom="point", shape=8,
-                size=2, color="red", fill="red")+xlab('')+
-   theme_bw(base_line_size = .2)+mythem+
-   theme(legend.position = 'none',
-         axis.text.x = element_text(size=13),
-         axis.text.y = element_text(size=13),
-         axis.title.y = element_text(size=20))+
-   scale_fill_viridis(discrete = TRUE, alpha=0.6)+
-   coord_cartesian(ylim = c(0, 40))+
-   stat_compare_means(comparisons = my_comparisons, method = 't.test',
-                      label.y = 35,tip.length = 0.01)
- 
-################ total ###################
-df2<-df
-df2$total<-rowSums(df2[,-c(1,2)])
-my_comparisons<-list(c('class1','class2'),
-                     c('class2','class3'),
-                     c('class1','class3'))
-
-df2$total<-df2$total/1000
-p3<-ggboxplot(df2, x='class',y='total', 
-          fill = 'class',alpha=.5,outlier.shape = NA)+
-  stat_summary(fun.y=mean, geom="point", shape=8,
-               size=2, color="red", fill="red")+xlab('')+
-  theme_bw(base_line_size = .2)+mythem+ylab('Total energy')+
-  theme(legend.position = 'none',
-        axis.text.x = element_text(size=13),
-        axis.text.y = element_text(size=13),
-        axis.title.y = element_text(size=20))+
-  ylim(-6.5,2)+
-  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
-  stat_compare_means(comparisons = my_comparisons, method = 't.test',
-                     label.y = c(-1,-.5,0),
-                     step.increase = .03,tip.length = 0.005)+
-  scale_fill_manual(values = c('green','magenta','blue'))
 
 
-p13<-ggarrange(p1,NULL,p3,nrow = 1,
-          widths = c(1, 0.12, 1),
-          labels = c("B", "", "C"),
-    font.label = list(size = 30),
-    hjust = -.5,vjust = 0)
+p1 <- ggarrange(NULL,NULL,
+          NULL,p1,ncol = 2,nrow = 2,
+          labels = c('','B'),
+          heights = c(0.1,1),
+          widths = c(.1,1),
+          font.label = list(size = 50),
+          hjust = 0,vjust = 1.2)
+p2 <- ggarrange(NULL,NULL,
+          NULL,p2,ncol = 2,nrow = 2,
+          labels = c('','A'),
+          heights = c(0.1,1),
+          widths = c(.1,1),
+          font.label = list(size = 50),
+          hjust = .5,vjust = 1.2)
 
-
- ggarrange(p2,NULL,p13,ncol = 1,
-           heights = c(1, 0.1, 1),
-           labels = c('A', ""),
-           font.label = list(size = 30),
-           hjust = -.5,vjust = 1.2)
-```
-
-## Fig6 ferritin
-
-```{r}
-E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
-df <- E210_ferritin
-
-dis <- proxy::dist(df[,-c(1:3)], method = manhat)
-
-nnet <- neighborNet(dis)
-ggsplitnet(nnet) + geom_tiplab2(aes(label=label),
-                                hjust=-.1,size=5,
-                                color='blue')+
-  ggexpand(.1) + ggexpand(.1, direction=-1)
-#write.nexus.networx(nnet,'Data/rds/E210_ferritin_manhat.nxs')
-#nnet <- read.nexus.networx('Data/rds/E210_ferritin_manhat.nxs')
-# ----   the 'E210_ferritin_manhat.nxs' file 
-# -----      was load on SplitsTree4(v 4.19.2) to visualize
+ggarrange(p2,NULL,p1,ncol = 3,nrow = 1,
+          widths = c(.5,.05,1))
+# save FIG8.pdf 15x8
 ```
 
 ##Fig9 DrugTarget
