@@ -600,7 +600,8 @@ colnames(my_sab)<-rownames(my_sab)<-drugs
 ```{r}
 # -------- At first, run the 'Energy Calculation prerequisite' chunk.
 # ----------------------------------------------------
-tm <- read.csv('Data/csv/tm-vec.csv')
+# ----------- the csv file is from TM-Vec guys.
+tm <- read.csv('Data/csv/tm-vec.csv') 
 nprotein <- nrow(tm)
 
 for (i in 1:nprotein){
