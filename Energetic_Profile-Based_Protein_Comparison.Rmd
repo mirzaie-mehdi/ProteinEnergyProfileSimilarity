@@ -75,15 +75,30 @@ mythem <- theme_bw(base_line_size = .1)+
         title = element_text(size = 20),
         panel.spacing = unit(2, "lines")
   )
-# ***********
+# ----------------------------------------
+denoiseEnergy<-function(x,n){
+  # x is a vectore with 210 dimentional
+  # n is the number of eigenvalues to reconstruct
+  m <- matrix(0,20,20)
+  m[lower.tri(m,diag = T)]<-x
+  m<-m+t(m)
+  diag(m)<-diag(m)/2
+  s<-svd(m)
+  s$d[(n+1):20] <- 0
+  m <- s$u %*% diag(s$d)  %*% t(s$v)
+  x <- m[lower.tri(m,diag = T)]
+  return(x)
+}
+# -----------------------------------------
 manhat <- function(X, Y){
-  x = X; y = Y
-  xy = abs(x - y)
-  xy = xy[xy != 0]
+  #x <- denoiseEnergy(X,1); y <- denoiseEnergy(Y,1)
+  x<-X; y<-Y
+  xy <- abs(x - y)
+  xy <- xy[xy != 0]
   if(length(xy)==0){
     d <- 0
   }else{
-    d = sum(xy)/length(xy)
+    d <- sum(xy)/length(xy)
   }
   return(d)
 }
@@ -2025,7 +2040,7 @@ p1<-ggplot(tm2, aes(status,score,fill=method))+
 
 # --------------------------------
 # -----  UMAP
-df <- readRDS('Data/rds/E210.seq_bacteriocin.RDS')
+df <- readRDS('Data/rds/E210.seq_bacteriocin.rds')
 dis <- as.matrix(proxy::dist(df[,-c(1:6)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 100,
