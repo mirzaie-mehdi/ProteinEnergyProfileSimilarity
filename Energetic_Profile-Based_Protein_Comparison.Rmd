@@ -1,0 +1,2284 @@
+---
+title: "Energetic Profile-Based Protein Comparison: A New and Fast Approach for Structural, and Evolutionary analysis"
+author: "Peyman & Mehdi"
+date: "2024-02-19"
+output: 
+  html_document:
+    fig_caption: yes
+fontsize: 11pt
+geometry: margin=1in
+graphics: yes
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,warning=FALSE, fig.pos= "h")
+```
+
+# Library   
+```{r libraries, include=FALSE}
+#library(kableExtra)
+options(knitr.table.format = "latex")
+library(readr)
+library(data.table)
+library(MASS)
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(ggrepel)
+library(ggpubr)
+library(ggpointdensity)
+library(ggpubr)
+library(igraph)
+library(fpc)
+library(grid)
+library(gridExtra)
+library(reshape2)
+library(visNetwork)
+library(pheatmap)
+library(umap)
+library(Rtsne)
+library(viridis)
+library(viridisLite)
+library(bio3d)
+library(caret)
+library(e1071)
+library(randomForest)
+library(seqinr)
+library(geometry)
+library(ape)
+library(colorspace)
+library(dendextend)
+library(dynamicTreeCut)
+library(caret)
+library(ggtree)
+library(phangorn)
+library(tanggle)
+library(stringr)
+library(protr)
+library(proxy)
+library(class)
+library(readxl)
+library(ggh4x)
+```
+
+# Prerequisite of Fig and dis
+
+```{r}
+mythem <- theme_bw(base_line_size = .1)+
+  theme(axis.text = element_text(size=15),
+        axis.title = element_text(size = 20),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size=15),
+        strip.text = element_text(size = 15),
+        title = element_text(size = 20),
+        panel.spacing = unit(2, "lines")
+  )
+# ----------------------------------------
+denoiseEnergy<-function(x,n){
+  # x is a vectore with 210 dimentional
+  # n is the number of eigenvalues to reconstruct
+  m <- matrix(0,20,20)
+  m[lower.tri(m,diag = T)]<-x
+  m<-m+t(m)
+  diag(m)<-diag(m)/2
+  s<-svd(m)
+  s$d[(n+1):20] <- 0
+  m <- s$u %*% diag(s$d)  %*% t(s$v)
+  x <- m[lower.tri(m,diag = T)]
+  return(x)
+}
+# -----------------------------------------
+manhat <- function(X, Y){
+  #x <- denoiseEnergy(X,1); y <- denoiseEnergy(Y,1)
+  x<-X; y<-Y
+  xy <- abs(x - y)
+  xy <- xy[xy != 0]
+  if(length(xy)==0){
+    d <- 0
+  }else{
+    d <- sum(xy)/length(xy)
+  }
+  return(d)
+}
+```
+
+# Parse Scope 2.08
+This chunk parse the astral 95/40 data downloaded form Scope 2.08 and organize it into a suitable data-frame with columns "scopeID","pdbID" ,"Position", "class","fold","superfamily","family","seq". Since we already made astral_95.rds, we do not need to run the following two chunks (ASTRAL95 and ASTRAL40).
+
+## ASTRAL95
+
+```{r}
+astrals_95 <- read_table("Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-95-2.08.fa", col_names = FALSE)
+astrals_95_seq <- readFASTA("Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-95-2.08.fa")
+
+rows_keep <- grep(">", astrals_95$X1)
+astrals_95 <- astrals_95[rows_keep,c(1,2,3)]
+colnames(astrals_95) <- c("scopeID","ID_scope","Position")
+astral_95 <- data.frame(
+    scopeID = character(dim(astrals_95)[1]),
+    pdbID = character(dim(astrals_95)[1]),
+    Position = character(dim(astrals_95)[1]),
+    seq = t(data.frame(astrals_95_seq)))
+row.names(astral_95) <- c(1:dim(astral_95)[1])
+astral_95$scopeID <- substr(astrals_95$scopeID, start = 2, stop = nchar(astrals_95$scopeID))
+astral_95$pdbID <- substr(astrals_95$scopeID, start = 3, stop = 6)
+#----------Split scopeID into class, fold, super and family---------
+split_values <- strsplit(astrals_95$ID_scope, "\\.")
+matrix_values <- matrix("", nrow = nrow(astrals_95), ncol = 4)
+for (i in 1:4) {
+  matrix_values[, i] <- sapply(split_values, function(x) paste(x[1:i], collapse = "."))
+}
+df_split <- as.data.frame(matrix_values)
+colnames(df_split) <- c("class", "fold", "superfamily", "family")
+#-------------------------------------------------------------------
+# ------------split Position, start and end--------------------------
+astral_95$Position <- gsub("[()]", "", astrals_95$Position)
+#-----------------------------------------------------------------
+astral_95 <- cbind(astral_95,df_split)
+astral_95 <- astral_95[,c("scopeID","pdbID" ,"Position", "class","fold","superfamily","family","seq")]
+astral_95$seq <- toupper(astral_95$seq)
+#saveRDS(astral_95, file = "Data/rds/astral_95.rds")
+```
+
+## ASTRAL40
+
+```{r}
+astrals_40 <- read_table("Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-40-2.08.fa", col_names = FALSE)
+astrals_40_seq <- readFASTA("Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-40-2.08.fa")
+
+rows_keep <- grep(">", astrals_40$X1)
+astrals_40 <- astrals_40[rows_keep,c(1,2,3)]
+colnames(astrals_40) <- c("pdbID","scopeID","chainID")
+astral_40 <- data.frame(
+  scope = character(dim(astrals_40)[1]),
+    pdbID = character(dim(astrals_40)[1]),
+    chainID = character(dim(astrals_40)[1]),
+    position = integer(dim(astrals_40)[1]),
+    start = integer(dim(astrals_40)[1]),
+    end = integer(dim(astrals_40)[1]),
+  seq = t(data.frame(astrals_40_seq)))
+astral_40$scope <- substr(astrals_40$pdbID, start = 2, stop = nchar(astrals_40$pdbID))
+astral_40$pdbID <- substr(astrals_40$pdbID, start = 3, stop = 6)
+#----------Split scopeID into class, fold, super and family---------
+split_values <- strsplit(astrals_40$scopeID, "\\.")
+matrix_values <- matrix("", nrow = nrow(astrals_40), ncol = 4)
+for (i in 1:4) {
+  matrix_values[, i] <- sapply(split_values, function(x) paste(x[1:i], collapse = "."))
+}
+df_split <- as.data.frame(matrix_values)
+colnames(df_split) <- c("class", "fold", "superfamily", "family")
+#-------------------------------------------------------------------
+# ------------split chainID, start and end--------------------------
+astral_40$chainID <- gsub("[()]", "", astrals_40$chainID)
+astral_40$position <- substr(astral_40$chainID, start = regexpr(":", astral_40$chainID) + 1, stop = nchar(astral_40$chainID))
+astral_40$chainID <- substr(astral_40$chainID,start = 1, stop = 1)
+astral_40$start <- NA
+astral_40$end <- NA
+split_values <- strsplit(astral_40$position, "-")
+for (i in seq_along(split_values)) {
+  if (length(split_values[[i]]) == 2) {
+    astral_40$start[i] <- as.numeric(split_values[[i]][1])
+    astral_40$end[i] <- as.numeric(split_values[[i]][2])
+  }
+}
+#-----------------------------------------------------------------
+astral_40 <- cbind(astral_40,df_split)
+astral_40$length <- apply(data.frame(astral_40$seq),1,nchar)
+#saveRDS(astral_40, file = "Data/rds/astral_40.rds")
+```
+
+<<<<<<< HEAD:Energy_comparison.Rmd
+# Energy Calculation
+
+## Sequence_Energy_Estimator
+=======
+
+
+# Energy Calculation prerequisite
+>>>>>>> 30f912cc414bbb6af1241903b44e85ad40dc7445:Energetic_Profile-Based_Protein_Comparison.Rmd
+
+The following chunk retrieves the predicted pairwise energy values from the training dataset for the computation of the energy profile based on sequence.
+
+```{r}
+energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
+energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
+source("Functions/amacid2num.R")
+source("Functions/atomtype2num167.R")
+source("Functions/Energy_PC210.R")
+source("Functions/NetworkFrame.R")
+source("Functions/inedx_HelixSheet.R")
+source("Functions/split_position.R")
+# ------Pairwise Amino Acid names-------------
+AA <- c("PHE","LEU","ILE","VAL","TRP","TYR","MET","CYS","HIS","THR",
+        "ARG","ALA","ASN","GLN","PRO","SER","ASP","GLY","LYS","GLU")
+letters_list <- aa321(AA)
+pair_inter <- character(0)
+for (i in 1:20) {
+  for (j in i:20) {
+    pair_inter <- c(pair_inter, paste0(letters_list[i], letters_list[j]))
+  }
+} 
+# -----------------------------------
+# -----  Sequence Energy Estimator (predictor)
+aaenergy <- read.csv("Data/csv/Pij.csv", header = F,sep = ";")
+aaenergy <- (aaenergy + t(aaenergy))/2
+colnames(aaenergy) = rownames(aaenergy)<- letters_list
+#aa210 <- aaenergy[lower.tri(aaenergy,diag = T)]
+```
+
+## ASTRAL95/40
+
+This chunk calculate the profile of energy for ASTRAL95/40 based on sequence and structure.
+
+```{r}
+# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+# ----------------------------------------------------
+astral <- readRDS("Data/rds/astral_95.rds")  # astral_40.rds 
+Nprotein <- nrow(astral)
+num_columns <- 210
+E210.astral <- data.frame(pdbID = astral$pdbID,
+                            scopeID= astral$scopeID,
+                            length = rep(NA,Nprotein),
+                            position = astral$Position,
+                            class = astral$class,
+                            fold = astral$fold,
+                            superfamily = astral$superfamily,
+                            family = astral$family,
+                            matrix(NA, ncol = num_columns, nrow = length(astral$pdbID)))
+colnames(E210.astral)[9:218] = pair_inter
+E210.astral_SS <- E210.seq_astral <- E210.seqPDB_astral <- E210.astral 
+for (NP in 1:Nprotein) {
+  if (NP %% 50 == 0) {print(NP)}
+  chain_resno <- split_position(astral$Position[NP])
+  pdbname <- astral$pdbID[NP]
+  tryCatch({
+    pdb0 <- read.pdb(pdbname,verbose = FALSE)
+    pdblist = list()
+    for (ind in 1:dim(chain_resno)[1]){
+      sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=chain_resno$chain[ind])
+      sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+      sele4 <- atom.select(pdb0, "noh")
+      sele <- combine.select(sele1, sele2,sele4, operator="AND")
+      if (!(chain_resno$start[ind]=="NA") & !(chain_resno$end[ind])=="NA"){
+         st <- chain_resno$start[ind]
+         en <- chain_resno$end[ind]
+         sele3 <- atom.select(pdb0,  resno=st:en, verbose=FALSE)
+         sele <- combine.select(sele1, sele2,sele3,sele4, operator="AND")
+      }
+      pdblist[[ind]] <- trim.pdb(pdb0, sele,verbose = FALSE)
+    }
+    new_pdb = pdblist[[1]]
+    if (dim(chain_resno)[1] > 1) {
+      for (ind in 2:dim(chain_resno)[1]){
+      new_pdb <- cat.pdb(new_pdb, pdblist[[ind]], rechain=FALSE)
+      }
+    }
+    pdbX <- new_pdb$atom
+    E210.astral$length[NP] = length(unique(pdbX$resno))
+    E210.astral_SS$length[NP] = length(unique(pdbX$resno))
+    E210.seqPDB_astral$length[NP] = length(unique(pdbX$resno))
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    E210.astral[NP,9:218] <- energy210
+    # ****************keep res helix & sheet************************
+    indhs <- inedx_HelixSheet(PDB = new_pdb)
+    Net_Frame_hs <- Net_Frame[Net_Frame$resnoif %in% indhs & Net_Frame$resnojf %in% indhs,]
+    if(dim(Net_Frame_hs)[1]!=0){
+        Net_Frame <- Net_Frame_hs
+    }
+    energy210_ss <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    E210.astral_SS[NP,9:218] <- energy210_ss
+    #-----------sequence enregy based on PDB--------
+    pdbXca <- pdbX[pdbX$elety == "CA",]
+    seq = aa321(pdbXca$resid)
+    E210.seqPDB_astral$length[NP] = length(seq)
+    freq = c()
+    for (j in 1:20){
+        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+    }
+    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+    en_fr <- aaenergy * freq_matrix
+    en_fr <- en_fr/length(seq)
+    pair_es <- diag(freq) %*% as.matrix(en_fr)
+    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+    E210.seqPDB_astral[NP,9:218] <- aa210_p
+#-----------sequence enregy based on astral--------
+    seq = astral$seq[NP]
+    seq = gsub("X", "", seq)
+    E210.seq_astral$length[NP] = nchar(seq)
+    seq = unlist(strsplit(seq,""))
+    freq = c()
+    for (j in 1:20){
+        freq[j] <-  length(grep(letters_list[j],tolower(seq)))
+    }
+    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+    en_fr <- aaenergy * freq_matrix
+    en_fr <- en_fr/length(seq)
+    pair_es <- diag(freq) %*% as.matrix(en_fr)
+    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+    E210.seq_astral[NP,9:218] <- aa210_p
+    }, error = function(e) {
+     cat("Error downloading file:", e$message, "\n")
+    })
+}
+# -----------------------------------------------------------
+# ----------- astral 95 ------
+#saveRDS(E210.astral,file = "Data/rds/E210.astral_95.rds")
+#saveRDS(E210.astral_SS,file = "Data/rds/E210.astral_95_SS.rds")
+#saveRDS(E210.seq_astral,file = "Data/rds/E210.seq_astral_95.rds")
+#saveRDS(E210.seqPDB_astral,file = "Data/rds/E210.seqPDB_astral_95.rds")
+# -----------------------------------------------------------
+# ----------- astral 40 ------
+#saveRDS(E210.astral,file = "Data/rds/E210.astral_40.rds")
+#saveRDS(E210.astral_SS,file = "Data/rds/E210.astral_40_SS.rds")
+#saveRDS(E210.seq_astral,file = "Data/rds/E210.seq_astral_40.rds")
+#saveRDS(E210.seqPDB_astral,file = "Data/rds/E210.seqPDB_astral_40.rds")
+```
+
+
+## Ferritin-like Superfamily
+
+```{r}
+ferritin <- read.csv("Data/csv/Ferritin_Like.csv",sep = ",")
+energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
+energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
+source("Functions/amacid2num.R")
+source("Functions/atomtype2num167.R")
+source("Functions/Energy_PC210.R")
+source("Functions/NetworkFrame.R")
+source("Functions/inedx_HelixSheet.R")
+Nprotein <- nrow(ferritin)
+# ------Pairwise Amino Acid names-------------
+AA <- c("PHE","LEU","ILE","VAL","TRP","TYR","MET","CYS","HIS","THR",
+        "ARG","ALA","ASN","GLN","PRO","SER","ASP","GLY","LYS","GLU")
+letters_list <- aa321(AA)
+pair_inter <- character(0)
+for (i in 1:20) {
+  for (j in i:20) {
+    pair_inter <- c(pair_inter, paste0(letters_list[i], letters_list[j]))
+  }
+} 
+#----------------------------------------------
+num_columns <- 210
+E210_ferritin <- data.frame(pdbID = ferritin$pdbID,
+                            length = rep(NA,Nprotein),
+                            group = ferritin$group,
+                            matrix(NA, ncol = num_columns, nrow = length(ferritin$pdbID)))
+colnames(E210_ferritin) = c("pdbID","length","group",pair_inter)
+E210_ferritin_SS <- E210_ferritin
+for (NP in 1:Nprotein) {
+  print(NP)
+  pdbname <- ferritin$pdbID[NP]
+  E210_ferritin_SS$pdbID[NP] <- pdbname
+  ch <- ferritin$chainID[NP]
+  E210_ferritin$pdbID[NP] <- paste0(pdbname,ch)
+  E210_ferritin_SS$pdbID[NP] <- paste0(pdbname,ch)
+  tryCatch({
+    pdb0 <- read.pdb(pdbname)
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
+    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+    sele4 <- atom.select(pdb0, "noh")
+    sele <- combine.select(sele1, sele2,sele4, operator="AND")
+    if (!is.na(ferritin$start[NP])){
+      st <- ferritin$start[NP]
+      en <- ferritin$end[NP]
+      sele3 <- atom.select(pdb0,  resno=st:en, verbose=TRUE)
+      sele <- combine.select(sele1, sele2,sele3,sele4, operator="AND")
+    }
+    pdbX <- pdb0$atom[sele$atom,]
+    E210_ferritin$length[NP] = length(unique(pdbX$resno))
+    E210_ferritin_SS$length[NP] = length(unique(pdbX$resno))
+    Net_Frame <- NetworkFrame(PDB = pdb0, AtomSelect = sele)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    E210_ferritin[NP,4:213] <- energy210
+    # ****************keep res helix & sheet************************
+    indhs <- inedx_HelixSheet(PDB = pdb0)
+    Net_Frame_hs <- Net_Frame[Net_Frame$resnoif %in% indhs & Net_Frame$resnojf %in% indhs,]
+    if(dim(Net_Frame_hs)[1]!=0){
+        Net_Frame <- Net_Frame_hs
+    }
+    energy210_ss <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    E210_ferritin_SS[NP,4:213] <- energy210_ss
+    }, error = function(e) {
+     cat("Error downloading file:", e$message, "\n")
+    })
+}
+#saveRDS(E210_ferritin,file = "Data/rds/E210_ferritin.rds")
+#saveRDS(E210_ferritin_SS,file = "Data/rds/E210_ferritin_SS.rds")
+```
+
+
+## Covid_Spike200
+
+```{r}
+# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+# ----------------------------------------------------
+spike <- read.csv("Data/csv/spike200.csv", sep=";")
+Nprotein <- nrow(spike)
+#----------------------------------------------
+num_columns <- 210
+E210_spike200 <- data.frame(pdbID = spike$pdbID,
+                            length = rep(NA,Nprotein),
+                            virus = spike$VIRUS,
+                            conformation = spike$Conformation,
+                            matrix(NA,ncol=num_columns,nrow=Nprotein))
+
+colnames(E210_spike200) = c("pdbID","length","virus", "conformation",pair_inter)
+E210.seq_spike200 <- E210_spike200_SS <- E210_spike200
+
+for (NP in 1:Nprotein) {
+  print(NP)
+  ch <- substr(spike$pdbID[NP],5,5)
+  pdbname <- substr(spike$pdbID[NP],1,4)
+  E210_spike200$pdbID[NP] <- spike$pdbID[NP]
+  E210_spike200_SS$pdbID[NP] <- spike$pdbID[NP]
+  E210.seq_spike200$pdbID[NP] <- spike$pdbID[NP]
+  tryCatch({
+    pdb0 <- read.pdb(tolower(pdbname))
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
+    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+    sele4 <- atom.select(pdb0, "noh")
+    sele <- combine.select(sele1, sele2,sele4, operator="AND")
+    pdbX <- pdb0$atom[sele$atom,]
+    pdbXca <- pdbX[pdbX$elety == "CA",]
+    seq <- aa321(pdbXca$resid)
+    E210.seq_spike200$length[NP] <- length(unique(pdbX$resno))
+    freq <- c()
+    for (j in 1:20){
+        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+    }
+    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+    en_fr <- aaenergy * freq_matrix
+    en_fr <- en_fr/length(seq)
+    pair_es <- diag(freq) %*% as.matrix(en_fr)
+    aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
+    E210.seq_spike200[NP,5:214] <- aa210_p
+    E210_spike200$length[NP] <- length(unique(pdbX$resno))
+    E210_spike200_SS$length[NP] <- length(unique(pdbX$resno))
+    # -------------------
+    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    E210_spike200[NP,5:214] <- energy210
+    # ****************keep res helix & sheet************************
+    indhs <- inedx_HelixSheet(PDB = new_pdb)
+    Net_Frame_hs <- Net_Frame[Net_Frame$resnoif %in% indhs & Net_Frame$resnojf %in% indhs,]
+    if(dim(Net_Frame_hs)[1]!=0){
+        Net_Frame <- Net_Frame_hs
+    }
+    energy210_ss <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    E210_spike200_SS[NP,5:214] <- energy210_ss
+    }, error = function(e) {
+     cat("Error downloading file:", e$message, "\n")
+    })
+}
+
+#saveRDS(E210_spike200,file = "Data/rds/E210_spike200.rds")
+#saveRDS(E210_spike200_SS,file = "Data/rds/E210_spike200_SS.rds")
+#saveRDS(E210.seq_spike200,file = "Data/rds/E210.seq_spike200.rds")
+```
+
+## DTI preprocess
+This chunk extracts AA sequences from the drug-target
+```{r}
+library(rentrez)
+get_protids_from_geneids <- function(gene_ids) {
+  # Get the protein elink.
+  protein_elink = rentrez::entrez_link(dbfrom = "gene",
+                                        id = gene_ids,
+                                        db = "protein")
+  # Get the protein id (refseq database)
+  protein_ids = protein_elink$links$gene_protein_refseq
+  return(protein_ids)
+}
+
+make_aa_fasta <- function(prot_ids) { #, nameFile
+  # Make a multi-fasta file with each protein id
+  sapply(prot_ids, function(x) {
+    protein_esummary = rentrez::entrez_summary(db = "protein", id = x)
+    protein_fasta = rentrez::entrez_fetch(db = "protein",
+                                          id = protein_esummary$uid,
+                                          rettype = "fasta")
+    return(protein_fasta)
+  } )
+}
+
+seq2df<-function(seq){
+  x<-strsplit(seq,'\n')
+  head<-x[[1]][1]
+  seq<-paste(x[[1]][-c(1,10)],collapse = '')
+  return(c(head,seq))
+}
+
+# ------------------------------
+dti <- read_excel('Data/csv/41467_2019_9186_MOESM4_ESM_dti_barabasi.xlsx')
+colnames(dti)<-c('drugID','entrezID')
+dti$entrezID<-as.character(dti$entrezID)
+
+sab<-readRDS('Data/rds/sAB.rds')
+colnames(sab)[1:2]<-c('d1','d2')
+
+d65<-unique(c(sab$d1,sab$d2))
+df_seq<-c()
+for(i in 1:65){
+  df<-dti[dti$drugID%in%d65[i],]
+  df2<-c()
+  for (j in 1:nrow(df)) {
+    print(paste0(i,', ',j,'/',nrow(df)))
+    prot_ids <- get_protids_from_geneids(df$entrezID[j])
+    z<-make_aa_fasta(prot_ids)
+    zz<-data.frame(prot=df$entrezID[j],t(sapply(z, seq2df)))
+    df2<-rbind(df2,zz)
+  }
+  df2<-data.frame(drug=d65[i],df2)
+  df_seq<-rbind(df_seq,df2)
+}
+
+colnames(df_seq)[3:4]<-c('Isoform','seq_aa')
+df_seq$length <- nchar(df_seq$seq)
+#saveRDS(df_seq,'Data/rds/DTI_df_seq.rds')
+```
+
+## DTI Energy
+
+```{r}
+# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+# ----------------------------------------------------
+df_seq <- readRDS('Data/rds/DTI_df_seq.rds')
+
+E210.seq_dti <- data.frame(df_seq,matrix(NA,nrow(df_seq),210))
+colnames(E210.seq_dti)[-c(1:5)] <- pair_inter
+for (NP in 1:nrow(df_seq)) {
+  if(NP%%10==0)print(NP)
+  seq = unlist(strsplit(unlist(E210.seq_dti$seq_aa[NP]),''))
+    freq = c()
+    for (j in 1:20){
+        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+    }
+    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+    en_fr <- aaenergy * freq_matrix
+    en_fr <- en_fr/length(seq)
+    pair_es <- diag(freq) %*% as.matrix(en_fr)
+    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+    E210.seq_dti[NP,-c(1:5)] <- aa210_p
+}
+#saveRDS(E210.seq_dti,'Data/rds/E210.seq_dti.rds')
+```
+
+## DTI drug similarity 
+This Chunk calculates the similarity between drugs based on Eq 6 in the paper.
+```{r}
+# -------- At first, run the 'Prerequisite of Fig and dis' chunk.
+# ----------------------------------------------------
+sab <- readRDS('Data/rds/sAB.rds')
+colnames(sab)[1:2] <- c('d1','d2')
+E210.seq_dti<-readRDS('Data/rds/E210.seq_dti.rds')
+
+df0 <- E210.seq_dti 
+df <- cbind(df0[,1:5],df0[,-c(1:5)]/df0$length) 
+
+df2 <- aggregate(.~drug+entrezID,df[,-c(3:5)],mean)
+drugs<-unique(df2$drug)
+#########################
+my_sab<-matrix(0,65,65)
+for (i in 1:65) {
+  print(i)
+  for (j in 1:65) {
+    if(i>=j){
+      x<-drugs[i]
+      y<-drugs[j]
+      zx<-df2[df2$drug%in%x,]
+      zy<-df2[df2$drug%in%y,]
+      xnames<-paste0(zx$drug,'_',zx$entrezID)
+      ynames<-paste0(zy$drug,'_',zy$entrezID)
+      z<-rbind(zx,zy)
+      dis<-as.matrix(dist(z[,-c(1:4)],method = manhat))
+      colnames(dis)<-rownames(dis)<-paste0(z$drug,'_',z$entrezID)
+      diag(dis)<-NA
+      dis[is.nan(dis)] <- 0
+      disx<-dis[xnames,xnames]
+      dxx<-mean(diag(as.matrix(disx[apply(disx,2,which.min),])))
+      disy<-dis[ynames,ynames]
+      dyy<-mean(diag(as.matrix(disy[apply(disy,2,which.min),])))
+      disxy<-dis[xnames,ynames]
+      disyx<-dis[ynames,xnames]
+      dxy<-mean(c(diag(as.matrix(disxy[apply(disxy,2,which.min),])),
+                  diag(as.matrix(disyx[apply(disyx,2,which.min),]))))
+      my_sab[i,j]<-dxy-((dxx+dyy)/2)
+      my_sab[j,i]<-my_sab[i,j]
+    }
+  }
+}
+diag(my_sab)<-NA
+colnames(my_sab)<-rownames(my_sab)<-drugs
+# saveRDS(my_sab,'Data/rds/my_sab.rds')
+```
+
+## Bacteriocin Tm-Vec
+
+```{r}
+# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+# ----------------------------------------------------
+# ----------- the csv file is from TM-Vec guys.
+tm <- read.csv('Data/csv/tm-vec.csv') 
+nprotein <- nrow(tm)
+
+for (i in 1:nprotein){
+  if(i%%100==0)print(i)
+  # ---- seq1
+  seq <- unlist(strsplit(tolower(tm$Seq_x[i]), ""))
+  freq <- c()
+  for (j in 1:20){
+  freq[j] <-  length(grep(tolower(letters_list[j]),seq))
+  }
+  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+  en_fr <- aaenergy * freq_matrix
+  en_fr <- en_fr/length(seq)
+  pair_es <- diag(freq) %*% as.matrix(en_fr)
+  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+  CEP_x <- c(length(seq),aa210_p)
+  # ---- seq2
+  seq <- unlist(strsplit(tolower(tm$Seq_y[i]), ""))
+  freq = c()
+  for (j in 1:20){
+  freq[j] <-  length(grep(tolower(letters_list[j]),seq))
+  }
+  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+  en_fr <- aaenergy * freq_matrix
+  en_fr <- en_fr/length(seq)
+  pair_es <- diag(freq) %*% as.matrix(en_fr)
+  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+  CEP_y <- c(length(seq),aa210_p)
+  # ----------
+  tm$CEP_dis[i] <- manhat(CEP_x[-1],CEP_y[-1])
+}
+
+tm$CEP_dis <- (tm$CEP_dis-min(tm$CEP_dis))/(max(tm$CEP_dis)-min(tm$CEP_dis))
+tm$CEP_dis <- 1-(tm$CEP_dis) 
+
+tm$status <- if_else(tm$class_x==tm$class_y,'same class','different class')
+tm$status2 <- if_else(tm$Subclass_x==tm$Subclass_y&tm$class_x=='Class_1'&tm$class_y=='Class_1','same class(sub class1)',NA)
+# saveRDS(tm,'Data/rds/bacteriocin_tm-vec.rds')
+# ---------------------------------------------------------
+# ------- ENERGY
+# ---------------------------------------
+tm_unique <- tm[!duplicated(tm$ID_x),]
+nprotein <- nrow(tm_unique)
+tm_unique <- data.frame(tm_unique[,c(1,7,8,9,14)], 
+                        length=nchar(tm_unique$Seq_x),
+                        matrix(NA,nrow=nprotein,ncol=210))
+colnames(tm_unique)[-c(1:6)] <- pair_inter
+
+for (i in 1:nprotein){
+  print(i)
+  seq = unlist(strsplit(tolower(tm_unique$Seq_x[i]), ""))
+  freq = c()
+  for (j in 1:20){
+  freq[j] <-  length(grep(tolower(letters_list[j]),seq))
+  }
+freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+en_fr <- aaenergy * freq_matrix
+en_fr <- en_fr/length(seq)
+pair_es <- diag(freq) %*% as.matrix(en_fr)
+aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+tm_unique[i,7:216] <- aa210_p
+}
+# saveRDS(tm_unique,'Data/rds/E210.seq_bacteriocin.rds')
+```
+
+## CT_Ho
+
+```{r}
+# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+# ----------------------------------------------------
+df <- read.csv('Data/csv/CT_Ho_cathID_filtered.csv')
+df$chain <- substr(df$pdbID,5,5)
+df$pdbID <- substr(df$pdbID,1,4)
+
+E210.CT_Ho <- data.frame(pdbID = df$pdbID,chainID = df$chain,length = NA,
+                         start = df$start,end = df$end,
+                         cathID = df$cathID,
+                         class = df$class,
+                         architecture = df$architecture,
+                         topology = df$topology,
+                         homologous = df$homologous,
+                         matrix(NA, ncol = 210, nrow = nrow(df)))
+
+colnames(E210.CT_Ho)[-c(1:10)] <- pair_inter
+E210.seq_CT_Ho <- E210.CT_Ho
+
+for(NP in 1:nrow(E210.CT_Ho)){
+  print(NP)
+  pdbname <- E210.CT_Ho$pdbID[NP]
+  ch <- E210.CT_Ho$chainID[NP]
+  tryCatch({
+    pdb0 <- read.pdb(pdbname)
+      sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
+      sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+      sele4 <- atom.select(pdb0, "noh")
+      sele <- combine.select(sele1, sele2,sele4, operator="AND")
+      if (!is.na(E210.CT_Ho$start[NP])){
+        pdbX <- pdb0$atom[sele$atom,]
+        shift_pos <- min(pdbX$resno)-1
+         st <- E210.CT_Ho$start[NP]+shift_pos
+         en <- E210.CT_Ho$end[NP]+shift_pos
+         sele3 <- atom.select(pdb0,  resno=st:en, verbose=TRUE)
+         sele <- combine.select(sele, sele3, operator="AND")
+      }
+      new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+      pdbX <- new_pdb$atom
+      E210.CT_Ho$length[NP] = length(unique(pdbX$resno))
+      Net_Frame <- NetworkFrame(PDB = new_pdb)
+      energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+      E210.CT_Ho[NP,11:220] <- energy210
+      # ****************seq************************
+      pdbXca <- pdbX[pdbX$elety == "CA",]
+      seq <- tolower(aa321(pdbXca$resid))
+      E210.seq_CT_Ho$length[NP] = length(seq)
+      freq = c()
+      for (j in 1:20){
+          freq[j] <- length(grep(tolower(letters_list[j]),seq))
+      }
+      freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+      en_fr <- aaenergy * freq_matrix
+      en_fr <- en_fr/length(seq)
+      pair_es <- diag(freq) %*% as.matrix(en_fr)
+      aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+      E210.seq_CT_Ho[NP,11:220] <- aa210_p
+      }, error = function(e) {
+       cat("Error downloading file:", e$message, "\n")
+        }
+  )
+}
+# saveRDS(E210.CT_Ho,'Data/rds/E210.CT_Ho.rds')
+# saveRDS(E210.seq_CT_Ho,'Data/rds/E210.seq_CT_Ho.rds')
+```
+
+## five superfamily
+
+```{r}
+# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+# ----------------------------------------------------
+df5 <- readRDS('Data/rds/fiveSF.rds')
+Nprotein <- nrow(df5)
+#----------------------------------------------
+num_columns <- 210
+E210.seq_df5 <- data.frame(df5,
+                       matrix(NA,ncol=num_columns,nrow=Nprotein))
+
+for (NP in 1:Nprotein) {
+  print(NP)
+  chain_resno <- split_position(df5$position[NP])
+  pdbname <- df5$pdbID[NP]
+  tryCatch({
+    pdb0 <- read.pdb(pdbname,verbose = FALSE)
+    pdblist = list()
+    for (ind in 1:dim(chain_resno)[1]){
+      sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=chain_resno$chain[ind])
+      sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+      sele4 <- atom.select(pdb0, "noh")
+      sele <- combine.select(sele1, sele2,sele4, operator="AND")
+      if (!(chain_resno$start[ind]=="NA") & !(chain_resno$end[ind])=="NA"){
+         st <- chain_resno$start[ind]
+         en <- chain_resno$end[ind]
+         sele3 <- atom.select(pdb0,  resno=st:en, verbose=FALSE)
+         sele <- combine.select(sele1, sele2,sele3,sele4, operator="AND")
+      }
+      pdblist[[ind]] <- trim.pdb(pdb0, sele,verbose = FALSE)
+    }
+    new_pdb = pdblist[[1]]
+    if (dim(chain_resno)[1] > 1) {
+      for (ind in 2:dim(chain_resno)[1]){
+      new_pdb <- cat.pdb(new_pdb, pdblist[[ind]], rechain=FALSE)
+      }
+    }
+    pdbX <- new_pdb$atom
+    #-----------sequence enregy based on PDB--------
+    pdbXca <- pdbX[pdbX$elety == "CA",]
+    seq <- aa321(pdbXca$resid)
+    freq = c()
+    for (j in 1:20){
+        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+    }
+    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+    en_fr <- aaenergy * freq_matrix
+    en_fr <- en_fr/length(seq)
+    pair_es <- diag(freq) %*% as.matrix(en_fr)
+    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+    E210.seq_df5[NP,9:218] <- aa210_p
+    }, error = function(e) {
+     cat("Error downloading file:", e$message, "\n")
+    })
+}
+
+# saveRDS(E210.seq_df5,file = "Data/rds/E210.seq_df5.rds")
+```
+
+# Figures
+## Preprocess for Fig1
+
+```{r}
+# astral 95
+df_seq <- readRDS("Data/rds/E210.seq_astral_95.rds") 
+df_seq = df_seq[!is.na(df_seq$FL),] 
+
+df_str <- readRDS("Data/rds/E210.astral_95.rds") 
+df_str = df_str[!is.na(df_str$FL),] 
+m<-match(df_str$scopeID,df_seq$scopeID)
+df_str <- df_str[-which(is.na(m)),]
+# **** total energy 95
+df_tot95 <- data.frame(data='Astral 95', class=df_str$class,
+                       length = df_seq$length,
+                       seq=rowSums(df_seq[,-c(1:8)]),
+                       str=rowSums(df_str[,-c(1:8)]))
+# **** distance 95
+dis_seq <- dist(df_seq[,-c(1:8)],method = manhat)
+dis_str <- dist(df_str[,-c(1:8)],method = manhat)
+idx <- sample(length(dis_str),100000)
+df_dis95 <- data.frame(data='Astral 95',
+                       dis_str=as.vector(dis_str)[idx],
+                       dis_seq=as.vector(dis_seq)[idx])
+#saveRDS(df_dis95,'manuscript/fig_data/dis_95_manhat.rds')
+# ************************************************************
+# astral 40
+df_seq <- readRDS("Data/rds/E210.seq_astral40.rds") 
+df_seq = df_seq[!is.na(df_seq$FL),] 
+
+df_str <- readRDS("Data/rds/E210.astral40.rds") 
+df_str = df_str[!is.na(df_str$FL),] 
+m<-match(df_str$scopeID,df_seq$scopeID)
+df_str <- df_str[-which(is.na(m)),]
+# **** total energy 40
+df_tot40 <- data.frame(data='Astral 40', class=df_str$class,
+                       length=df_seq$length,
+                       seq=rowSums(df_seq[,-c(1:8)]),
+                       str=rowSums(df_str[,-c(1:8)]))
+# **** distance 40
+dis_seq <- dist(df_seq[,-c(1:8)],method = manhat)
+dis_str <- dist(df_str[,-c(1:8)],method = manhat)
+idx <- sample(length(dis_str),100000)
+df_dis40 <- data.frame(data='Astral 40',
+                       dis_str=as.vector(dis_str)[idx],
+                       dis_seq=as.vector(dis_seq)[idx])
+#saveRDS(df_dis40,'manuscript/fig_data/dis_40_manhat.rds')
+# **************************************
+df_tot <- rbind(df_tot40, df_tot95)
+#saveRDS(df_tot, 'manuscript/fig_data/df_total_energy.rds')
+```
+
+## Fig1
+
+```{r}
+# ************** total energy 40 and 95
+df_tot <- readRDS('manuscript/fig_data/df_total_energy.rds')
+df_tot$data <- ifelse(df_tot$data=='Astral 40','ASTRAL40','ASTRAL95')
+AB <- ggplot(df_tot, aes(seq/2000,str/1000))+
+       geom_pointdensity(adjust = .1,alpha=.3,show.legend = T)+
+       geom_smooth(method = 'glm',col='red')+
+       stat_cor(method = "pearson", size=5, color = "red", geom = "label") +
+       scale_color_viridis()+facet_wrap(vars(data))+
+       theme_bw(base_line_size = .3)+
+       xlab('Total energy (sequence)')+ylab('Total energy (structure)')+
+  mythem
+# ************** distance 40 and 95
+df_dis40<-readRDS('manuscript/fig_data/dis_40_manhat.rds')
+df_dis95<-readRDS('manuscript/fig_data/dis_95_manhat.rds')
+df_dis <- rbind(df_dis40, df_dis95)
+df_dis$data <- ifelse(df_dis$data=='Astral 40','ASTRAL40','ASTRAL95')
+
+CD <- ggplot(df_dis, aes(dis_seq,dis_str))+
+       geom_pointdensity(adjust = .1,alpha=.3,show.legend = T)+
+       geom_smooth(method = 'glm',col='red')+
+       stat_cor(method = "pearson", size=5, color = "red", geom = "label") +
+       scale_color_viridis()+facet_wrap(vars(data))+
+       theme_bw(base_line_size = .3)+
+       xlab('Distance (CPE)')+ylab('Distance (SPE)')+
+       mythem
+
+ggarrange(NULL,
+    AB, NULL,CD, ncol = 1,
+    heights = c(0.09, 1, 0.17, 1),
+    labels = c('',"A", "", "B"),
+    font.label = list(size = 30),    # color = "red"
+    hjust = -.5,vjust = 0
+    )
+
+# save FIG1.pdf 10x9
+```
+
+## Fig2
+
+```{r}
+df_tot <- readRDS('manuscript/fig_data/df_total_energy.rds')
+df_tot <- df_tot[df_tot$class%in%c('a','b','c','d'),]
+df_tot$class[df_tot$class=='a']<-'All_alpha'
+df_tot$class[df_tot$class=='b']<-'All_beta'
+df_tot$class[df_tot$class=='c']<-'alpha/beta'
+df_tot$class[df_tot$class=='d']<-'alpha+beta'
+df_tot$data <- ifelse(df_tot$data=='Astral 40','ASTRAL40','ASTRAL95')
+
+AB <- ggplot(df_tot,aes(class,str/length,fill=class))+
+  geom_boxplot(outlier.alpha = .01)+
+  facet_wrap(vars(data))+
+  xlab('')+ylab('Total energy (structure)')+
+  coord_cartesian(ylim = c(-15, -4))+
+  mythem+theme(legend.title = element_blank(),
+               axis.text.x = element_blank())
+
+CD <- ggplot(df_tot,aes(class,seq/(2*length),fill=class))+
+  geom_boxplot(outlier.alpha = .1)+
+  facet_wrap(vars(data))+
+  xlab('')+ylab('Total energy (sequence)')+
+  coord_cartesian(ylim = c(-15, -6))+
+  mythem+theme(legend.title = element_blank(),
+               axis.text.x = element_blank())
+
+
+ggarrange(NULL,
+    AB, NULL,CD, ncol = 1,
+    heights = c(0.09, 1, 0.17, 1),
+    labels = c('',"A", "", "B"),
+    common.legend = T, legend = 'bottom',
+    font.label = list(size = 30),    # color = "red"
+    hjust = -.5,vjust = 0
+    )
+# save FIG2.pdf 10x9
+```
+
+## Fig3
+
+```{r}
+# ******** str40
+df <- readRDS("Data/rds/E210.astral40.rds")
+df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
+df <- df[,c(5,3,9:218)]
+dis <- as.matrix(proxy::dist(df[,-1]/df$length, method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str40 <- data.frame(data='Astral 40',type='Structure',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+ump_df_str40$class <- ifelse(ump_df_str40$class=='a','All-alpha','All-beta')
+
+# ******** seq40
+df <- readRDS("Data/rds/E210.seq_astral40.rds")
+df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
+df <- df[,c(5,3,9:218)]
+dis <- as.matrix(proxy::dist(df[,-c(1)]/df$length, method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq40 <- data.frame(data='Astral 40',type='Sequence',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+ump_df_seq40$class <- ifelse(ump_df_seq40$class=='a','All-alpha','All-beta')
+
+# ******** str95
+df <- readRDS("Data/rds/E210.astral_95.rds")
+df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
+df <- df[,c(5,3,9:218)]
+dis <- as.matrix(proxy::dist(df[,-c(1)]/df$length, method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str95 <- data.frame(data='Astral 95',type='Structure',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+ump_df_str95 <- ump_df_str95[ump_df_str95$UMAP1> -1.5 & ump_df_str95$UMAP1< 4.5,]
+ump_df_str95 <- ump_df_str95[ump_df_str95$UMAP2> -1.5 & ump_df_str95$UMAP2< 6,]
+ump_df_str95$class <- ifelse(ump_df_str95$class=='a','All-alpha','All-beta')
+
+# ******** seq95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds")
+df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
+df <- df[,c(5,3,9:218)]
+dis <- as.matrix(proxy::dist(df[,-c(1)]/df$length, method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq95 <- data.frame(data='Astral 95',type='Sequence',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+ump_df_seq95 <- ump_df_seq95[ump_df_seq95$UMAP1> -5 & ump_df_seq95$UMAP1< 1.5,]
+ump_df_seq95 <- ump_df_seq95[ump_df_seq95$UMAP2> -2.5 & ump_df_seq95$UMAP2< 3,]
+ump_df_seq95$class <- ifelse(ump_df_seq95$class=='a','All-alpha','All-beta')
+# **** rbind
+ump_df <- rbind(ump_df_str40,ump_df_seq40,
+                ump_df_str95,ump_df_seq95)
+
+# save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95,
+#      file = 'manuscript/fig_data/UMPs.RData')
+load('manuscript/fig_data/UMPs.RData')
+ump_df_str40$type <- ifelse(ump_df_str40$type=='Structure','SPE','CPE')
+ump_df_seq40$type <- ifelse(ump_df_seq40$type=='Structure','SPE','CPE')
+ump_df_str95$type <- ifelse(ump_df_str95$type=='Structure','SPE','CPE')
+ump_df_seq95$type <- ifelse(ump_df_seq95$type=='Structure','SPE','CPE')
+
+ump_df_str40$data <- ump_df_seq40$data <- 'ASTRAL40'
+ump_df_str95$data <- ump_df_seq95$data <- 'ASTRAL95'
+
+p1<-ggplot(ump_df_str40,aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7,size=.5) + 
+  facet_grid(data ~ type)+xlab('')+ylab('')+
+  mythem+scale_color_manual(values = c('green','magenta'))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 5)))
+
+p2<-ggplot(ump_df_seq40,aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7,size=.5) + 
+  facet_grid( ~ type)+xlab('')+
+  #facet_grid(data ~ type)+xlab('')+ylab('')+
+  mythem+scale_color_manual(values = c('green','magenta'))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 5)))
+
+p3<-ggplot(ump_df_str95,aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7,size=.5) +
+  facet_grid(rows = vars(data))+ylab('')+
+  mythem+scale_color_manual(values = c('green','magenta'))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 5)))
+
+
+p4<-ggplot(ump_df_seq95,aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7,size=.5) + 
+  #facet_grid(rows = vars(data))+ylab('')+
+  mythem+scale_color_manual(values = c('green','magenta'))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 5)))
+
+# ********
+ggarrange(NULL,NULL,NULL,
+          p2,NULL,p1,
+          NULL,NULL,NULL,
+          p4,NULL,p3,ncol = 3,nrow = 4,
+          common.legend = T,
+          labels = c('','','',
+                     "A", "", "B",
+                     '','','',
+                     'C','','D'),
+          font.label = list(size = 30),
+          widths = c(1, 0.12, 1),
+          heights = c(.1, 1, 0.12, 1),
+          hjust = -.5,vjust = 0,legend = 'bottom')
+
+# save FIG3.pdf 10x10
+```
+
+## Fig4A
+
+```{r}
+# ******** str40
+df <- readRDS("Data/rds/E210.astral40.rds")
+df <- df[df$fold%in%c('a.100','a.104'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(6,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str <- data.frame(data='Astral 40',type='SPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+
+# ******** seq40
+df <- readRDS("Data/rds/E210.seq_astral40.rds")
+df <- df[df$fold%in%c('a.100','a.104'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(6,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq <- data.frame(data='Astral 40',type='CPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+z <- rbind(ump_df_str,ump_df_seq)
+z$data <- 'ASTRAL40'
+z$class <- ifelse(z$class=='a.100', 'a.100    ','a.104')
+
+p1 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
+    geom_point(alpha=.7) + 
+    facet_nested(~ data+type,independent = T,scales = T)+
+  ylab('')+xlab('')+
+  mythem+
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 3)))
+# ---------------------
+# ******** str95
+df <- readRDS("Data/rds/E210.astral_95.rds")
+df <- df[df$fold%in%c('a.100','a.104'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(6,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str <- data.frame(data='Astral 95',type='SPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+
+# ******** seq95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds")
+df <- df[df$fold%in%c('a.100','a.104'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(6,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq <- data.frame(data='Astral 95',type='CPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+z <- rbind(ump_df_str,ump_df_seq)
+z$data <- 'ASTRAL95'
+z$class <- ifelse(z$class=='a.100', 'a.100    ','a.104')
+
+
+p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
+    geom_point(alpha=.7) + 
+    facet_nested(~ data+type,independent = T,scales = T)+
+  ylab('')+xlab('')+
+  mythem+
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 3)))
+
+A<-ggarrange(NULL,NULL,NULL,NULL,
+             NULL,p1,NULL,p2,nrow = 2,ncol = 4,
+          common.legend = T,legend = 'right',
+          widths = c(.1,1, 0.0, 1),
+          heights = c(.07,1),
+          labels = c('','','','',
+                     '',"A", "", ""),
+  font.label = list(size = 30),
+  hjust = .2,vjust = 0)
+
+```
+
+## Fig4B
+
+```{r}
+# ******** str40
+df <- readRDS("Data/rds/E210.astral40.rds")
+df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(7,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str <- data.frame(data='Astral 40',type='SPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+
+# ******** seq40
+df <- readRDS("Data/rds/E210.seq_astral40.rds")
+df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(7,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq <- data.frame(data='Astral 40',type='CPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+z <- rbind(ump_df_str,ump_df_seq)
+z$data <- 'ASTRAL40'
+z$class <- ifelse(z$class=='a.29.2', 'a.29.2   ','a.29.3')
+
+p1 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
+    geom_point(alpha=.7) + 
+    facet_nested(~ data+type,independent = T,scales = T)+
+  ylab('')+xlab('')+
+  mythem+
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 3)))
+# ---------------------
+# ******** str95
+df <- readRDS("Data/rds/E210.astral_95.rds")
+df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(7,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str <- data.frame(data='Astral 95',type='SPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+
+# ******** seq95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds")
+df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(7,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq <- data.frame(data='Astral 95',type='CPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+z <- rbind(ump_df_str,ump_df_seq)
+z$data <- 'ASTRAL95'
+z$class <- ifelse(z$class=='a.29.2', 'a.29.2   ','a.29.3')
+
+p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
+    geom_point(alpha=.7) + 
+    facet_nested(~ data+type,independent = T,scales = T)+
+  ylab('')+xlab('')+
+  mythem+
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 3)))
+
+B <- ggarrange(NULL,NULL,NULL,NULL,
+             NULL,p1,NULL,p2,nrow = 2,ncol = 4,
+          common.legend = T,legend = 'right',
+          widths = c(.1,1, 0.0, 1),
+          heights = c(.07,1),
+          labels = c('','','','',
+                     '',"B", "", ""),
+  font.label = list(size = 30),
+  hjust = .2,vjust = 0)
+```
+
+## Fig4C
+
+```{r}
+# ******** str40
+df <- readRDS("Data/rds/E210.astral40.rds")
+df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(8,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 10,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str <- data.frame(data='Astral 40',type='SPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+
+# ******** seq40
+df <- readRDS("Data/rds/E210.seq_astral40.rds")
+df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(8,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 10,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq <- data.frame(data='Astral 40',type='CPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+z <- rbind(ump_df_str,ump_df_seq)
+z$data <- 'ASTRAl40'
+
+p1 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
+    geom_point(alpha=.7) + 
+    facet_nested(~ data+type,independent = T,scales = T)+
+  ylab('')+xlab('')+
+  mythem+
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 3)))
+# ---------------------
+# ******** str95
+df <- readRDS("Data/rds/E210.astral_95.rds")
+df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(8,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 10,
+            min_dist = 0.1,
+            input="dist")
+ump_df_str <- data.frame(data='Astral 95',type='SPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+
+# ******** seq95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds")
+df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
+df <- df[!is.na(df$FF),]
+df <- df[,c(8,3,9:218)]
+df$length <- as.numeric(df$length)
+dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 10,
+            min_dist = 0.1,
+            input="dist")
+ump_df_seq <- data.frame(data='Astral 95',type='CPE',
+                           class=df[,1],
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+z <- rbind(ump_df_str,ump_df_seq)
+z$data <- 'ASTRAL95'
+
+p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
+    geom_point(alpha=.7) + 
+    facet_nested(~ data+type,independent = T,scales = T)+
+  ylab('')+xlab('')+
+  mythem+
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 3)))
+
+C <- ggarrange(NULL,NULL,NULL,NULL,
+             NULL,p1,NULL,p2,nrow = 2,ncol = 4,
+          common.legend = T,legend = 'right',
+          widths = c(.1,1, 0.0, 1),
+          heights = c(.07,1),
+          labels = c('','','','',
+                     '',"C", "", ""),
+  font.label = list(size = 30),
+  hjust = .2,vjust = 0)
+```
+
+##Fig4ABC
+
+```{r}
+ggarrange(NULL,A,B,C,ncol = 1,
+          heights = c(0.07,1,1,1))
+# save FIG4.pdf 10x10
+```
+
+## Fig5EF
+
+```{r}
+# ******** a.29.3
+# ****** structure40
+df <- readRDS("Data/rds/E210.astral40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$superfamily%in% 'a.29.3'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$family[idx], dis)
+fa<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fa)) {  
+  print(i)   
+  x <- fa[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_family_str <- data.frame(data='ASTRAL40-superfamily a.29.3',type='SPE',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# ****** sequence40
+df <- readRDS("Data/rds/E210.seq_astral40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$superfamily%in% 'a.29.3'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$family[idx], dis)
+fa<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fa)) {  
+  print(i)   
+  x <- fa[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_family_seq <- data.frame(data='ASTRAL40-superfamily a.29.3',type='CPE',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# **********
+df_family <- rbind(df_family_seq, df_family_str)
+
+E <- ggboxplot(df_family, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  mythem+
+  theme(legend.position = 'none',
+        axis.text.x = element_blank())+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(method = 't.test',size=3,label.y = 18,
+                     label.x = 1.4,
+                     aes(label = paste0("p = ", ..p.format..)))+
+  facet_nested(~ data + type)+
+  coord_cartesian(ylim = c(0, 20))
+mylegend <- get_legend(E+
+                       theme(legend.position = 'bottom',
+                             legend.title = element_blank(),
+                             legend.text = element_text(size = 20)))
+# ******************************************
+# ****** structure95
+df <- readRDS("Data/rds/E210.astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$superfamily%in% 'a.29.3'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$family[idx], dis)
+fa<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fa)) {  
+  print(i)   
+  x <- fa[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_family_str <- data.frame(data='ASTRAL95-superfamily a.29.3',type='SPE',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# ****** sequence95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$superfamily%in% 'a.29.3'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$family[idx], dis)
+fa<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fa)) {  
+  print(i)   
+  x <- fa[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_family_seq <- data.frame(data='ASTRAL95-superfamily a.29.3',type='CPE',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# **********
+df_family <- rbind(df_family_seq, df_family_str)
+
+FF <- ggboxplot(df_family, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  mythem+
+  theme(legend.position = 'none',
+    axis.text.x = element_blank())+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(method = 't.test',size=3,
+                     label.y = 18,
+                     label.x = 1.4,
+                     aes(label = paste0("p = ", ..p.format..)))+
+  facet_nested(~ data + type)+
+  coord_cartesian(ylim = c(0, 20))
+# ********
+E<-ggarrange(
+  NULL,E, ncol = 1,
+  heights = c(0.07, 1),
+  labels = c('', "E"),
+  font.label = list(size = 30), # color = "red"
+  hjust = -.5,vjust = 0
+)
+FF<-ggarrange(
+  NULL,FF, ncol = 1,
+  heights = c(0.07, 1),
+  labels = c('', "F"),
+  font.label = list(size = 30), # color = "red"
+  hjust = -.5,vjust = 0
+)
+EF<-ggarrange(
+    E, NULL,FF, nrow = 1,
+    widths = c(1, 0.3, 1),
+    labels = c("", "", "")
+    )
+
+```
+
+## Fig5CD
+
+```{r}
+# ******** a.29
+# ****** structure40
+df <- readRDS("Data/rds/E210.astral40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$fold%in% 'a.29'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$superfamily[idx], dis)
+sf<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(sf)) {  
+  print(i)   
+  x <- sf[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_superfamily_str <- data.frame(data='ASTRAL40-fold a.29',type='SPE',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# ****** sequence40
+df <- readRDS("Data/rds/E210.seq_astral40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$fold%in% 'a.29'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$superfamily[idx], dis)
+sf<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(sf)) {  
+  print(i)   
+  x <- sf[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_superfamily_seq <- data.frame(data='ASTRAL40-fold a.29',type='CPE',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# **********
+df_superfamily <- rbind(df_superfamily_seq, df_superfamily_str)
+
+C <- ggboxplot(df_superfamily, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  mythem+
+  theme(legend.position = 'none',
+        axis.text.x = element_blank())+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',
+                     size=3,label.y = 17,
+                     label.x = 1.4,bracket.size = NA,tip.length = NA)+
+  facet_nested(~ data + type)+
+  coord_cartesian(ylim = c(0, 20))
+# ******************************************
+# ****** structure95
+df <- readRDS("Data/rds/E210.astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$fold%in% 'a.29'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$superfamily[idx], dis)
+sf<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(sf)) {  
+  print(i)   
+  x <- sf[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_superfamily_str <- data.frame(data='ASTRAL95-fold a.29',type='SPE',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# ****** sequence95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$fold%in% 'a.29'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$superfamily[idx], dis)
+sf <- unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(sf)) {  
+  print(i)   
+  x <- sf[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_superfamily_seq <- data.frame(data='ASTRAL95-fold a.29',type='CPE',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# **********
+df_superfamily <- rbind(df_superfamily_seq, df_superfamily_str)
+
+D <- ggboxplot(df_superfamily, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  mythem+
+  theme(legend.position = 'none',
+        axis.text.x = element_blank())+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=3,
+                     label.x = 1.4,label.y = 17,bracket.size = NA,tip.length = NA)+
+  facet_nested(~ data + type)+
+  coord_cartesian(ylim = c(0, 20))
+# ********
+C<-ggarrange(
+  NULL,C, ncol = 1,
+  heights = c(0.07, 1),
+  labels = c('', "C"),
+  font.label = list(size = 30), # color = "red"
+  hjust = -.5,vjust = 0
+)
+D<-ggarrange(
+  NULL,D, ncol = 1,
+  heights = c(0.07, 1),
+  labels = c('', "D"),
+  font.label = list(size = 30), # color = "red"
+  hjust = -.5,vjust = 0
+)
+CD<-ggarrange(
+    C, NULL,D, nrow = 1,
+    widths = c(1, 0.3, 1),
+    labels = c("", "", "")
+    )
+```
+
+## Fig5AB
+
+```{r}
+my_comparisons<-list(c('within','between'))
+# ******** a
+# ****** structure40
+df <- readRDS("Data/rds/E210.astral40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$class%in% 'a'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$fold[idx], dis)
+fo<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fo)) {  
+  print(i)   
+  x <- fo[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+wit <- within[sample(length(within),1000)] 
+bet <- between[sample(length(between),1000)] 
+df_fold_str <- data.frame(data='ASTRAL40-class alpha',type='SPE',
+                            gr=rep(c('within','between'),c(1000,1000)),
+                            distance=c(wit,bet)) 
+# ****** sequence40
+df <- readRDS("Data/rds/E210.seq_astral40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$class%in% 'a'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$fold[idx], dis)
+fo <- unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fo)) {  
+  print(i)   
+  x <- fo[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+wit <- within[sample(length(within),1000)] 
+bet <- between[sample(length(between),1000)] 
+df_fold_seq <- data.frame(data='ASTRAL40-class alpha',type='CPE',
+                            gr=rep(c('within','between'),c(1000,1000)),
+                            distance=c(wit,bet))
+# **********
+df_fold <- rbind(df_fold_seq, df_fold_str)
+
+A <- ggboxplot(df_fold, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  mythem+
+  theme(legend.position = 'none',
+        axis.text.x = element_blank())+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=3,
+                     label.y = 30,bracket.size = NA,tip.length = NA)+
+  facet_nested(~ data + type)+
+  coord_cartesian(ylim = c(0, 40))
+# ******************************************
+# ****** structure95
+df <- readRDS("Data/rds/E210.astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$class%in% 'a'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$fold[idx], dis)
+fo<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fo)) {  
+  print(i)   
+  x <- fo[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+wit <- within[sample(length(within),1000)]
+bet <- between[sample(length(between),1000)] 
+df_fold_str <- data.frame(data='ASTRAL95-class alpha',type='SPE',
+                            gr=rep(c('within','between'),c(1000,1000)),
+                            distance=c(wit,bet))
+# ****** sequence95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$class%in% 'a'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$fold[idx], dis)
+fo<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fo)) {  
+  print(i)   
+  x <- fo[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+wit <- within[sample(length(within),1000)] 
+bet <- between[sample(length(between),1000)] 
+df_fold_seq <- data.frame(data='ASTRAL95-class alpha',type='CPE',
+                            gr=rep(c('within','between'),c(1000,1000)),
+                            distance=c(wit,bet)) 
+# **********
+df_fold <- rbind(df_fold_seq, df_fold_str)
+
+B <- ggboxplot(df_fold, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  mythem+
+  theme(legend.position = 'none',
+        axis.text.x = element_blank())+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=3,
+                     label.y = 30, bracket.size = NA,tip.length = NA)+
+  facet_nested(~ data + type)+
+  coord_cartesian(ylim = c(0, 40))
+# ********
+A<-ggarrange(
+  NULL,A, ncol = 1,
+  heights = c(0.07, 1),
+  labels = c('', "A"),
+  font.label = list(size = 30), # color = "red"
+  hjust = -.5,vjust = 0
+)
+B<-ggarrange(
+  NULL,B, ncol = 1,
+  heights = c(0.07, 1),
+  labels = c('', "B"),
+  font.label = list(size = 30), # color = "red"
+  hjust = -.5,vjust = 0
+)
+AB<-ggarrange(
+    A, NULL,B, nrow = 1,
+    widths = c(1, 0.3, 1),
+    labels = c("", "", "")
+    )
+```
+
+##Fig5All
+
+```{r}
+f5all <- ggarrange(NULL,AB,CD,EF,ncol = 1,
+          heights = c(0.1,1,1,1))
+cowplot::plot_grid(f5all, mylegend, ncol = 1, rel_heights = c(1,.03))
+# save pdf 10x9
+```
+
+## Fig6 ferritin
+
+```{r}
+E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
+df <- E210_ferritin
+
+dis <- proxy::dist(df[,-c(1:3)], method = manhat)
+
+nnet <- neighborNet(dis)
+ggsplitnet(nnet) + geom_tiplab2(aes(label=label),
+                                hjust=-.1,size=5,
+                                color='blue')+
+  ggexpand(.1) + ggexpand(.1, direction=-1)
+# write.nexus.networx(nnet,'Data/rds/E210_ferritin_manhat.nxs')
+# nnet <- read.nexus.networx('Data/rds/E210_ferritin_manhat.nxs')
+# --------------------------------------------------------------------
+# ----   the 'E210_ferritin_manhat.nxs' file 
+# -----      was load on SplitsTree4(v 4.19.2) to visualize
+# --------------------------------------------------------------------
+```
+
+## Fig7 covid
+
+```{r}
+E210.seq_spike200 <- readRDS("Data/rds/E210.seq_spike200.rds")
+#-----------close
+df = E210.seq_spike200
+df = df[!is.na(df$length),]
+df = df[df$conformation == "Close",]
+
+rownames(df) = df$pdbID
+x <- df[,-c(1:4)]/df$length
+x  <- as.matrix(x) 
+hc <- x %>% proxy::dist(method = manhat)
+hc <- hc%>% hclust(method = "ward.D2")
+dend <- hc %>% as.dendrogram
+
+df <- df[with(df, order(df$virus)), ]
+row.names(df) <- df$pdbID
+rn <- df$pdbID
+tree_data <- as.phylo(dend)
+grp <- list(MERS_Cov     = rn[1:32],
+            SARS_Cov  = rn[33:63],
+            SARS_Cov2  = rn[64:143])
+
+p_data <- ggtree(tree_data, layout = 'circular',
+                 size = 1) 
+
+t_CPE = groupOTU(p_data, grp, "groups") + aes(color=groups) +
+  theme(legend.position="none",
+        plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
+  geom_tiplab2(aes(label=label,angle=angle),
+               hjust=-.1,size=5.5,fontface="bold",align=F)+
+  scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
+                      type =  c('black',"blue","green","red" ))+
+  ggtitle('Coronaviruse Spike Clustering Based On CPE')
+
+# -----------------------
+E210_spike200 <- readRDS("Data/rds/E210_spike200.rds")
+#-----------close
+df = E210_spike200
+df = df[!is.na(df$length),]
+df = df[df$conformation == "Close",]
+
+rownames(df) = df$pdbID
+x <- df[,-c(1:4)]/df$length
+x  <- as.matrix(x) 
+hc <- x %>% proxy::dist(method = manhat)
+hc <- hc%>% hclust(method = "ward.D2")
+dend <- hc %>% as.dendrogram
+
+df <- df[with(df, order(df$virus)), ]
+row.names(df) <- df$pdbID
+rn <- df$pdbID
+
+tree_data <- as.phylo(dend)
+grp <- list(MERS_Cov     = rn[1:32],
+            SARS_Cov  = rn[33:63],
+            SARS_Cov2  = rn[64:143])
+
+p_data <- ggtree(tree_data, layout = 'circular',
+                 #branch.length='none',
+                 size = 1) 
+
+t_SPE = groupOTU(p_data, grp, "groups") + aes(color=groups) +
+  theme(legend.position="none",
+        plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
+  geom_tiplab2(aes(label=label,angle=angle),
+               hjust=-.1,size=5.5,fontface="bold",align=F)+
+  scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
+                      type =  c('black',"blue","green","red"  ))+
+  ggtitle('Coronaviruse Spike Clustering Based On SPE')
+
+mylegend <- get_legend(t_SPE+
+                       theme(legend.position = 'bottom',
+                             legend.title = element_blank(),
+                             legend.text = element_text(size = 20)))
+
+
+AB<-ggarrange(NULL,
+    t_CPE, NULL,t_SPE, ncol = 1,nrow = 4,
+    heights = c(.15, 1,.1, 1),
+    #widths = c(1,.1,1),
+    labels = c('',"A", "", "B"),
+    font.label = list(size = 55), # color = "red"
+    hjust = -10,vjust = 0
+    )
+cowplot::plot_grid(AB, mylegend, ncol = 1, rel_heights = c(1,.1))
+# save FIG6.pdf 13x8
+```
+
+## Fig8 Bacteriocin Tm-Vec
+
+```{r}
+tm <- readRDS('Data/rds/bacteriocin_tm-vec.rds')
+tm2 <- tm[!is.na(tm$status2),-23]
+colnames(tm2)[23]<-'status'
+tm2 <- rbind(tm[,-24],tm2)
+
+tm2 <- tm2[,c(5,20,21,6,22,23)]
+colnames(tm2)[-6] <- c('Alphafold2','Omegafold','ESMfold','TM_vec','CPE')
+tm2 <- melt(tm2,variable.name = 'method',value.name = 'score')
+tm2$method <- factor(tm2$method,levels = c('TM_vec','Alphafold2','Omegafold','ESMfold','CPE'))
+p1<-ggplot(tm2, aes(status,score,fill=method))+
+  geom_boxplot(outlier.shape = NA,
+               color='black',
+               size=rep(c(rep(.3,4),1),3),
+               alpha=rep(c(rep(.4,4),1),3),
+               width=.4
+               )+
+  coord_cartesian(ylim = c(0.1, 1))+
+  xlab('')+
+    geom_hline(yintercept = .5, linetype="dashed", 
+             color = "red", size=.7)+
+  mythem+
+  theme(legend.title = element_blank(),
+        axis.text.y = element_text(size=13),
+        axis.text.x = element_text(color = 'black',size = 15, face = 'bold'),
+        axis.title.y = element_text(size = 20,vjust = 2, face = 'bold'),
+        legend.text = element_text(size = 15))+
+  scale_fill_discrete(labels=c('TM_vec','Alphafold2',
+                               'Omegafold','ESMfold',
+                               expression(bold("CEP"))))
+
+# --------------------------------
+# -----  UMAP
+df <- readRDS('Data/rds/E210.seq_bacteriocin.rds')
+dis <- as.matrix(proxy::dist(df[,-c(1:6)], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 100,
+            min_dist = 0.1,
+            input="dist")
+
+ump_df <- data.frame(class=df$class_x,
+                     subclass=df$Subclass_x,
+                     UMAP1 = ump$layout[, 1],
+                     UMAP2 = ump$layout[, 2])
+
+p2<-ggplot(ump_df,
+       aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7, size=2) + 
+  mythem+
+  theme(legend.title = element_blank(),
+        legend.position = 'bottom',
+        axis.title = element_text(size = 15),
+        axis.title.y = element_text(size = 15,vjust = 5),
+        legend.text = element_text(size = 15))+
+  scale_color_manual(values = c('green','magenta','blue'))
+
+
+p1 <- ggarrange(NULL,NULL,
+          NULL,p1,ncol = 2,nrow = 2,
+          labels = c('','B'),
+          heights = c(0.1,1),
+          widths = c(.1,1),
+          font.label = list(size = 50),
+          hjust = 0,vjust = 1.2)
+p2 <- ggarrange(NULL,NULL,
+          NULL,p2,ncol = 2,nrow = 2,
+          labels = c('','A'),
+          heights = c(0.1,1),
+          widths = c(.1,1),
+          font.label = list(size = 50),
+          hjust = .5,vjust = 1.2)
+
+ggarrange(p2,NULL,p1,ncol = 3,nrow = 1,
+          widths = c(.5,.05,1))
+# save FIG8.pdf 15x8
+```
+
+##Fig9 DrugTarget
+
+```{r}
+my_sab <- readRDS('Data/rds/my_sab.rds')
+my_sab <- as.data.frame(as.table(my_sab)) 
+colnames(my_sab) <- c("d1", "d2", "my_sAB") 
+my_sab <- my_sab[!is.na(my_sab$my_sAB), ]
+sab <- readRDS('Data/rds/sAB.rds')
+colnames(sab)[1:2] <- c('d1','d2')
+
+df <- left_join(sab,my_sab,c('d1','d2'))
+ggplot(df,aes(sAB,my_sAB))+
+  geom_point(alpha=.5)+geom_smooth(method = 'lm')+
+  stat_cor(col='red',size=8)+mythem+
+    theme(axis.title = element_text(size=20),
+        axis.text.x = element_text(size = 13),
+        axis.text.y = element_text(size = 13),)+
+  xlab('sAB (PPI)')+ylab('sAB (CPE)')
+# save FIG9.pdf 10x7
+```
+
+## Table1 FiveSF
+
+```{r}
+# -------- 5 sf
+win <- 'a.4.5'
+imu <- 'b.1.1'
+ph <- 'b.55.1'
+ub <- 'd.15.1'
+ntf <- 'd.17.4'
+
+fiveSF <- c(win,imu,ph,ub,ntf)
+#############
+df5 <- readRDS('Data/rds/E210.seq_df5.rds')
+df5 <- df5[!is.na(df5$FF),]
+###############
+dis <- as.matrix(dist(df5[,-c(1:8)],method = manhat))
+diag(dis) <- NA
+
+im <- apply(dis,1, FUN = which.min)
+res <- data.frame(sorce=df5$superfamily, target=df5$superfamily[im])
+cm <- matrix(0,5,5)
+colnames(cm) <- rownames(cm) <- fiveSF
+for (sf in fiveSF) {
+  x <- res[res$sorce%in%sf,]
+  z <- table(x$target)
+  cm[sf,names(z)]<-z
+}
+Accuracy<-sum(diag(cm))/sum(cm)
+Precision <- diag(cm)/colSums(cm)
+Recall <- diag(cm)/rowSums(cm)
+F1 <- (2 * Precision * Recall) /(Precision + Recall)
+
+res1nn<-data.frame(t(round(c(Accuracy,F1),2)))
+# ------------------------------------
+df5$superfamily <- factor(df5$superfamily)
+kfolds <- createFolds(df5$superfamily, k = 10)
+res<-c()
+for (i in 1:10) {
+  print(i)
+  x <- kfolds[[i]]
+  tr <- df5[-x,c(7,9:218)]
+  te <- df5[x,c(7,9:218)]
+  rf = randomForest(superfamily~.,data = tr)
+  p2 <- predict(rf, te)
+  cm2 <- confusionMatrix(p2, te$superfamily)
+  Accuracy <- c(cm2$overall['Accuracy'], F1=cm2$byClass[,'F1'])
+  res<-rbind(res,Accuracy)
+}
+res <- rbind(res,colMeans(res))
+res <- round(res,2)
+rownames(res) <- c(paste0("Fold_",1:length(kfolds)),'Average')
+colnames(res)[-1] <- gsub('.Class','',colnames(res)[-1])
+# -----------------
+tab1 <- rbind(res1nn,res[11,])
+colnames(tab1)<-colnames(res)
+tab1 <- data.frame(method=c('1NN','RF'),tab1)
+```
+
+## Table2 CT_Ho
+
+```{r}
+# -------------------- 1NN 
+df <- readRDS('Data/rds/E210.seq_CT_Ho.rds')
+df <- df[!is.na(df$FF),]
+twoSF <- unique(df$cathID)
+
+dis <- as.matrix(dist(df[,-c(1:10)]/df$length, method = manhat))
+diag(dis) <- NA
+
+im <- apply(dis,1, FUN = which.min)
+res <- data.frame(sorce=df$cathID, target=df$cathID[im])
+## ----------
+cm <- matrix(0,2,2)
+colnames(cm) <- rownames(cm) <- twoSF
+for (sf in twoSF) {
+  x <- res[res$sorce%in%sf,]
+  z <- table(x$target)
+  cm[sf,names(z)]<-z
+}
+round(sum(diag(cm))/sum(cm),2)
+```
+
+
+# Enzyme
+
+```{r}
+df <- read.delim('COFACTOR_Test_TrueLabels.txt')
+df$class <- substr(df$EC.Number,1,1)
+Nprotein <- nrow(df)
+#----------------------------------------------
+E210_Enzyme <- data.frame(pdbID = df$PDB.id,
+                            length = rep(NA,Nprotein),
+                            class = df$class,
+                            matrix(NA,ncol=210, nrow=Nprotein))
+
+colnames(E210_Enzyme) = c("pdbID","length","class",pair_inter)
+E210.seq_Enzyme <- E210_Enzyme_SS <- E210_Enzyme
+
+for (NP in 1:Nprotein) {
+  print(NP)
+  ch <- substr(E210_Enzyme$pdbID[NP],5,5)
+  pdbname <- substr(E210_Enzyme$pdbID[NP],1,4)
+  E210_Enzyme$pdbID[NP] <- E210_Enzyme$pdbID[NP]
+  E210_Enzyme_SS$pdbID[NP] <- E210_Enzyme$pdbID[NP]
+  E210.seq_Enzyme$pdbID[NP] <- E210_Enzyme$pdbID[NP]
+  tryCatch({
+    pdb0 <- read.pdb(tolower(pdbname))
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
+    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+    sele4 <- atom.select(pdb0, "noh")
+    sele <- combine.select(sele1, sele2,sele4, operator="AND")
+    pdbX <- pdb0$atom[sele$atom,]
+    pdbXca <- pdbX[pdbX$elety == "CA",]
+    seq <- aa321(pdbXca$resid)
+    E210.seq_Enzyme$length[NP] <- length(unique(pdbX$resno))
+    freq <- c()
+    for (j in 1:20){
+        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+    }
+    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+    en_fr <- aaenergy * freq_matrix
+    en_fr <- en_fr/length(seq)
+    pair_es <- diag(freq) %*% as.matrix(en_fr)
+    aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
+    E210.seq_Enzyme[NP,4:213] <- aa210_p
+    E210_Enzyme$length[NP] <- length(unique(pdbX$resno))
+    E210_Enzyme_SS$length[NP] <- length(unique(pdbX$resno))
+    # -------------------
+    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    E210_Enzyme[NP,4:213] <- energy210
+    # ****************keep res helix & sheet************************
+    indhs <- inedx_HelixSheet(PDB = new_pdb)
+    Net_Frame_hs <- Net_Frame[Net_Frame$resnoif %in% indhs & Net_Frame$resnojf %in% indhs,]
+    if(dim(Net_Frame_hs)[1]!=0){
+        Net_Frame <- Net_Frame_hs
+    }
+    energy210_ss <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    E210_Enzyme_SS[NP,4:213] <- energy210_ss
+    }, error = function(e) {
+     cat("Error downloading file:", e$message, "\n")
+    })
+}
+# -----  UMAP
+df <- E210.seq_Enzyme
+df <- df[!is.na(df$FF),]
+dis <- as.matrix(proxy::dist(df[,-c(1:3)], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 100,
+            min_dist = 0.1,
+            input="dist")
+
+ump_df <- data.frame(class=df$class,
+                     UMAP1 = ump$layout[, 1],
+                     UMAP2 = ump$layout[, 2])
+
+p2<-ggplot(ump_df,
+       aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7, size=2) + 
+  mythem+
+  theme(legend.title = element_blank(),
+        #legend.position = 'bottom',
+        axis.title = element_text(size = 15),
+        axis.title.y = element_text(size = 15,vjust = 5),
+        legend.text = element_text(size = 15))
+```
+
+
+
+
