@@ -2187,3 +2187,92 @@ for (sf in twoSF) {
 round(sum(diag(cm))/sum(cm),2)
 ```
 
+
+# Enzyme
+
+```{r}
+df <- read.delim('COFACTOR_Test_TrueLabels.txt')
+df$class <- substr(df$EC.Number,1,1)
+Nprotein <- nrow(df)
+#----------------------------------------------
+E210_Enzyme <- data.frame(pdbID = df$PDB.id,
+                            length = rep(NA,Nprotein),
+                            class = df$class,
+                            matrix(NA,ncol=210, nrow=Nprotein))
+
+colnames(E210_Enzyme) = c("pdbID","length","class",pair_inter)
+E210.seq_Enzyme <- E210_Enzyme_SS <- E210_Enzyme
+
+for (NP in 1:Nprotein) {
+  print(NP)
+  ch <- substr(E210_Enzyme$pdbID[NP],5,5)
+  pdbname <- substr(E210_Enzyme$pdbID[NP],1,4)
+  E210_Enzyme$pdbID[NP] <- E210_Enzyme$pdbID[NP]
+  E210_Enzyme_SS$pdbID[NP] <- E210_Enzyme$pdbID[NP]
+  E210.seq_Enzyme$pdbID[NP] <- E210_Enzyme$pdbID[NP]
+  tryCatch({
+    pdb0 <- read.pdb(tolower(pdbname))
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
+    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+    sele4 <- atom.select(pdb0, "noh")
+    sele <- combine.select(sele1, sele2,sele4, operator="AND")
+    pdbX <- pdb0$atom[sele$atom,]
+    pdbXca <- pdbX[pdbX$elety == "CA",]
+    seq <- aa321(pdbXca$resid)
+    E210.seq_Enzyme$length[NP] <- length(unique(pdbX$resno))
+    freq <- c()
+    for (j in 1:20){
+        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+    }
+    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+    en_fr <- aaenergy * freq_matrix
+    en_fr <- en_fr/length(seq)
+    pair_es <- diag(freq) %*% as.matrix(en_fr)
+    aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
+    E210.seq_Enzyme[NP,4:213] <- aa210_p
+    E210_Enzyme$length[NP] <- length(unique(pdbX$resno))
+    E210_Enzyme_SS$length[NP] <- length(unique(pdbX$resno))
+    # -------------------
+    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    E210_Enzyme[NP,4:213] <- energy210
+    # ****************keep res helix & sheet************************
+    indhs <- inedx_HelixSheet(PDB = new_pdb)
+    Net_Frame_hs <- Net_Frame[Net_Frame$resnoif %in% indhs & Net_Frame$resnojf %in% indhs,]
+    if(dim(Net_Frame_hs)[1]!=0){
+        Net_Frame <- Net_Frame_hs
+    }
+    energy210_ss <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    E210_Enzyme_SS[NP,4:213] <- energy210_ss
+    }, error = function(e) {
+     cat("Error downloading file:", e$message, "\n")
+    })
+}
+# -----  UMAP
+df <- E210.seq_Enzyme
+df <- df[!is.na(df$FF),]
+dis <- as.matrix(proxy::dist(df[,-c(1:3)], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 100,
+            min_dist = 0.1,
+            input="dist")
+
+ump_df <- data.frame(class=df$class,
+                     UMAP1 = ump$layout[, 1],
+                     UMAP2 = ump$layout[, 2])
+
+p2<-ggplot(ump_df,
+       aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7, size=2) + 
+  mythem+
+  theme(legend.title = element_blank(),
+        #legend.position = 'bottom',
+        axis.title = element_text(size = 15),
+        axis.title.y = element_text(size = 15,vjust = 5),
+        legend.text = element_text(size = 15))
+```
+
+
+
+
