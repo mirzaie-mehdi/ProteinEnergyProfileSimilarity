@@ -2177,7 +2177,7 @@ df <- readRDS('Data/rds/E210.seq_CT_Ho.rds')
 df <- df[!is.na(df$FF),]
 twoSF <- unique(df$cathID)
 
-dis <- as.matrix(dist(df[,-c(1:10)]/df$length, method = manhat))
+dis <- as.matrix(dist(df[,-c(1:10)], method = manhat))
 diag(dis) <- NA
 
 im <- apply(dis,1, FUN = which.min)
