@@ -189,7 +189,7 @@ astral_40$length <- apply(data.frame(astral_40$seq),1,nchar)
 #saveRDS(astral_40, file = "Data/rds/astral_40.rds")
 ```
 
-<<<<<<< HEAD:Energy_comparison.Rmd
+
 # Energy Calculation
 
 ## Sequence_Energy_Estimator
@@ -197,7 +197,7 @@ astral_40$length <- apply(data.frame(astral_40$seq),1,nchar)
 
 
 # Energy Calculation prerequisite
->>>>>>> 30f912cc414bbb6af1241903b44e85ad40dc7445:Energetic_Profile-Based_Protein_Comparison.Rmd
+
 
 The following chunk retrieves the predicted pairwise energy values from the training dataset for the computation of the energy profile based on sequence.
 
