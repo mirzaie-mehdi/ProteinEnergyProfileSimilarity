@@ -2191,35 +2191,37 @@ round(sum(diag(cm))/sum(cm),2)
 # Enzyme
 
 ```{r}
-df <- read.delim('COFACTOR_Test_TrueLabels.txt')
-df$class <- substr(df$EC.Number,1,1)
-Nprotein <- nrow(df)
-#----------------------------------------------
-E210_Enzyme <- data.frame(pdbID = df$PDB.id,
-                            length = rep(NA,Nprotein),
-                            class = df$class,
-                            matrix(NA,ncol=210, nrow=Nprotein))
+df1 <- read.delim('Data/Enzyme/Hydrolases_Positive_Train.Txt')
+df2 <- read.delim('Data/Enzyme/Isomerases_Positive_Train.txt')
+df3 <- read.delim('Data/Enzyme/Ligases_Positive_Train.txt')
+df4 <- read.delim('Data/Enzyme/Lyases_Positive_Train.txt')
+df5 <- read.delim('Data/Enzyme/Oxidoreductases_Positive_Train.txt')
+df6 <- read.delim('Data/Enzyme/Transferases_Positive_Train.txt')
 
-colnames(E210_Enzyme) = c("pdbID","length","class",pair_inter)
-E210.seq_Enzyme <- E210_Enzyme_SS <- E210_Enzyme
+size.class <- c(nrow(df1),nrow(df2),nrow(df3),nrow(df4),nrow(df5),nrow(df6))
+
+E210.seq_Enzyme <- data.frame(class=rep(c('Hydrolases','Isomerases',
+                                          'Ligases','Lyases',
+                             'Oxidoreductases','Transferases'),
+                           size.class),
+                 uniID=c(df1[,1],  #sample(1:nrow(df1),1000)
+                         df2[,1],  #sample(1:nrow(df2),1000)
+                         df3[,1],  #sample(1:nrow(df3),1000)
+                         df4[,1],  #sample(1:nrow(df4),1000)
+                         df5[,1],  #sample(1:nrow(df5),1000)
+                         df6[,1]), #sample(1:nrow(df6),1000)
+                 length=NA,
+                 matrix(0,sum(size.class),210))
+
+Nprotein <- nrow(E210.seq_Enzyme)
+#----------------------------------------------
+colnames(E210.seq_Enzyme)[-c(1:3)] <- pair_inter
 
 for (NP in 1:Nprotein) {
   print(NP)
-  ch <- substr(E210_Enzyme$pdbID[NP],5,5)
-  pdbname <- substr(E210_Enzyme$pdbID[NP],1,4)
-  E210_Enzyme$pdbID[NP] <- E210_Enzyme$pdbID[NP]
-  E210_Enzyme_SS$pdbID[NP] <- E210_Enzyme$pdbID[NP]
-  E210.seq_Enzyme$pdbID[NP] <- E210_Enzyme$pdbID[NP]
   tryCatch({
-    pdb0 <- read.pdb(tolower(pdbname))
-    sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
-    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
-    sele4 <- atom.select(pdb0, "noh")
-    sele <- combine.select(sele1, sele2,sele4, operator="AND")
-    pdbX <- pdb0$atom[sele$atom,]
-    pdbXca <- pdbX[pdbX$elety == "CA",]
-    seq <- aa321(pdbXca$resid)
-    E210.seq_Enzyme$length[NP] <- length(unique(pdbX$resno))
+    seq <- getUniProt(E210.seq_Enzyme$uniID[NP])[[1]]
+    E210.seq_Enzyme$length[NP] <- nchar(seq)
     freq <- c()
     for (j in 1:20){
         freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
@@ -2230,28 +2232,15 @@ for (NP in 1:Nprotein) {
     pair_es <- diag(freq) %*% as.matrix(en_fr)
     aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
     E210.seq_Enzyme[NP,4:213] <- aa210_p
-    E210_Enzyme$length[NP] <- length(unique(pdbX$resno))
-    E210_Enzyme_SS$length[NP] <- length(unique(pdbX$resno))
-    # -------------------
-    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
-    Net_Frame <- NetworkFrame(PDB = new_pdb)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
-    E210_Enzyme[NP,4:213] <- energy210
-    # ****************keep res helix & sheet************************
-    indhs <- inedx_HelixSheet(PDB = new_pdb)
-    Net_Frame_hs <- Net_Frame[Net_Frame$resnoif %in% indhs & Net_Frame$resnojf %in% indhs,]
-    if(dim(Net_Frame_hs)[1]!=0){
-        Net_Frame <- Net_Frame_hs
-    }
-    energy210_ss <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
-    E210_Enzyme_SS[NP,4:213] <- energy210_ss
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
     })
 }
-# -----  UMAP
+saveRDS(E210.seq_Enzyme,'Data/Enzyme/E210.seq_Enzyme_All.rds')
+# -----------------------------------------
+# -----------------  UMAP
 df <- E210.seq_Enzyme
-df <- df[!is.na(df$FF),]
+df <- df[!is.na(df$length),]
 dis <- as.matrix(proxy::dist(df[,-c(1:3)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 100,
