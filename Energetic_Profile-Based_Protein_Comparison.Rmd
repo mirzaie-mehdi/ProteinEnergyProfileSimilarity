@@ -2233,7 +2233,7 @@ for (NP in 1:Nprotein) {
      cat("Error downloading file:", e$message, "\n")
     })
 }
-saveRDS(E210.seq_Enzyme,'Data/Enzyme/E210.seq_Enzyme_All.rds')
+saveRDS(E210.seq_Enzyme,'Data/Enzyme/E210.seq_Enzyme.rds')
 # -----------------------------------------
 # -----------------  UMAP
 source('mytheme.R')
