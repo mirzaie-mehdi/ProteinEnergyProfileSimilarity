@@ -11,15 +11,15 @@ size.class <- c(nrow(df1),nrow(df2),nrow(df3),nrow(df4),nrow(df5),nrow(df6))
 E210.seq_Enzyme <- data.frame(class=rep(c('Hydrolases','Isomerases',
                                           'Ligases','Lyases',
                                           'Oxidoreductases','Transferases'),
-                                        each=1000),
-                              uniID=c(df1[sample(1:nrow(df1),1000),1],  #
-                                      df2[sample(1:nrow(df2),1000),1],  #
-                                      df3[sample(1:nrow(df3),1000),1],  #
-                                      df4[sample(1:nrow(df4),1000),1],  #
-                                      df5[sample(1:nrow(df5),1000),1],  #
-                                      df6[sample(1:nrow(df6),1000),1]), #
+                                        size.class),
+                              uniID=c(df1[,1],  #sample(1:nrow(df1),1000)
+                                      df2[,1],  #sample(1:nrow(df2),1000)
+                                      df3[,1],  #sample(1:nrow(df3),1000)
+                                      df4[,1],  #sample(1:nrow(df4),1000)
+                                      df5[,1],  #sample(1:nrow(df5),1000)
+                                      df6[,1]), #sample(1:nrow(df6),1000)
                               length=NA,
-                              matrix(0,6000,210))
+                              matrix(0,sum(size.class),210))
 
 Nprotein <- nrow(E210.seq_Enzyme)
 #----------------------------------------------
@@ -45,7 +45,7 @@ for (NP in 1:Nprotein) {
     cat("Error downloading file:", e$message, "\n")
   })
 }
-saveRDS(E210.seq_Enzyme,'Data/Enzyme/E210.seq_Enzyme.rds')
+saveRDS(E210.seq_Enzyme,'Data/Enzyme/E210.seq_Enzyme_All.rds')
 # -----------------------------------------
 # -----------------  UMAP
 source('mytheme.R')
@@ -92,7 +92,4 @@ res <- rbind(res,colMeans(res))
 res <- round(res,2)
 rownames(res) <- c(paste0("Fold_",1:length(kfolds)),'Average')
 colnames(res)[-1] <- gsub('.Class','',colnames(res)[-1])
-# -----------------
-tab1 <- rbind(res1nn,res[11,])
-colnames(tab1)<-colnames(res)
-tab1 <- data.frame(method=c('1NN','RF'),tab1)
+
