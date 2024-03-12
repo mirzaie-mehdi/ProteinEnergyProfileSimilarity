@@ -84,7 +84,7 @@ for (i in 1:10) {
   te <- df[x,-c(2:3)]
   rf = randomForest(class~.,data = tr)
   p2 <- predict(rf, te)
-  cm2 <- confusionMatrix(p2, te$superfamily)
+  cm2 <- confusionMatrix(p2, te$class)
   Accuracy <- c(cm2$overall['Accuracy'], F1=cm2$byClass[,'F1'])
   res<-rbind(res,Accuracy)
 }
