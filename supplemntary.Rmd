@@ -51,6 +51,7 @@ for (i in 1:Np) {
     cat("Error downloading file:", e$message, "\n")
   })
 }
+file.remove('aln.fa')
 tictoc::toc()
 rownames(rms) <- colnames(rms) <- spike$pdbID
 saveRDS(rms,'Data/covidPDB/disRMSD.rds')
