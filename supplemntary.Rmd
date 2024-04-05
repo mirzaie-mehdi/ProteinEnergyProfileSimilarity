@@ -1,0 +1,96 @@
+---
+title: "supplemntary"
+author: "peyman"
+date: "2024-04-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# load packages
+
+```{r}
+library(bio3d)
+```
+
+# Covid-19
+
+```{r}
+spike <- read.csv("Data/covidPDB/spike200.csv", sep=";")
+spike <- spike[-grep('6XR8',spike$pdbID),] # There is no PDB file of ID 6XR8
+spike <- spike[spike$Conformation%in%'Close',]
+Np <- nrow(spike)
+#----------------------------------------------
+rms <- matrix(NA,Np,Np)
+
+tictoc::tic()
+for (i in 1:Np) {
+  print(i)
+  tryCatch({
+    chi <- substr(spike$pdbID[i],5,5)
+    pdbnamei <- substr(spike$pdbID[i],1,4)
+    pdb0 <- read.pdb(tolower(pdbnamei))
+    sele <- atom.select(pdb0,chain=chi)
+    new_pdbi <- trim.pdb(pdb0, sele,verbose = FALSE)
+    for (j in 1:Np) {
+      if(i>j){
+        chj <- substr(spike$pdbID[j],5,5)
+        pdbnamej <- substr(spike$pdbID[j],1,4)
+        pdb0 <- read.pdb(tolower(pdbnamej))
+        sele <- atom.select(pdb0,'protein',chain=chj)
+        new_pdbj <- trim.pdb(pdb0, sele,verbose = FALSE)
+        pdbs <- list(new_pdbi, new_pdbj)
+        aln_pdbs <- pdbaln(pdbs,fit = T)
+        xyz <- pdbfit(aln_pdbs)
+        rms[i,j] <- rms[j,i] <- rmsd(xyz)[1,2]
+      }
+    }
+  }, error = function(e) {
+    cat("Error downloading file:", e$message, "\n")
+  })
+}
+tictoc::toc()
+rownames(rms) <- colnames(rms) <- spike$pdbID
+saveRDS(rms,'Data/covidPDB/disRMSD.rds')
+# ---------------------------------------------------
+
+rms <- data.frame(readRDS('Data/covidPDB/disRMSD.rds'))
+diag(rms)<-0
+df<-spike
+tm <- read.csv('Data/covidPDB/disTM.csv',row.names = 'X')
+rownames(tm) <- colnames(tm) <- df$pdbID
+
+tm1 <- tm2 <- tm
+tm1[lower.tri(tm1)]<-0
+tm2[upper.tri(tm2)]<-0
+
+tm1 <- tm1 + t(tm1)
+tm2 <- tm2 + t(tm2)
+
+hc <- as.dist(rms)
+hc <- hc%>% hclust(method = "ward.D2")
+dend <- hc %>% as.dendrogram
+
+df <- df[with(df, order(df$VIRUS)), ]
+row.names(df) <- paste0(df$pdbID,'_',df$chainID)
+rn <- paste0(df$pdbID,'_',df$chainID)
+tree_data <- as.phylo(dend)
+grp <- list(MERS_Cov  = rn[1:32],
+            SARS_Cov  = rn[33:63],
+            SARS_Cov2 = rn[64:143])
+
+p_data <- ggtree(tree_data, layout = 'circular',
+                 size = 1) 
+
+groupOTU(p_data, grp, "groups") + aes(color=groups) +
+  theme(legend.position="none",
+        plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
+  geom_tiplab2(aes(label=label,angle=angle),
+               hjust=-.1,size=5.5,fontface="bold",align=F)+
+  scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
+                       type =  c("blue","green","red" ))
+
+```
+
