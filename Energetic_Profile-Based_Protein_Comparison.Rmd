@@ -681,65 +681,37 @@ tm_unique[i,7:216] <- aa210_p
 # -------- At first, run the 'Energy Calculation prerequisite' chunk.
 # ----------------------------------------------------
 df <- read.csv('Data/csv/CT_Ho_cathID_filtered.csv')
-df$chain <- substr(df$pdbID,5,5)
-df$pdbID <- substr(df$pdbID,1,4)
 
-E210.CT_Ho <- data.frame(pdbID = df$pdbID,chainID = df$chain,length = NA,
-                         start = df$start,end = df$end,
-                         cathID = df$cathID,
-                         class = df$class,
-                         architecture = df$architecture,
-                         topology = df$topology,
-                         homologous = df$homologous,
+E210.seq_CT_Ho <- data.frame(df,
                          matrix(NA, ncol = 210, nrow = nrow(df)))
 
-colnames(E210.CT_Ho)[-c(1:10)] <- pair_inter
-E210.seq_CT_Ho <- E210.CT_Ho
+colnames(E210.seq_CT_Ho)[-c(1:9)] <- pair_inter
 
-for(NP in 1:nrow(E210.CT_Ho)){
+tictoc::tic()
+for(NP in 1:nrow(E210.seq_CT_Ho)){
   print(NP)
-  pdbname <- E210.CT_Ho$pdbID[NP]
-  ch <- E210.CT_Ho$chainID[NP]
   tryCatch({
-    pdb0 <- read.pdb(pdbname)
-      sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
-      sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
-      sele4 <- atom.select(pdb0, "noh")
-      sele <- combine.select(sele1, sele2,sele4, operator="AND")
-      if (!is.na(E210.CT_Ho$start[NP])){
-        pdbX <- pdb0$atom[sele$atom,]
-        shift_pos <- min(pdbX$resno)-1
-         st <- E210.CT_Ho$start[NP]+shift_pos
-         en <- E210.CT_Ho$end[NP]+shift_pos
-         sele3 <- atom.select(pdb0,  resno=st:en, verbose=TRUE)
-         sele <- combine.select(sele, sele3, operator="AND")
-      }
-      new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
-      pdbX <- new_pdb$atom
-      E210.CT_Ho$length[NP] = length(unique(pdbX$resno))
-      Net_Frame <- NetworkFrame(PDB = new_pdb)
-      energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
-      E210.CT_Ho[NP,11:220] <- energy210
-      # ****************seq************************
-      pdbXca <- pdbX[pdbX$elety == "CA",]
-      seq <- tolower(aa321(pdbXca$resid))
-      E210.seq_CT_Ho$length[NP] = length(seq)
+      seq <- unlist(strsplit(toupper(E210.seq_CT_Ho$seq[NP]),''))
       freq = c()
       for (j in 1:20){
-          freq[j] <- length(grep(tolower(letters_list[j]),seq))
+          freq[j] <- length(grep(letters_list[j],seq))
       }
       freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
       en_fr <- aaenergy * freq_matrix
       en_fr <- en_fr/length(seq)
       pair_es <- diag(freq) %*% as.matrix(en_fr)
       aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-      E210.seq_CT_Ho[NP,11:220] <- aa210_p
+      E210.seq_CT_Ho[NP,10:219] <- aa210_p
       }, error = function(e) {
        cat("Error downloading file:", e$message, "\n")
         }
   )
 }
-# saveRDS(E210.CT_Ho,'Data/rds/E210.CT_Ho.rds')
+df2 <- E210.seq_CT_Ho
+df2 <- df2[!is.na(df2$FF),]
+dis <- as.matrix(proxy::dist(df2[,-c(1:9)], method = manhat))
+tictoc::toc()
+# saveRDS(dis,'Data/rds/dis.CT_Ho.rds')
 # saveRDS(E210.seq_CT_Ho,'Data/rds/E210.seq_CT_Ho.rds')
 ```
 

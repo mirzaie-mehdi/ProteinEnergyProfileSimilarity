@@ -70,14 +70,14 @@ tm2[upper.tri(tm2)]<-0
 tm1 <- tm1 + t(tm1)
 tm2 <- tm2 + t(tm2)
 
-hc <- as.dist(rms)
+hc <- as.dist(tm1)
 hc <- hc%>% hclust(method = "ward.D2")
 library(mclust)
 adjustedRandIndex(cutree(hc, 3), df$VIRUS)
 dend <- hc %>% as.dendrogram
 
 df <- df[with(df, order(df$VIRUS)), ]
-rn <- row.names(df) <- df$pdbID
+rn <- df$pdbID
 tree_data <- as.phylo(hc)
 grp <- list(MERS_Cov  = rn[1:32],
             SARS_Cov  = rn[33:63],
@@ -90,7 +90,7 @@ p <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
        theme(legend.position="none",
              plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
        geom_tiplab2(aes(label=label,angle=angle),
-                    hjust=-.1,size=5.5,fontface="bold",align=F)+
+                    hjust=-.1,size=3.5,fontface="bold",align=F)+
        scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
                             type =  c("blue","green","red" ))
 
