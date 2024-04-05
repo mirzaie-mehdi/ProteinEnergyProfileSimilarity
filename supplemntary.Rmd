@@ -42,7 +42,7 @@ for (i in 1:Np) {
         sele <- atom.select(pdb0,'protein',chain=chj)
         new_pdbj <- trim.pdb(pdb0, sele,verbose = FALSE)
         pdbs <- list(new_pdbi, new_pdbj)
-        aln_pdbs <- pdbaln(pdbs,fit = T)
+        aln_pdbs <- pdbaln(pdbs,fit = T,)
         xyz <- pdbfit(aln_pdbs)
         rms[i,j] <- rms[j,i] <- rmsd(xyz)[1,2]
       }
@@ -55,10 +55,10 @@ tictoc::toc()
 rownames(rms) <- colnames(rms) <- spike$pdbID
 saveRDS(rms,'Data/covidPDB/disRMSD.rds')
 # ---------------------------------------------------
+df <- spike
 
 rms <- data.frame(readRDS('Data/covidPDB/disRMSD.rds'))
 diag(rms)<-0
-df<-spike
 tm <- read.csv('Data/covidPDB/disTM.csv',row.names = 'X')
 rownames(tm) <- colnames(tm) <- df$pdbID
 
@@ -71,12 +71,13 @@ tm2 <- tm2 + t(tm2)
 
 hc <- as.dist(rms)
 hc <- hc%>% hclust(method = "ward.D2")
+library(mclust)
+adjustedRandIndex(cutree(hc, 3), df$VIRUS)
 dend <- hc %>% as.dendrogram
 
 df <- df[with(df, order(df$VIRUS)), ]
-row.names(df) <- paste0(df$pdbID,'_',df$chainID)
-rn <- paste0(df$pdbID,'_',df$chainID)
-tree_data <- as.phylo(dend)
+rn <- row.names(df) <- df$pdbID
+tree_data <- as.phylo(hc)
 grp <- list(MERS_Cov  = rn[1:32],
             SARS_Cov  = rn[33:63],
             SARS_Cov2 = rn[64:143])
@@ -84,13 +85,13 @@ grp <- list(MERS_Cov  = rn[1:32],
 p_data <- ggtree(tree_data, layout = 'circular',
                  size = 1) 
 
-groupOTU(p_data, grp, "groups") + aes(color=groups) +
-  theme(legend.position="none",
-        plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
-  geom_tiplab2(aes(label=label,angle=angle),
-               hjust=-.1,size=5.5,fontface="bold",align=F)+
-  scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
-                       type =  c("blue","green","red" ))
+p <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
+       theme(legend.position="none",
+             plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
+       geom_tiplab2(aes(label=label,angle=angle),
+                    hjust=-.1,size=5.5,fontface="bold",align=F)+
+       scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
+                            type =  c("blue","green","red" ))
 
 ```
 

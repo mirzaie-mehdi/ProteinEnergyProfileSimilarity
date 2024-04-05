@@ -1189,10 +1189,12 @@ df = df[!is.na(df$length),]
 df = df[df$conformation == "Close",]
 
 rownames(df) = df$pdbID
-x <- df[,-c(1:4)]/df$length
+x <- df[,-c(1:4)]
 x  <- as.matrix(x) 
 hc <- x %>% proxy::dist(method = manhat)
 hc <- hc%>% hclust(method = "ward.D2")
+library(mclust)
+adjustedRandIndex(cutree(hc, 4), df$virus)
 dend <- hc %>% as.dendrogram
 
 df <- df[with(df, order(df$virus)), ]
@@ -1227,6 +1229,7 @@ x <- df[,-c(1:4)]/df$length
 x  <- as.matrix(x) 
 hc <- x %>% proxy::dist(method = manhat)
 hc <- hc%>% hclust(method = "ward.D2")
+adjustedRandIndex(cutree(hc, 3), df$virus)
 dend <- hc %>% as.dendrogram
 
 df <- df[with(df, order(df$virus)), ]
