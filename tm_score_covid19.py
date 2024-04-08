@@ -1,5 +1,10 @@
-#pip install tmtools
-#pip install biopython
+# title: "TM score"
+# author: "peyman"
+# date: "2023-12-10"
+# ----------------------------------------
+# pip install tmtools
+# pip install biopython
+# ---------------------------------
 import time
 import os
 import pandas as pd
@@ -7,9 +12,9 @@ import numpy as np
 from tmtools import tm_align
 from tmtools.io import get_structure, get_residue_data
 from tmtools.testing import get_pdb_path
+# --------------------------------------
 start = time.time()
 path = '/home/peymanc/Desktop/proj/ProteinEnergyProfileSimilarity/Data/covidPDB/'
-#df = pd.read_csv(path+"ct_ho214.csv")
 df = pd.read_csv(path+"spike200.csv",sep=';')
 z=pd.Series(df.iloc[:,0]).str.contains('6XR8').tolist() # There is no PDB file of ID 6XR8
 z=~np.array(z)

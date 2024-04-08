@@ -13,10 +13,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(bio3d)
+library(mclust)
+library(tidyverse)
 ```
 
 # Covid-19
-
+## RMSD
 ```{r}
 spike <- read.csv("Data/covidPDB/spike200.csv", sep=";")
 spike <- spike[-grep('6XR8',spike$pdbID),] # There is no PDB file of ID 6XR8
@@ -55,11 +57,53 @@ file.remove('aln.fa')
 tictoc::toc()
 rownames(rms) <- colnames(rms) <- spike$pdbID
 saveRDS(rms,'Data/covidPDB/disRMSD.rds')
-# ---------------------------------------------------
+
+```
+
+## plot RMSD
+
+```{r}
+spike <- read.csv("Data/covidPDB/spike200.csv", sep=";")
+spike <- spike[-grep('6XR8',spike$pdbID),] # There is no PDB file of ID 6XR8
+spike <- spike[spike$Conformation%in%'Close',]
 df <- spike
 
 rms <- data.frame(readRDS('Data/covidPDB/disRMSD.rds'))
 diag(rms)<-0
+
+hc <- as.dist(rms)
+hc <- hc%>% hclust(method = "ward.D2")
+
+adjustedRandIndex(cutree(hc, 3), spike$VIRUS)
+classError(cutree(hc, 3), spike$VIRUS)
+dend <- hc %>% as.dendrogram
+
+df <- df[with(df, order(df$VIRUS)), ]
+rn <- df$pdbID
+tree_data <- as.phylo(hc)
+grp <- list(MERS_Cov  = rn[1:32],
+            SARS_Cov  = rn[33:63],
+            SARS_Cov2 = rn[64:143])
+
+p_data <- ggtree(tree_data, layout = 'circular',
+                 size = 1) 
+
+p <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
+       theme(legend.position="none",
+             plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
+       geom_tiplab2(aes(label=label,angle=angle),
+                    hjust=-.1,size=3.5,fontface="bold",align=F)+
+       scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
+                            type =  c("blue","green","red" ))
+```
+
+## TM score
+
+```{r}
+spike <- read.csv("Data/covidPDB/spike200.csv", sep=";")
+spike <- spike[-grep('6XR8',spike$pdbID),] # There is no PDB file of ID 6XR8
+spike <- spike[spike$Conformation%in%'Close',]
+df <- spike
 tm <- read.csv('Data/covidPDB/disTM.csv',row.names = 'X')
 rownames(tm) <- colnames(tm) <- df$pdbID
 
@@ -70,10 +114,11 @@ tm2[upper.tri(tm2)]<-0
 tm1 <- tm1 + t(tm1)
 tm2 <- tm2 + t(tm2)
 
-hc <- as.dist(tm1)
+hc <- as.dist(tm2)
 hc <- hc%>% hclust(method = "ward.D2")
-library(mclust)
-adjustedRandIndex(cutree(hc, 3), df$VIRUS)
+
+adjustedRandIndex(cutree(hc, 3), spike$VIRUS)
+classError(cutree(hc, 3), spike$VIRUS)
 dend <- hc %>% as.dendrogram
 
 df <- df[with(df, order(df$VIRUS)), ]
@@ -94,5 +139,30 @@ p <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
        scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
                             type =  c("blue","green","red" ))
 
+
+```
+
+# cor SPE&CPE
+
+```{r}
+# astral 40
+df_seq <- readRDS("Data/rds/E210.seq_astral_40.rds") 
+df_seq = df_seq[!is.na(df_seq$FL),] 
+
+df_str <- readRDS("Data/rds/E210.astral_40.rds") 
+df_str = df_str[!is.na(df_str$FL),] 
+m<-match(df_str$scopeID,df_seq$scopeID)
+df_str <- df_str[-which(is.na(m)),]
+
+
+str <- t(df_str[,-c(1:8)])
+seq <- t(df_seq[,-c(1:8)])
+
+corr <- cor(str,seq)
+csin <- cosine(cbind(str,seq)) #lsa package
+n<-ncol(str)
+dim(csin)[1]==2*n
+csin <- csin[1:n, (n+1):2*n]
+hist(corr[lower.tri(corr,diag = TRUE)])
 ```
 

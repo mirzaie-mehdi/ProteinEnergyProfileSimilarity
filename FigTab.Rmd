@@ -55,6 +55,7 @@ library(proxy)
 library(class)
 library(readxl)
 library(ggh4x)
+library(mclust)
 source('mytheme.R')
 ```
 
@@ -101,10 +102,10 @@ df_dis95 <- data.frame(data='Astral 95',
 #saveRDS(df_dis95,'manuscript/fig_data/dis_95_manhat.rds')
 # ************************************************************
 # astral 40
-df_seq <- readRDS("Data/rds/E210.seq_astral40.rds") 
+df_seq <- readRDS("Data/rds/E210.seq_astral_40.rds") 
 df_seq = df_seq[!is.na(df_seq$FL),] 
 
-df_str <- readRDS("Data/rds/E210.astral40.rds") 
+df_str <- readRDS("Data/rds/E210.astral_40.rds") 
 df_str = df_str[!is.na(df_str$FL),] 
 m<-match(df_str$scopeID,df_seq$scopeID)
 df_str <- df_str[-which(is.na(m)),]
@@ -1193,8 +1194,8 @@ x <- df[,-c(1:4)]/df$length
 x  <- as.matrix(x) 
 hc <- x %>% proxy::dist(method = manhat)
 hc <- hc%>% hclust(method = "ward.D2")
-library(mclust)
 adjustedRandIndex(cutree(hc, 4), df$virus)
+classError(cutree(hc, 4), df$virus)
 dend <- hc %>% as.dendrogram
 
 df <- df[with(df, order(df$virus)), ]
@@ -1212,7 +1213,7 @@ t_CPE = groupOTU(p_data, grp, "groups") + aes(color=groups) +
   theme(legend.position="none",
         plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
   geom_tiplab2(aes(label=label,angle=angle),
-               hjust=-.1,size=5.5,fontface="bold",align=F)+
+               hjust=-.1,size=3.5,fontface="bold",align=F)+
   scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
                       type =  c('black',"blue","green","red" ))+
   ggtitle('Coronaviruse Spike Clustering Based On CPE')
@@ -1230,6 +1231,7 @@ x  <- as.matrix(x)
 hc <- x %>% proxy::dist(method = manhat)
 hc <- hc%>% hclust(method = "ward.D2")
 adjustedRandIndex(cutree(hc, 3), df$virus)
+classError(cutree(hc, 3), df$virus)
 dend <- hc %>% as.dendrogram
 
 df <- df[with(df, order(df$virus)), ]
