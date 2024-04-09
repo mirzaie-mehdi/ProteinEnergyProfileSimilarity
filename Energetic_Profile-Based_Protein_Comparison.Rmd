@@ -403,25 +403,26 @@ for (NP in 1:Nprotein) {
 # -------- At first, run the 'Energy Calculation prerequisite' chunk.
 # ----------------------------------------------------
 spike <- read.csv("Data/csv/spike200.csv", sep=";")
+spike <- spike[spike$Conformation == "Close",]
+spike <- spike[-grep('6XR8',spike$pdbID),] # There is no PDB file of ID 6XR8
 Nprotein <- nrow(spike)
 #----------------------------------------------
 num_columns <- 210
-E210_spike200 <- data.frame(pdbID = spike$pdbID,
+E210_spike_close <- data.frame(pdbID = spike$pdbID,
                             length = rep(NA,Nprotein),
                             virus = spike$VIRUS,
                             conformation = spike$Conformation,
+                            seq=NA,
                             matrix(NA,ncol=num_columns,nrow=Nprotein))
 
-colnames(E210_spike200) = c("pdbID","length","virus", "conformation",pair_inter)
-E210.seq_spike200 <- E210_spike200_SS <- E210_spike200
+colnames(E210_spike_close)[6:215] <- pair_inter
 
+tictoc::tic()
 for (NP in 1:Nprotein) {
   print(NP)
   ch <- substr(spike$pdbID[NP],5,5)
   pdbname <- substr(spike$pdbID[NP],1,4)
-  E210_spike200$pdbID[NP] <- spike$pdbID[NP]
-  E210_spike200_SS$pdbID[NP] <- spike$pdbID[NP]
-  E210.seq_spike200$pdbID[NP] <- spike$pdbID[NP]
+  E210_spike_close$pdbID[NP] <- spike$pdbID[NP]
   tryCatch({
     pdb0 <- read.pdb(tolower(pdbname))
     sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
@@ -431,40 +432,52 @@ for (NP in 1:Nprotein) {
     pdbX <- pdb0$atom[sele$atom,]
     pdbXca <- pdbX[pdbX$elety == "CA",]
     seq <- aa321(pdbXca$resid)
-    E210.seq_spike200$length[NP] <- length(unique(pdbX$resno))
-    freq <- c()
-    for (j in 1:20){
-        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
-    E210.seq_spike200[NP,5:214] <- aa210_p
-    E210_spike200$length[NP] <- length(unique(pdbX$resno))
-    E210_spike200_SS$length[NP] <- length(unique(pdbX$resno))
+    E210_spike_close$seq[NP] <- paste0(seq,collapse = '')
+    E210_spike_close$length[NP] <- length(unique(pdbX$resno))
     # -------------------
     new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
     Net_Frame <- NetworkFrame(PDB = new_pdb)
     energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
-    E210_spike200[NP,5:214] <- energy210
-    # ****************keep res helix & sheet************************
-    indhs <- inedx_HelixSheet(PDB = new_pdb)
-    Net_Frame_hs <- Net_Frame[Net_Frame$resnoif %in% indhs & Net_Frame$resnojf %in% indhs,]
-    if(dim(Net_Frame_hs)[1]!=0){
-        Net_Frame <- Net_Frame_hs
-    }
-    energy210_ss <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
-    E210_spike200_SS[NP,5:214] <- energy210_ss
+    E210_spike_close[NP,6:215] <- energy210
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
     })
 }
+df <- E210_spike_close
+x <- df[,-c(1:5)]/df$length
+x  <- as.matrix(x) 
+dis <- x %>% proxy::dist(method = manhat)
+tictoc::toc()
 
-#saveRDS(E210_spike200,file = "Data/rds/E210_spike200.rds")
-#saveRDS(E210_spike200_SS,file = "Data/rds/E210_spike200_SS.rds")
-#saveRDS(E210.seq_spike200,file = "Data/rds/E210.seq_spike200.rds")
+E210.seq_spike_close <- data.frame(E210_spike_close[,1:5],
+                            matrix(NA,ncol=num_columns,nrow=Nprotein))
+colnames(E210.seq_spike_close)[6:215] <- pair_inter
+
+tictoc::tic()
+for (NP in 1:Nprotein) {
+  print(NP)
+  seq <- unlist(strsplit(E210.seq_spike_close$seq[NP],''))
+  freq <- c()
+  for (j in 1:20){
+    freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+    }
+  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+  en_fr <- aaenergy * freq_matrix
+  en_fr <- en_fr/length(seq)
+  pair_es <- diag(freq) %*% as.matrix(en_fr)
+  aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
+  E210.seq_spike_close[NP,6:215] <- aa210_p
+}
+df <- E210.seq_spike_close
+x <- df[,-c(1:5)]/df$length
+x  <- as.matrix(x) 
+dis <- x %>% proxy::dist(method = manhat)
+tictoc::toc()
+
+saveRDS(E210_spike_close,file = "Data/rds/E210_spike_close.rds")
+#saveRDS(E210_spike_close_SS,file = "Data/rds/E210_spike_close_SS.rds")
+saveRDS(E210.seq_spike_close,file = "Data/rds/E210.seq_spike_close.rds")
+write.csv(E210.seq_spike_close[,1:5], "Data/csv/spike_close.csv",row.names = F)
 ```
 
 ## DTI preprocess

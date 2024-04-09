@@ -1183,14 +1183,14 @@ ggsplitnet(nnet) + geom_tiplab2(aes(label=label),
 ## Fig7 covid
 
 ```{r}
-E210.seq_spike200 <- readRDS("Data/rds/E210.seq_spike200.rds")
+E210.seq_spike200 <- readRDS("Data/rds/E210.seq_spike_close.rds")
 #-----------close
 df = E210.seq_spike200
 df = df[!is.na(df$length),]
 df = df[df$conformation == "Close",]
 
 rownames(df) = df$pdbID
-x <- df[,-c(1:4)]/df$length
+x <- df[,-c(1:5)]/df$length
 x  <- as.matrix(x) 
 hc <- x %>% proxy::dist(method = manhat)
 hc <- hc%>% hclust(method = "ward.D2")
@@ -1219,14 +1219,14 @@ t_CPE = groupOTU(p_data, grp, "groups") + aes(color=groups) +
   ggtitle('Coronaviruse Spike Clustering Based On CPE')
 
 # -----------------------
-E210_spike200 <- readRDS("Data/rds/E210_spike200.rds")
+E210_spike200 <- readRDS("Data/rds/E210_spike_close.rds")
 #-----------close
 df = E210_spike200
 df = df[!is.na(df$length),]
 df = df[df$conformation == "Close",]
 
 rownames(df) = df$pdbID
-x <- df[,-c(1:4)]/df$length
+x <- df[,-c(1:5)]/df$length
 x  <- as.matrix(x) 
 hc <- x %>% proxy::dist(method = manhat)
 hc <- hc%>% hclust(method = "ward.D2")
@@ -1277,12 +1277,13 @@ cowplot::plot_grid(AB, mylegend, ncol = 1, rel_heights = c(1,.1))
 ## Fig8 Bacteriocin Tm-Vec
 
 ```{r}
+source('mytheme.R')
 tm <- readRDS('Data/rds/bacteriocin_tm-vec.rds')
 tm2 <- tm[!is.na(tm$status2),-23]
 colnames(tm2)[23]<-'status'
 tm2 <- rbind(tm[,-24],tm2)
 
-tm2 <- tm2[,c(5,20,21,6,22,23)]
+tm2 <- tm2[,c(5,20,21,18,22,23)]
 colnames(tm2)[-6] <- c('Alphafold2','Omegafold','ESMfold','TM_vec','CPE')
 tm2 <- melt(tm2,variable.name = 'method',value.name = 'score')
 tm2$method <- factor(tm2$method,levels = c('TM_vec','Alphafold2','Omegafold','ESMfold','CPE'))
