@@ -162,7 +162,10 @@ corr <- cor(str,seq)
 csin <- cosine(cbind(str,seq)) #lsa package
 n<-ncol(str)
 dim(csin)[1]==2*n
-csin <- csin[1:n, (n+1):2*n]
+csin <- csin[1:n, (n+1):(2*n)]
+dim(csin)
 hist(corr[lower.tri(corr,diag = TRUE)])
+hist(csin)
+quantile(corr)
 ```
 
