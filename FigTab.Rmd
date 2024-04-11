@@ -1183,19 +1183,16 @@ ggsplitnet(nnet) + geom_tiplab2(aes(label=label),
 ## Fig7 covid
 
 ```{r}
-E210.seq_spike200 <- readRDS("Data/rds/E210.seq_spike_close.rds")
-#-----------close
-df = E210.seq_spike200
-df = df[!is.na(df$length),]
-df = df[df$conformation == "Close",]
+E210.seq_spike <- readRDS("Data/rds/E210.seq_spike_close.rds")
+df <- E210.seq_spike
 
 rownames(df) = df$pdbID
 x <- df[,-c(1:5)]/df$length
 x  <- as.matrix(x) 
 hc <- x %>% proxy::dist(method = manhat)
 hc <- hc%>% hclust(method = "ward.D2")
-adjustedRandIndex(cutree(hc, 4), df$virus)
-classError(cutree(hc, 4), df$virus)
+adjustedRandIndex(cutree(hc, 3), df$virus)
+classError(cutree(hc, 3), df$virus)
 dend <- hc %>% as.dendrogram
 
 df <- df[with(df, order(df$virus)), ]
@@ -1219,11 +1216,8 @@ t_CPE = groupOTU(p_data, grp, "groups") + aes(color=groups) +
   ggtitle('Coronaviruse Spike Clustering Based On CPE')
 
 # -----------------------
-E210_spike200 <- readRDS("Data/rds/E210_spike_close.rds")
-#-----------close
-df = E210_spike200
-df = df[!is.na(df$length),]
-df = df[df$conformation == "Close",]
+E210_spike <- readRDS("Data/rds/E210_spike_close.rds")
+df <- E210_spike
 
 rownames(df) = df$pdbID
 x <- df[,-c(1:5)]/df$length
