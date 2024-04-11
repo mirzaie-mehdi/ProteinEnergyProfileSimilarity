@@ -40,7 +40,7 @@ for i in range(0,n,1):
     disT[i,j] = res.tm_norm_chain1
     disTM[j,i] = res.tm_norm_chain2
 disTM = pd.DataFrame(disTM)
-disTM.to_csv(path+'TM_Score.csv')
+disTM.to_csv(path+'TM_Score.csv',index=False)
 elapsed = (time.time() - start)
 print(elapsed)
 

@@ -1300,7 +1300,7 @@ p1<-ggplot(tm2, aes(status,score,fill=method))+
         legend.text = element_text(size = 15))+
   scale_fill_discrete(labels=c('TM_vec','Alphafold2',
                                'Omegafold','ESMfold',
-                               expression(bold("CEP"))))
+                               expression(bold("CPE"))))
 
 # --------------------------------
 # -----  UMAP

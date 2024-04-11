@@ -402,17 +402,11 @@ for (NP in 1:Nprotein) {
 ```{r}
 # -------- At first, run the 'Energy Calculation prerequisite' chunk.
 # ----------------------------------------------------
-spike <- read.csv("Data/csv/spike200.csv", sep=";")
-spike <- spike[spike$Conformation == "Close",]
-spike <- spike[-grep('6XR8',spike$pdbID),] # There is no PDB file of ID 6XR8
+spike <- read.csv("Data/csv/spike_close.csv")
 Nprotein <- nrow(spike)
 #----------------------------------------------
 num_columns <- 210
-E210_spike_close <- data.frame(pdbID = spike$pdbID,
-                            length = rep(NA,Nprotein),
-                            virus = spike$VIRUS,
-                            conformation = spike$Conformation,
-                            seq=NA,
+E210_spike_close <- data.frame(spike,
                             matrix(NA,ncol=num_columns,nrow=Nprotein))
 
 colnames(E210_spike_close)[6:215] <- pair_inter
@@ -420,20 +414,15 @@ colnames(E210_spike_close)[6:215] <- pair_inter
 tictoc::tic()
 for (NP in 1:Nprotein) {
   print(NP)
-  ch <- substr(spike$pdbID[NP],5,5)
-  pdbname <- substr(spike$pdbID[NP],1,4)
-  E210_spike_close$pdbID[NP] <- spike$pdbID[NP]
+  ch <- substr(E210_spike_close$pdbID[NP],5,5)
+  pdbname <- substr(E210_spike_close$pdbID[NP],1,4)
   tryCatch({
-    pdb0 <- read.pdb(tolower(pdbname))
+    #pdb0 <- read.pdb(tolower(pdbname))
+    pdb0 <- read.pdb(paste0('../covpdb/', pdbname, '.pdb'))
     sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
     sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
     sele4 <- atom.select(pdb0, "noh")
     sele <- combine.select(sele1, sele2,sele4, operator="AND")
-    pdbX <- pdb0$atom[sele$atom,]
-    pdbXca <- pdbX[pdbX$elety == "CA",]
-    seq <- aa321(pdbXca$resid)
-    E210_spike_close$seq[NP] <- paste0(seq,collapse = '')
-    E210_spike_close$length[NP] <- length(unique(pdbX$resno))
     # -------------------
     new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
     Net_Frame <- NetworkFrame(PDB = new_pdb)
@@ -444,8 +433,7 @@ for (NP in 1:Nprotein) {
     })
 }
 df <- E210_spike_close
-x <- df[,-c(1:5)]/df$length
-x  <- as.matrix(x) 
+x  <- as.matrix(df[,-c(1:5)]) 
 dis <- x %>% proxy::dist(method = manhat)
 tictoc::toc()
 
@@ -622,7 +610,7 @@ colnames(my_sab)<-rownames(my_sab)<-drugs
 # -------- At first, run the 'Energy Calculation prerequisite' chunk.
 # ----------------------------------------------------
 # ----------- the csv file is from TM-Vec guys.
-tm <- read.csv('Data/csv/TM_vec_bac.csv',row.names = 'X') 
+tm <- read.csv('Data/csv/TM_vec_bac.csv') 
 # ---------------------------------------------------------
 # ------- ENERGY
 # ---------------------------------------
@@ -633,6 +621,16 @@ tmx <- tm[idx[!is.na(idx)], c(1,7,8,9,14)]
 tmy <- tm[idy, c(2,10,11,12,16)]
 colnames(tmx)<-colnames(tmy)<-gsub('_','',str_match(names(tmx),'.*_'))
 tm_unique <- rbind(tmx, tmy)
+write.csv(tm_unique, 'Data/csv/Bacteriocin.csv', row.names = FALSE)
+# ------------------------------------
+# add our tm-vec
+disTM <- read.csv('Data/csv/disTM_vec_bac.csv')
+diag(disTM) <- 1
+colnames(disTM) <- rownames(disTM) <- tm_unique$ID
+disTM <- melt(as.matrix(disTM))
+colnames(disTM) <- c('ID_x','ID_y','tm_vec')
+tm <- left_join(tm,disTM,c('ID_x','ID_y'))
+# ---------------------------------
 nprotein <- nrow(tm_unique)
 tm_unique <- data.frame(tm_unique, 
                         length=nchar(tm_unique$Seq),

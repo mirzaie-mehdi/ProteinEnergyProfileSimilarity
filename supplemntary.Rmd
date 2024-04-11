@@ -15,6 +15,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(bio3d)
 library(mclust)
 library(tidyverse)
+library(reshape2)
+library(phylotools)
 ```
 
 # Covid-19
@@ -96,11 +98,10 @@ p <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
 ## TM score
 
 ```{r}
-spike <- read.csv("Data/covidPDB/spike200.csv", sep=";")
-spike <- spike[-grep('6XR8',spike$pdbID),] # There is no PDB file of ID 6XR8
-spike <- spike[spike$Conformation%in%'Close',]
+spike <- read.csv("Data/covidPDB/spike_close.csv")
 df <- spike
-tm <- read.csv('Data/covidPDB/disTM.csv',row.names = 'X')
+
+tm <- read.csv('Data/covidPDB/TM_Score.csv')
 rownames(tm) <- colnames(tm) <- df$pdbID
 
 tm_max <- tm
@@ -113,20 +114,20 @@ for (i in 1:nrow(tm_max)) {
 }
 
 
-tm_vec <- read.csv('Data/csv/disTM_vec.csv',row.names = 'X')
+tm_vec <- read.csv('Data/covidPDB/disTM_vec.csv')
 colnames(tm_vec) <- rownames(tm_vec) <- spike$pdbID
 tm_vec <- 1 - tm_vec
 
 hc <- as.dist(tm_vec)
 hc <- hc%>% hclust(method = "ward.D2")
 
-adjustedRandIndex(cutree(hc, 5), spike$VIRUS)
-classError(cutree(hc, 3), spike$VIRUS)
+adjustedRandIndex(cutree(hc, 5), spike$virus)
+classError(cutree(hc, 5), spike$virus)
 dend <- hc %>% as.dendrogram
 
-df <- df[with(df, order(df$VIRUS)), ]
+df <- df[with(df, order(df$virus)), ]
 rn <- df$pdbID
-tree_data <- as.phylo(hc)
+tree_data <- as.phylo(dend)
 grp <- list(MERS_Cov  = rn[1:32],
             SARS_Cov  = rn[33:63],
             SARS_Cov2 = rn[64:143])
@@ -135,7 +136,7 @@ p_data <- ggtree(tree_data, layout = 'circular',
                  size = 1) 
 
 p <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
-       theme(legend.position="none",
+       theme(#legend.position="none",
              plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
        geom_tiplab2(aes(label=label,angle=angle),
                     hjust=-.1,size=3.5,fontface="bold",align=F)+
@@ -143,8 +144,8 @@ p <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
                             type =  c("blue","green","red" ))
 
 
-labcol <- c("green3", "blue", "red")
-ord_sml <- spike[,][order.dendrogram(dend),2]
+labcol <- c("blue","green","red" )
+ord_sml <- spike[,][order.dendrogram(dend),3]
 group_cols <- labcol[as.factor(ord_sml)]
 
 dend2 <- dend %>%
@@ -213,47 +214,12 @@ p <- ggplot(df, aes(value, fill=variable))+
 # bacteriocine 
 
 ```{r}
-nprotein <- nrow(tm)
-
-tictoc::tic()
-for (i in 1:nprotein){
-  if(i%%100==0)print(i)
-  # ---- seq1
-  seq <- unlist(strsplit(tolower(tm$Seq_x[i]), ""))
-  freq <- c()
-  for (j in 1:20){
-    freq[j] <-  length(grep(tolower(letters_list[j]),seq))
-  }
-  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-  en_fr <- aaenergy * freq_matrix
-  en_fr <- en_fr/length(seq)
-  pair_es <- diag(freq) %*% as.matrix(en_fr)
-  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-  #CEP_x <- c(length(seq),aa210_p)
-  CEP_x <- aa210_p
-  # ---- seq2
-  seq <- unlist(strsplit(tolower(tm$Seq_y[i]), ""))
-  freq = c()
-  for (j in 1:20){
-    freq[j] <-  length(grep(tolower(letters_list[j]),seq))
-  }
-  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-  en_fr <- aaenergy * freq_matrix
-  en_fr <- en_fr/length(seq)
-  pair_es <- diag(freq) %*% as.matrix(en_fr)
-  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-  #CEP_y <- c(length(seq),aa210_p)
-  CEP_y <- aa210_p
-  # ----------
-  tm$CEP_dis[i] <- manhat(CEP_x, CEP_y)
-}
-tictoc::toc()
-
-tm$CEP_dis <- (tm$CEP_dis-min(tm$CEP_dis))/(max(tm$CEP_dis)-min(tm$CEP_dis))
-tm$CEP_dis <- 1-(tm$CEP_dis) 
-
-tm$status <- if_else(tm$class_x==tm$class_y,'same class','different class')
-tm$status2 <- if_else(tm$Subclass_x==tm$Subclass_y&tm$class_x=='Class_1'&tm$class_y=='Class_1','same class(sub class1)',NA)
-# saveRDS(tm,'Data/rds/bacteriocin_tm-vec.rds')
+bac <- read.csv('Data/csv/Bacteriocin.csv')
+tm0 <- readRDS('Data/rds/bacteriocin_tm_vec.rds')
+tm <- read.csv('Data/csv/TM_vec_bac.csv')
+colnames(tm) <- rownames(tm) <- bac$ID
+tm <- melt(as.matrix(tm))
+colnames(tm)[1:2] <- c('ID_x','ID_y')
+tm0 <- left_join(tm0,tm,c('ID_x','ID_y'))
 ```
 

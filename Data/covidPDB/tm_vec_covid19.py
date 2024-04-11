@@ -22,16 +22,17 @@ import matplotlib.pyplot as plt
 import seaborn as sns 
 from tmtools.testing import get_pdb_path
 # --------------------------------------
-tokenizer = T5Tokenizer.from_pretrained("/home/peymanc/apps/Rostlab/prot_t5_xl_uniref50", do_lower_case=False )
-model = T5EncoderModel.from_pretrained("/home/peymanc/apps/Rostlab/prot_t5_xl_uniref50")
+pathApp = '/home/peymanc/apps/Rostlab/prot_t5_xl_uniref50'
+tokenizer = T5Tokenizer.from_pretrained(pathApp, do_lower_case=False )
+model = T5EncoderModel.from_pretrained(pathApp)
 gc.collect()
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 model = model.to(device)
 model = model.eval()
 # ------------------------------
 # ---------TM-Vec model paths
-tm_vec_model_cpnt = "/home/peymanc/apps/Rostlab/prot_t5_xl_uniref50/tm_vec_cath_model.ckpt"
-tm_vec_model_config = "/home/peymanc/apps/Rostlab/prot_t5_xl_uniref50/tm_vec_cath_model_params.json"
+tm_vec_model_cpnt = pathApp+"/tm_vec_cath_model.ckpt"
+tm_vec_model_config = pathApp+"/tm_vec_cath_model_params.json"
 # ---------Load the TM-Vec model
 tm_vec_model_config = trans_basic_block_Config.from_json(tm_vec_model_config)
 model_deep = trans_basic_block.load_from_checkpoint(tm_vec_model_cpnt, config=tm_vec_model_config)
@@ -43,23 +44,33 @@ path = '/home/peymanc/Desktop/proj/ProteinEnergyProfileSimilarity/Data/covidPDB/
 df = pd.read_csv(path+'spike_close.csv')
 
 n=df.shape[0]
-disTM = np.zeros((n,n))
+emb=pd.DataFrame(np.zeros((n, 512)))
 for i in range(0,n,1):
-  seq_1 = df.loc[i, 'seq']
-  seq_1 = np.expand_dims(seq_1, axis=0)
-  protrans_seq_1 = featurize_prottrans(seq_1, model, tokenizer, device).detach()
-  embedded_seq_1 = embed_tm_vec(protrans_seq_1, model_deep, device)
-  for j in range(i,n,1):
+  print(i)
+  seq = df.loc[i, 'seq']
+  seq = np.expand_dims(seq, axis=0)
+  protrans_seq = featurize_prottrans(seq, model, tokenizer, device).detach()
+  embedded_seq = embed_tm_vec(protrans_seq, model_deep, device)
+  emb.loc[i,:] = embedded_seq
+emb.to_csv(path+'TM_vec_emb.csv',index=False)
+elapsed1 = (time.time() - start)
+
+start = time.time()
+disTM = np.ones((n,n))
+for i in range(0,n,1):
+  emb1 = emb.loc[i,:]
+  emb1 = emb1.to_numpy()
+  emb1 = emb1.reshape(1, -1)
+  for j in range(i+1,n,1):
     print(i,j)
-    seq_2 = df.loc[j, 'seq']
-    seq_2 = np.expand_dims(seq_2, axis=0)
-    protrans_seq_2 = featurize_prottrans(seq_2, model, tokenizer, device).detach()
-    embedded_seq_2 = embed_tm_vec(protrans_seq_2, model_deep, device)
-    predicted_tm_score = cosine_similarity_tm(torch.tensor(embedded_seq_1), torch.tensor(embedded_seq_2))
+    emb2 = emb.loc[j,:]
+    emb2 = emb2.to_numpy()
+    emb2 = emb2.reshape(1, -1)
+    predicted_tm_score = cosine_similarity_tm(torch.tensor(emb1), torch.tensor(emb2))
     disTM[i,j] = predicted_tm_score.numpy()[0]
     disTM[j,i] = predicted_tm_score.numpy()[0]
 disTM = pd.DataFrame(disTM)
-disTM.to_csv(path+'TM_vec.csv')
-elapsed = (time.time() - start)
-print(elapsed)
+disTM.to_csv(path+'disTM_vec.csv',index=False)
+elapsed2 = (time.time() - start)
+print(elapsed1, elapsed2)
 
