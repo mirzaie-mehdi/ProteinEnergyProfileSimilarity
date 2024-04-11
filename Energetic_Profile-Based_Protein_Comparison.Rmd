@@ -417,8 +417,8 @@ for (NP in 1:Nprotein) {
   ch <- substr(E210_spike_close$pdbID[NP],5,5)
   pdbname <- substr(E210_spike_close$pdbID[NP],1,4)
   tryCatch({
-    #pdb0 <- read.pdb(tolower(pdbname))
-    pdb0 <- read.pdb(paste0('../covpdb/', pdbname, '.pdb'))
+    pdb0 <- read.pdb(tolower(pdbname))
+    #pdb0 <- read.pdb(paste0('../covpdb/', pdbname, '.pdb'))
     sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
     sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
     sele4 <- atom.select(pdb0, "noh")
