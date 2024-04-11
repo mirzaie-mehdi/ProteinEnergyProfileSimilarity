@@ -169,6 +169,43 @@ legend("topright", legend = as.character(unique(ord_sml)),
        col = unique(group_cols),horiz = FALSE,xpd = TRUE)
 
 ```
+# tree bac
+
+```{r}
+tm <- readRDS('Data/rds/bacteriocin_tm_vec.rds')
+tm$ID_x <- as.character(tm$ID_x)
+tm$ID_y <- as.character(tm$ID_y)
+seqIDs <- unique(c(tm$ID_x, tm$ID_y))
+idx <- match(seqIDs, tm$ID_x)
+idy <- match(seqIDs[is.na(idx)], tm$ID_y)
+tmx <- tm[idx[!is.na(idx)], c(7,8)]
+tmy <- tm[idy, c(10,11)]
+colnames(tmx)<-colnames(tmy)<-c('IDs','Class')
+z<-rbind(tmx,tmy)
+db <- tm[,c(1,2,6)]
+n <- length(seqIDs)
+tmdb <- data.frame(matrix(0,n,n))
+colnames(tmdb)<-rownames(tmdb)<-seqIDs
+
+dis <- as.dist(tmdb)
+hc <- dis%>% hclust(method = "ward.D2")
+
+adjustedRandIndex(cutree(hc, 5), z$class_x)
+classError(cutree(hc, 3), z$class_x)
+dend <- hc %>% as.dendrogram
+
+labcol <- c("green3", "blue", "red")
+ord_sml <- z[,][order.dendrogram(dend),2]
+group_cols <- labcol[as.factor(ord_sml)]
+
+dend2 <- dend %>%
+  #color_branches(k=3, col = c("red","blue","green3")) %>%
+  color_labels(col =   group_cols) %>%
+  set("labels_cex", 0.5) 
+
+plot(dend2, ylab = "Height")
+
+```
 
 # cor SPE&CPE
 
@@ -187,13 +224,82 @@ str <- t(df_str[,-c(1:8)])
 seq <- t(df_seq[,-c(1:8)])
 
 corr <- cor(str,seq)
-csin <- cosine(cbind(str,seq)) #lsa package
-n<-ncol(str)
-dim(csin)[1]==2*n
-csin <- csin[1:n, (n+1):(2*n)]
-dim(csin)
-hist(corr[lower.tri(corr,diag = TRUE)])
-hist(csin)
-quantile(corr)
+quantile(diag(corr))
+hist(diag(corr))
+
+n <- ncol(seq)
+csin <- rep(NA,n)
+corr <- rep(NA,n)
+for (i in 1:n) {
+  print(i)
+  x <- seq[,i]
+  y <- str[,i]
+  csin[i] <- cosine(x,y) #lsa package
+  corr[i] <- cor(x,y)
+}
+
+df <- data.frame(corr,csin)
+df <- melt(df)
+df_med <- aggregate(.~variable,df,median)
+df_med$value <- round(df_med$value,2)
+
+
+p <- ggplot(df, aes(value, fill=variable))+
+  geom_density(alpha=.5)+
+  mytheme()+
+  theme(legend.position = c(.1,.9))+
+  xlab('')+ylab('')+
+  geom_text(data = df_med, aes(x=value, y=c(4,5), label = value, 
+                               col=variable), size=8)+
+  scale_fill_discrete(name = "variable", labels = c("Correlation", "Cosine"))+
+  scale_color_discrete(name = "variable", labels = c("Correlation", "Cosine"))
+# save pdf 8x10
+```
+
+# bacteriocine 
+
+```{r}
+nprotein <- nrow(tm)
+
+tictoc::tic()
+for (i in 1:nprotein){
+  if(i%%100==0)print(i)
+  # ---- seq1
+  seq <- unlist(strsplit(tolower(tm$Seq_x[i]), ""))
+  freq <- c()
+  for (j in 1:20){
+    freq[j] <-  length(grep(tolower(letters_list[j]),seq))
+  }
+  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+  en_fr <- aaenergy * freq_matrix
+  en_fr <- en_fr/length(seq)
+  pair_es <- diag(freq) %*% as.matrix(en_fr)
+  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+  #CEP_x <- c(length(seq),aa210_p)
+  CEP_x <- aa210_p
+  # ---- seq2
+  seq <- unlist(strsplit(tolower(tm$Seq_y[i]), ""))
+  freq = c()
+  for (j in 1:20){
+    freq[j] <-  length(grep(tolower(letters_list[j]),seq))
+  }
+  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+  en_fr <- aaenergy * freq_matrix
+  en_fr <- en_fr/length(seq)
+  pair_es <- diag(freq) %*% as.matrix(en_fr)
+  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+  #CEP_y <- c(length(seq),aa210_p)
+  CEP_y <- aa210_p
+  # ----------
+  tm$CEP_dis[i] <- manhat(CEP_x, CEP_y)
+}
+tictoc::toc()
+
+tm$CEP_dis <- (tm$CEP_dis-min(tm$CEP_dis))/(max(tm$CEP_dis)-min(tm$CEP_dis))
+tm$CEP_dis <- 1-(tm$CEP_dis) 
+
+tm$status <- if_else(tm$class_x==tm$class_y,'same class','different class')
+tm$status2 <- if_else(tm$Subclass_x==tm$Subclass_y&tm$class_x=='Class_1'&tm$class_y=='Class_1','same class(sub class1)',NA)
+# saveRDS(tm,'Data/rds/bacteriocin_tm-vec.rds')
 ```
 

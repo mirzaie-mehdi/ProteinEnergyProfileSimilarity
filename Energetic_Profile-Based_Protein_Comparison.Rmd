@@ -622,58 +622,27 @@ colnames(my_sab)<-rownames(my_sab)<-drugs
 # -------- At first, run the 'Energy Calculation prerequisite' chunk.
 # ----------------------------------------------------
 # ----------- the csv file is from TM-Vec guys.
-tm <- read.csv('Data/csv/tm-vec.csv') 
-nprotein <- nrow(tm)
-
-for (i in 1:nprotein){
-  if(i%%100==0)print(i)
-  # ---- seq1
-  seq <- unlist(strsplit(tolower(tm$Seq_x[i]), ""))
-  freq <- c()
-  for (j in 1:20){
-  freq[j] <-  length(grep(tolower(letters_list[j]),seq))
-  }
-  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-  en_fr <- aaenergy * freq_matrix
-  en_fr <- en_fr/length(seq)
-  pair_es <- diag(freq) %*% as.matrix(en_fr)
-  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-  CEP_x <- c(length(seq),aa210_p)
-  # ---- seq2
-  seq <- unlist(strsplit(tolower(tm$Seq_y[i]), ""))
-  freq = c()
-  for (j in 1:20){
-  freq[j] <-  length(grep(tolower(letters_list[j]),seq))
-  }
-  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-  en_fr <- aaenergy * freq_matrix
-  en_fr <- en_fr/length(seq)
-  pair_es <- diag(freq) %*% as.matrix(en_fr)
-  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-  CEP_y <- c(length(seq),aa210_p)
-  # ----------
-  tm$CEP_dis[i] <- manhat(CEP_x[-1],CEP_y[-1])
-}
-
-tm$CEP_dis <- (tm$CEP_dis-min(tm$CEP_dis))/(max(tm$CEP_dis)-min(tm$CEP_dis))
-tm$CEP_dis <- 1-(tm$CEP_dis) 
-
-tm$status <- if_else(tm$class_x==tm$class_y,'same class','different class')
-tm$status2 <- if_else(tm$Subclass_x==tm$Subclass_y&tm$class_x=='Class_1'&tm$class_y=='Class_1','same class(sub class1)',NA)
-# saveRDS(tm,'Data/rds/bacteriocin_tm-vec.rds')
+tm <- read.csv('Data/csv/TM_vec_bac.csv',row.names = 'X') 
 # ---------------------------------------------------------
 # ------- ENERGY
 # ---------------------------------------
-tm_unique <- tm[!duplicated(tm$ID_x),]
+seqIDs <- unique(c(tm$ID_x, tm$ID_y))
+idx <- match(seqIDs, tm$ID_x)
+idy <- match(seqIDs[is.na(idx)], tm$ID_y)
+tmx <- tm[idx[!is.na(idx)], c(1,7,8,9,14)]
+tmy <- tm[idy, c(2,10,11,12,16)]
+colnames(tmx)<-colnames(tmy)<-gsub('_','',str_match(names(tmx),'.*_'))
+tm_unique <- rbind(tmx, tmy)
 nprotein <- nrow(tm_unique)
-tm_unique <- data.frame(tm_unique[,c(1,7,8,9,14)], 
-                        length=nchar(tm_unique$Seq_x),
+tm_unique <- data.frame(tm_unique, 
+                        length=nchar(tm_unique$Seq),
                         matrix(NA,nrow=nprotein,ncol=210))
 colnames(tm_unique)[-c(1:6)] <- pair_inter
 
+tictoc::tic()
 for (i in 1:nprotein){
   print(i)
-  seq = unlist(strsplit(tolower(tm_unique$Seq_x[i]), ""))
+  seq = unlist(strsplit(tolower(tm_unique$Seq[i]), ""))
   freq = c()
   for (j in 1:20){
   freq[j] <-  length(grep(tolower(letters_list[j]),seq))
@@ -685,6 +654,24 @@ pair_es <- diag(freq) %*% as.matrix(en_fr)
 aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
 tm_unique[i,7:216] <- aa210_p
 }
+df <- tm_unique[,-c(1:6)]
+rownames(df) <- tm_unique$ID
+x <- as.matrix(df) 
+dis <- x %>% proxy::dist(method = manhat)
+tictoc::toc()
+dis <- as.matrix(dis)
+dis <- melt(dis)
+colnames(dis) <- c('ID_x','ID_y', 'CPE_dis')
+tm <- left_join(tm,dis,c('ID_x','ID_y'))
+tm$CPE_dis <- (tm$CPE_dis - min(tm$CPE_dis))/(max(tm$CPE_dis)-min(tm$CPE_dis))
+tm$CPE_dis <- 1-(tm$CPE_dis)
+tm$CPE_dis <- (tm$CPE_dis) - 0.36
+
+tm$status <- if_else(tm$class_x==tm$class_y,'same class','different class')
+tm$status2 <- if_else(tm$Subclass_x==tm$Subclass_y&
+                        tm$class_x=='Class_1'&tm$class_y=='Class_1',
+                      'same class(sub class1)',NA)
+# saveRDS(tm,'Data/rds/bacteriocin_tm_vec.rds')
 # saveRDS(tm_unique,'Data/rds/E210.seq_bacteriocin.rds')
 ```
 
