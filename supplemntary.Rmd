@@ -222,4 +222,43 @@ tm <- melt(as.matrix(tm))
 colnames(tm)[1:2] <- c('ID_x','ID_y')
 tm0 <- left_join(tm0,tm,c('ID_x','ID_y'))
 ```
+# ferritin
+
+```{r}
+source('mytheme.R')
+df <- read.csv('Data/csv/Ferritin_Like_seq.csv')
+df <- df[df$length!=0,]
+
+dis <- read.csv('Data/csv/disTM_vec_Ferritin_Like_seq.csv')
+colnames(dis) <- rownames(dis) <- df$pdbID
+dis <- 1 - dis
+dis <- as.dist(dis)
+
+
+df <- df[with(df, order(df$group)),]
+rn <- df$pdbID
+rownames(df) <- rn
+grp <- list(Bacteri     = rn[1:5],
+            BMM_alpha = rn[6:7],
+            BMM_beta  = rn[8:9],
+            Dps  = rn[10:24],
+            Fatty_acid  = rn[25:28],
+            Ferritins  = rn[29:39],
+            RNRR2  = rn[40:47],
+            NAA  = rn[48:52])
+
+
+tree_data <- ape::bionj(dis)
+
+p_data <- ggtree(tree_data, layout = 'circular',
+                 branch.length='none',size = 1.5) 
+
+p<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
+  theme(#legend.position="none",
+        plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
+  geom_tiplab2(aes(label=label,angle=angle),
+               hjust=-.1,size=3.5,fontface="bold",align=F)
+  
+
+```
 

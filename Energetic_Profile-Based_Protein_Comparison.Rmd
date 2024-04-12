@@ -222,7 +222,7 @@ This chunk calculate the profile of energy for ASTRAL95/40 based on sequence and
 ```{r}
 # -------- At first, run the 'Energy Calculation prerequisite' chunk.
 # ----------------------------------------------------
-astral <- readRDS("Data/rds/astral_95.rds")  # astral_40.rds 
+astral <- readRDS("Data/rds/astral_40.rds")  # astral_40.rds 
 Nprotein <- nrow(astral)
 num_columns <- 210
 E210.astral <- data.frame(pdbID = astral$pdbID,
@@ -329,30 +329,14 @@ for (NP in 1:Nprotein) {
 
 ```{r}
 ferritin <- read.csv("Data/csv/Ferritin_Like.csv",sep = ",")
-energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
-energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
-source("Functions/amacid2num.R")
-source("Functions/atomtype2num167.R")
-source("Functions/Energy_PC210.R")
-source("Functions/NetworkFrame.R")
-source("Functions/inedx_HelixSheet.R")
 Nprotein <- nrow(ferritin)
-# ------Pairwise Amino Acid names-------------
-AA <- c("PHE","LEU","ILE","VAL","TRP","TYR","MET","CYS","HIS","THR",
-        "ARG","ALA","ASN","GLN","PRO","SER","ASP","GLY","LYS","GLU")
-letters_list <- aa321(AA)
-pair_inter <- character(0)
-for (i in 1:20) {
-  for (j in i:20) {
-    pair_inter <- c(pair_inter, paste0(letters_list[i], letters_list[j]))
-  }
-} 
 #----------------------------------------------
 num_columns <- 210
 E210_ferritin <- data.frame(pdbID = ferritin$pdbID,
                             length = rep(NA,Nprotein),
                             group = ferritin$group,
-                            matrix(NA, ncol = num_columns, nrow = length(ferritin$pdbID)))
+                            matrix(NA, ncol = num_columns, 
+                                   nrow = Nprotein))
 colnames(E210_ferritin) = c("pdbID","length","group",pair_inter)
 E210_ferritin_SS <- E210_ferritin
 for (NP in 1:Nprotein) {
@@ -374,10 +358,14 @@ for (NP in 1:Nprotein) {
       sele3 <- atom.select(pdb0,  resno=st:en, verbose=TRUE)
       sele <- combine.select(sele1, sele2,sele3,sele4, operator="AND")
     }
+    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
     pdbX <- pdb0$atom[sele$atom,]
+    #pdbXca <- pdbX[pdbX$elety == "CA",]
+    #seq <- aa321(pdbXca$resid)
+    #E210_ferritin$seq[NP] <- paste0(seq,collapse = '')
     E210_ferritin$length[NP] = length(unique(pdbX$resno))
     E210_ferritin_SS$length[NP] = length(unique(pdbX$resno))
-    Net_Frame <- NetworkFrame(PDB = pdb0, AtomSelect = sele)
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
     energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
     E210_ferritin[NP,4:213] <- energy210
     # ****************keep res helix & sheet************************
