@@ -34,7 +34,7 @@ NetworkFrame <- function(PDB){  #, AtomSelect
   ami <- amacidname[edge_list[,1]];amj <- amacidname[edge_list[,2]]
   resnoi <- amnumber[edge_list[,1]];resnoj <- amnumber[edge_list[,2]]
   # This section creates a data.frame including contact information
-  Net_Frame <- data.frame(edge_list,distance,distance_bin,ati,atj,ami,amj,seqsep,resnoi,resnoj)
+  #Net_Frame <- data.frame(edge_list,distance,distance_bin,ati,atj,ami,amj,seqsep,resnoi,resnoj)
   edge_list2 <- cbind(edge_list[,2],edge_list[,1])
   edge_listf <- rbind(edge_list,edge_list2)
   distancef <- c(distance,distance)

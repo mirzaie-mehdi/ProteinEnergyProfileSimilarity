@@ -1277,18 +1277,19 @@ tm2 <- tm[!is.na(tm$status2),-24]
 colnames(tm2)[24]<-'status'
 tm2 <- rbind(tm[,-25],tm2)
 
-tm2 <- tm2[,c(5,20,21,6,23,24)]
+tm2 <- tm2[,c(5,20,21,6,23,24)] # 22~6 DeepBlast
 colnames(tm2)[-6] <- c('Alphafold2','Omegafold','ESMfold','TM_vec','CPE')
 tm2 <- melt(tm2,variable.name = 'method',value.name = 'score')
+tm2sc <- aggregate(score~status+method,tm2,scale)
 tm2$method <- factor(tm2$method,levels = c('TM_vec','Alphafold2','Omegafold','ESMfold','CPE'))
-p1<-ggplot(tm2, aes(status,score,fill=method))+
+p1<-ggplot(result, aes(status,scaled_score,fill=method))+
   geom_boxplot(outlier.shape = NA,
                color='black',
                size=rep(c(rep(.3,4),1),3),
                alpha=rep(c(rep(.4,4),1),3),
                width=.4
                )+
-  coord_cartesian(ylim = c(0.1, 1))+
+  #coord_cartesian(ylim = c(0.1, 1))+
   xlab('')+
     geom_hline(yintercept = .5, linetype="dashed", 
              color = "red", size=.7)+
