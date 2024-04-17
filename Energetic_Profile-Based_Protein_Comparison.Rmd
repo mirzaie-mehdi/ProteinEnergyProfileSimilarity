@@ -222,7 +222,7 @@ This chunk calculate the profile of energy for ASTRAL95/40 based on sequence and
 ```{r}
 # -------- At first, run the 'Energy Calculation prerequisite' chunk.
 # ----------------------------------------------------
-astral <- readRDS("Data/rds/astral_40.rds")  # astral_40.rds 
+astral <- readRDS("Data/rds/astral_95.rds")  # astral_40.rds 
 Nprotein <- nrow(astral)
 num_columns <- 210
 E210.astral <- data.frame(pdbID = astral$pdbID,

@@ -73,7 +73,7 @@ hc <- hc%>% hclust(method = "ward.D2")
 
 adjustedRandIndex(cutree(hc, 3), spike$virus)
 classError(cutree(hc, 3), spike$virus)
-dend <- hc %>% as.dendrogram
+
 
 df <- spike
 df <- df[with(df, order(df$virus)), ]
@@ -93,6 +93,23 @@ p <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
                     hjust=-.1,size=3.5,fontface="bold",align=F)+
        scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
                             type =  c("blue","green","red" ))
+
+labcol <- c("blue","green","red" )
+ord_sml <- spike[,][order.dendrogram(dend),3]
+group_cols <- labcol[as.factor(ord_sml)]
+
+dend <- hc %>% as.dendrogram
+dend2 <- dend %>%
+  #color_branches(k=3, col = c("red","blue","green3")) %>%
+  color_labels(col =   group_cols) %>%
+  set("labels_cex", .5) %>%
+  set("leaves_cex", .5) %>%
+  set("leaves_pch", 19) %>%
+  set("leaves_col", group_cols)
+
+plot(dend2, ylab = "Height",leaflab = "none")
+
+
 ```
 
 ## TM score
@@ -112,7 +129,7 @@ for (i in 1:nrow(tm_max)) {
     tm_max[j,i] <- tm_max[i,j]
   }
 }
-
+tm_max <- 1 - tm_max
 
 tm_vec <- read.csv('Data/covidPDB/disTM_vec.csv')
 colnames(tm_vec) <- rownames(tm_vec) <- spike$pdbID
@@ -121,8 +138,8 @@ tm_vec <- 1 - tm_vec
 hc <- as.dist(tm_vec)
 hc <- hc%>% hclust(method = "ward.D2")
 
-adjustedRandIndex(cutree(hc, 5), spike$virus)
-classError(cutree(hc, 5), spike$virus)
+adjustedRandIndex(cutree(hc, 2), spike$virus)
+classError(cutree(hc, 2), spike$virus)
 dend <- hc %>% as.dendrogram
 
 df <- df[with(df, order(df$virus)), ]
@@ -145,16 +162,18 @@ p <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
 
 
 labcol <- c("blue","green","red" )
-ord_sml <- spike[,][order.dendrogram(dend),3]
+ord_sml <- df[,][order.dendrogram(dend),7]
 group_cols <- labcol[as.factor(ord_sml)]
 
 dend2 <- dend %>%
   #color_branches(k=3, col = c("red","blue","green3")) %>%
   color_labels(col =   group_cols) %>%
-  set("labels_cex", 0.5) 
+  set("labels_cex", .5) %>%
+  set("leaves_cex", .5) %>%
+  set("leaves_pch", 19) %>%
+  set("leaves_col", group_cols)
 
-plot(dend2, ylab = "Height")
-
+plot(dend2, ylab = "Height",leaflab = "none")
 legend("topright", legend = as.character(unique(ord_sml)),
        pch = 15, pt.cex = 2.3, cex = 1.4, bty = 'n',
        inset = c(-.3, -.5), # place outside

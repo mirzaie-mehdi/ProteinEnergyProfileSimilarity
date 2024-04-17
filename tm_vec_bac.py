@@ -41,7 +41,11 @@ model_deep = model_deep.eval()
 # --------------------------------------
 start = time.time()
 path = '/home/peymanc/Desktop/proj/ProteinEnergyProfileSimilarity/Data/csv/'
+# ----------------------------------------------
 df = pd.read_csv(path+'Bacteriocin.csv')
+# Ferritin_Like_seq.csv
+# CT_Ho_cathID_filtered.csv
+# ----------------------------------------------
 #df['tm_vec'] = ''
 
 n=df.shape[0]

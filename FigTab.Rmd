@@ -1280,16 +1280,15 @@ tm2 <- rbind(tm[,-25],tm2)
 tm2 <- tm2[,c(5,20,21,6,23,24)] # 22~6 DeepBlast
 colnames(tm2)[-6] <- c('Alphafold2','Omegafold','ESMfold','TM_vec','CPE')
 tm2 <- melt(tm2,variable.name = 'method',value.name = 'score')
-tm2sc <- aggregate(score~status+method,tm2,scale)
 tm2$method <- factor(tm2$method,levels = c('TM_vec','Alphafold2','Omegafold','ESMfold','CPE'))
-p1<-ggplot(result, aes(status,scaled_score,fill=method))+
+p1<-ggplot(tm2, aes(status,score,fill=method))+
   geom_boxplot(outlier.shape = NA,
                color='black',
-               size=rep(c(rep(.3,4),1),3),
-               alpha=rep(c(rep(.4,4),1),3),
+               size=rep(c(rep(.2,4),1),3),
+               alpha=rep(c(rep(.5,4),1),3),
                width=.4
                )+
-  #coord_cartesian(ylim = c(0.1, 1))+
+  coord_cartesian(ylim = c(0.1, 1))+
   xlab('')+
     geom_hline(yintercept = .5, linetype="dashed", 
              color = "red", size=.7)+
@@ -1312,8 +1311,7 @@ ump <- umap(d = dis,
             min_dist = 0.1,
             input="dist")
 
-ump_df <- data.frame(class=df$class_x,
-                     subclass=df$Subclass_x,
+ump_df <- data.frame(class=df$class,
                      UMAP1 = ump$layout[, 1],
                      UMAP2 = ump$layout[, 2])
 
@@ -1437,7 +1435,8 @@ df <- readRDS('Data/rds/E210.seq_CT_Ho.rds')
 df <- df[!is.na(df$FF),]
 twoSF <- unique(df$cathID)
 
-dis <- as.matrix(dist(df[,-c(1:9)]/df$length, method = manhat))
+#dis <- read.csv('Data/csv/disTM_vec_CTHo.csv')
+dis <- as.matrix(dist(df[,-c(1:9)], method = manhat))
 diag(dis) <- NA
 
 im <- apply(dis,1, FUN = which.min)
