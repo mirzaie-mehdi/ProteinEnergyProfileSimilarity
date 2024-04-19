@@ -209,10 +209,13 @@ ggarrange(NULL,
 ## Fig3
 
 ```{r}
+source('mytheme.R')
 # ******** str40
 df <- readRDS("Data/rds/E210.astral_40.rds")
 df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
 df <- df[,c(5,3,9:218)]
+sc <- apply(df[-c(1:2)], 2, FUN = function(x){x/sd(x)})
+df[-c(1:2)] <- sc
 dis <- as.matrix(proxy::dist(df[,-c(1,2)]/df$length, method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
@@ -228,6 +231,8 @@ ump_df_str40$class <- ifelse(ump_df_str40$class=='a','All-alpha','All-beta')
 df <- readRDS("Data/rds/E210.seq_astral_40.rds")
 df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
 df <- df[,c(5,3,9:218)]
+sc <- apply(df[-c(1:2)], 2, FUN = function(x){x/sd(x)})
+df[-c(1:2)] <- sc
 dis <- as.matrix(proxy::dist(df[,-c(1,2)]/df$length, method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
@@ -285,11 +290,10 @@ ump_df_str95$type <- ifelse(ump_df_str95$type=='Structure','SPE','CPE')
 ump_df_seq95$type <- ifelse(ump_df_seq95$type=='Structure','SPE','CPE')
 
 ump_df_str40$data <- ump_df_seq40$data <- 'ASTRAL40'
-ump_df_str95$data <- ump_df_seq95$data <- 'ASTRAL95'
 
 p1<-ggplot(ump_df_str40,aes(UMAP1, UMAP2, color= class)) +
   geom_point(alpha=.7,size=.5) + 
-  facet_grid(data ~ type)+xlab('')+ylab('')+
+  #facet_grid(data ~ type)+xlab('')+ylab('')+
   mytheme()+scale_color_manual(values = c('green','magenta'))+
   theme(legend.title = element_blank(),
         legend.text = element_text(size = 18))+
@@ -1164,7 +1168,8 @@ cowplot::plot_grid(f5all, mylegend, ncol = 1, rel_heights = c(1,.03))
 ```{r}
 E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
 df <- E210_ferritin
-
+sc <- apply(df[,-c(1:3)], 2, FUN = function(x){x/sd(x)})
+df[,-c(1:3)] <- sc
 dis <- proxy::dist(df[,-c(1:3)], method = manhat)
 
 nnet <- neighborNet(dis)
@@ -1173,7 +1178,6 @@ ggsplitnet(nnet) + geom_tiplab2(aes(label=label),
                                 color='blue')+
   ggexpand(.1) + ggexpand(.1, direction=-1)
 # write.nexus.networx(nnet,'Data/rds/E210_ferritin_manhat.nxs')
-# nnet <- read.nexus.networx('Data/rds/E210_ferritin_manhat.nxs')
 # --------------------------------------------------------------------
 # ----   the 'E210_ferritin_manhat.nxs' file 
 # -----      was load on SplitsTree4(v 4.19.2) to visualize
@@ -1350,6 +1354,7 @@ ggarrange(p2,NULL,p1,ncol = 3,nrow = 1,
 ##Fig9 DrugTarget
 
 ```{r}
+source('mytheme.R')
 my_sab <- readRDS('Data/rds/my_sab.rds')
 my_sab <- as.data.frame(as.table(my_sab)) 
 colnames(my_sab) <- c("d1", "d2", "my_sAB") 

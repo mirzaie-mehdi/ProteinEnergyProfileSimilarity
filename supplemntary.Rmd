@@ -194,20 +194,13 @@ m<-match(df_str$scopeID,df_seq$scopeID)
 df_str <- df_str[-which(is.na(m)),]
 
 
-str <- t(df_str[,-c(1:8)])
-seq <- t(df_seq[,-c(1:8)])
-
-corr <- cor(str,seq)
-quantile(diag(corr))
-hist(diag(corr))
-
-n <- ncol(seq)
+n <- nrow(df_seq)
 csin <- rep(NA,n)
 corr <- rep(NA,n)
 for (i in 1:n) {
   print(i)
-  x <- seq[,i]
-  y <- str[,i]
+  x <- as.numeric(df_seq[i,-c(1:8)])
+  y <- as.numeric(df_str[i,-c(1:8)])
   csin[i] <- cosine(x,y) #lsa package
   corr[i] <- cor(x,y)
 }
@@ -217,17 +210,17 @@ df <- melt(df)
 df_med <- aggregate(.~variable,df,median)
 df_med$value <- round(df_med$value,2)
 
-
+source('mytheme.R')
 p <- ggplot(df, aes(value, fill=variable))+
   geom_density(alpha=.5)+
   mytheme()+
-  theme(legend.position = c(.1,.9))+
+  theme(legend.position = c(.2,.9))+
   xlab('')+ylab('')+
   geom_text(data = df_med, aes(x=value, y=c(4,5), label = value, 
                                col=variable), size=8)+
   scale_fill_discrete(name = "variable", labels = c("Correlation", "Cosine"))+
   scale_color_discrete(name = "variable", labels = c("Correlation", "Cosine"))
-# save pdf 8x10
+# save Cor_Cosine.pdf 7x6
 ```
 
 # bacteriocine 
@@ -245,13 +238,15 @@ colnames(tm2)[-6] <- c('Alphafold2','Omegafold','ESMfold','TM_vec','CPE')
 tm2 <- melt(tm2,variable.name = 'method',value.name = 'score')
 tm2$method <- factor(tm2$method,levels = c('TM_vec','Alphafold2','Omegafold','ESMfold','CPE'))
 
-cv <- function(x){return((mean(x)/sd(x)))}
 
-tm2cv <- aggregate(score~status+method,tm2,cv)
-tm2cv$method <- factor(tm2cv$method,levels = c('TM_vec','Alphafold2','Omegafold','ESMfold','CPE'))
+tm2sd <- tm2 %>% group_by(status,method) %>%
+  summarise(score = score/sd(score))
 
-p <- ggplot(tm2cv,aes(status,score,fill=method))+
-  geom_bar(stat="identity", width = .3,position=position_dodge())+ 
+tm2sd$method <- factor(tm2sd$method,levels = c('TM_vec','Alphafold2','Omegafold','ESMfold','CPE'))
+
+p <- ggplot(tm2sd,aes(status,score,fill=method))+
+  geom_boxplot(outlier.shape = NA)+
+  #geom_bar(stat="identity", width = .3,position=position_dodge())+ 
   theme_bw(base_size = 16,base_line_size = .2)
 
 ```
@@ -268,9 +263,9 @@ dis <- 1 - dis
 dis <- as.dist(dis)
 
 
-df <- df[with(df, order(df$group)),]
-rn <- df$pdbID
-rownames(df) <- rn
+df2 <- df[with(df, order(df$group)),]
+rn <- df2$pdbID
+rownames(df2) <- rn
 grp <- list(Bacteri     = rn[1:5],
             BMM_alpha = rn[6:7],
             BMM_beta  = rn[8:9],
@@ -281,37 +276,18 @@ grp <- list(Bacteri     = rn[1:5],
             NAA  = rn[48:52])
 
 
-tree_data <- ape::bionj(dis)
+hc <- dis %>% hclust(method = "ward.D2") 
+hc <- ape::bionj(dis)
 
-p_data <- ggtree(tree_data, layout = 'circular',
+adjustedRandIndex(cutree(hc, 8), df$group)
+classError(cutree(hc, 8), df$group)
+
+p_data <- ggtree(hc,layout = 'dendrogram',
                  branch.length='none',size = 1.5) 
 
 p<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
   theme(#legend.position="none",
         plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
-  geom_tiplab2(aes(label=label,angle=angle),
-               hjust=-.1,size=3.5,fontface="bold",align=F)
-  
-
+  geom_tiplab(aes(label=label,),
+               hjust=1,size=3.5,fontface="bold",align=F)
 ```
-
-# Leukemia
-
-```{r}
-mat <- read_excel("~/Desktop/proj/C0023434_disease_gda_summary.xlsx")
-mat <- mat[mat$N_PMIDs>1,]
-tdis <- unique(mat$UniProt)
-
-df0 <-readRDS('../../DTI/241/E210.seq_dtcMathew.rds')
-df0 <- df0[df0$target%in%mat$UniProt,]
-dt <- unique(df0$target)
-
-m <- match(tdis, dt)
-tdis <- 
-
-sab <- readRDS('../../DTI/241/sAB.rds')
-sab <- sab[sab$d1%in%df0$drug,]
-sab <- sab[sab$d2%in%df0$drug,]
-
-```
-
