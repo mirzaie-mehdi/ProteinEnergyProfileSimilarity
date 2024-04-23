@@ -231,7 +231,7 @@ p <- ggplot(df, aes(variable, value, fill=variable))+
   geom_boxplot(alpha=.7, outliers = F, show.legend = F)+
   mytheme()+
   theme(legend.position = c(.8,.1), 
-        axis.text.x = element_text(size = 8),
+        axis.text.x = element_text(size = 13),
         legend.text = element_text(size = 6))+
   xlab('')+
   #ylab('Density')+
