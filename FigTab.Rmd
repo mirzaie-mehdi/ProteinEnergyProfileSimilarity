@@ -1195,7 +1195,7 @@ x <- df[,-c(1:5)]/df$length
 x  <- as.matrix(x) 
 hc <- x %>% proxy::dist(method = manhat)
 hc <- hc%>% hclust(method = "ward.D2")
-adjustedRandIndex(cutree(hc, 3), df$virus)
+adjustedRandIndex(cutree(hc, 4), df$virus)
 classError(cutree(hc, 3), df$virus)
 dend <- hc %>% as.dendrogram
 

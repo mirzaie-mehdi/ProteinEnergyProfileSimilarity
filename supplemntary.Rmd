@@ -18,6 +18,7 @@ library(tidyverse)
 library(reshape2)
 library(phylotools)
 library(lsa)
+library(ggbreak)
 ```
 
 # Covid-19
@@ -185,6 +186,9 @@ legend("topright", legend = as.character(unique(ord_sml)),
 # cor SPE&CPE
 
 ```{r}
+aij <- read.csv('Data/Dunbrack/PijReweight.csv',header = F)
+aij <- (aij+t(aij))/2
+aij210 <- aij[lower.tri(aij,diag = T)]
 # astral 40
 df_seq <- readRDS("Data/rds/E210.seq_astral_40.rds") 
 df_seq = df_seq[!is.na(df_seq$FL),] 
@@ -198,32 +202,51 @@ df_str <- df_str[-which(is.na(m)),]
 n <- nrow(df_seq)
 csin <- rep(NA,n)
 corr <- rep(NA,n)
+manh <- rep(NA,n)
 for (i in 1:n) {
   print(i)
-  x <- as.numeric(df_seq[i,-c(1:8)])
+  x <- as.numeric(df_seq[i,-c(1:8)])*aij210
   y <- as.numeric(df_str[i,-c(1:8)])
   csin[i] <- cosine(x,y) #lsa package
   corr[i] <- cor(x,y)
+  manh[i] <- manhat(x,y)
 }
 
-df <- data.frame(corr,csin)
+manh2 <- (manh - min(manh))/(max(manh) - min(manh))*(1 - (-1)) + (-1)
+#manh2 <- 1 - manh2
+manh2 <- (-1)*manh2
+#corr2 <- (corr - min(corr))/(max(corr) - min(corr))
+#csin2 <- (csin - min(csin))/(max(csin) - min(csin))
+
+df <- data.frame(Correlation=corr,
+                 Cosine=csin,
+                 Manhattan=manh2)
 df <- melt(df)
 df_med <- aggregate(.~variable,df,median)
 df_med$value <- round(df_med$value,2)
 
 source('mytheme.R')
 
-p <- ggplot(df, aes(value, fill=variable))+
-  geom_density(alpha=.7)+
+p <- ggplot(df, aes(variable, value, fill=variable))+
+  geom_boxplot(alpha=.7, outliers = F, show.legend = F)+
   mytheme()+
-  theme(legend.position = c(.2,.9))+
-  xlab('')+ylab('Density')+
-  geom_text(data = df_med, aes(x=value-.1, y=c(2.7,4.2), label = value, 
-                               col=variable), size=8)+
-  geom_segment(aes(x = df_med$value[1], y = 0, xend = df_med$value[1], yend = 2.6),linetype=2)+
-  geom_segment(aes(x = df_med$value[2], y = 0, xend = df_med$value[2], yend = 4.1),linetype=2)+
-  scale_color_manual(values = c('green4','orange'),name = "variable", labels = c("Correlation", "Cosine"))+
-  scale_fill_manual(values = c('green4','orange'),name = "variable", labels = c("Correlation", "Cosine"))
+  theme(legend.position = c(.8,.1), 
+        axis.text.x = element_text(size = 8),
+        legend.text = element_text(size = 6))+
+  xlab('')+
+  #ylab('Density')+
+  ylab('')+
+  #geom_text(data = df_med, aes(x=value-.1, y=c(2.7, 4.2, 6.6), label = value, 
+  #                             col=variable), size=6)+
+  #geom_segment(aes(x = df_med$value[1], y = 0, xend = df_med$value[1], yend = 2.6),linetype=2)+
+  #geom_segment(aes(x = df_med$value[2], y = 0, xend = df_med$value[2], yend = 4.1),linetype=2)+
+  #geom_segment(aes(x = df_med$value[3], y = 0, xend = df_med$value[3], yend = 6.5),linetype=2)+
+  scale_color_manual(values = c('green4','orange','magenta4'),
+                     #name = "variable", labels = c("Correlation", "Cosine",'Manhattan')
+                     )+
+  scale_fill_manual(values = c('green4','orange','magenta4'),
+                    #name = "variable", labels = c("Correlation", "Cosine", 'Manhattan')
+                    )
 
 # save Cor_Cosine.pdf 7x6
 ```
@@ -296,3 +319,108 @@ p<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
   geom_tiplab(aes(label=label,),
                hjust=1,size=3.5,fontface="bold",align=F)
 ```
+# Dunbrack
+
+```{r}
+dun <- read.delim('Data/Dunbrack/list_with_chainID.txt',header = F)
+
+Nprotein <- nrow(dun)
+E210.dun <- data.frame(pdbID = dun$V1, length=NA,
+                            matrix(NA, ncol = 210, nrow = Nprotein))
+colnames(E210.dun)[-c(1:2)] = pair_inter
+E210.seq_dun <- E210.dun 
+for (NP in NP:Nprotein) {
+  #if (NP %% 50 == 0) {print(NP)}
+  print(NP)
+  pdbname <- substr(E210.dun$pdbID[NP],1,4)
+  ch <- substr(E210.dun$pdbID[NP], 5,5)
+  tryCatch({
+    pdb0 <- read.pdb(pdbname,verbose = FALSE)
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
+    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+    sele4 <- atom.select(pdb0, "noh")
+    sele <- combine.select(sele1, sele2,sele4, operator="AND")
+    new_pdb = trim.pdb(pdb0, sele,verbose = FALSE)
+    pdbX <- new_pdb$atom
+    E210.dun$length[NP] = length(unique(pdbX$resno))
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    E210.dun[NP, -c(1:2)] <- energy210
+    #-----------sequence enregy based on PDB--------
+    pdbXca <- pdbX[pdbX$elety == "CA",]
+    seq = aa321(pdbXca$resid)
+    E210.seq_dun$length[NP] = length(seq)
+    freq = c()
+    for (j in 1:20){
+        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+    }
+    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+    en_fr <- aaenergy * freq_matrix
+    en_fr <- en_fr/length(seq)
+    pair_es <- diag(freq) %*% as.matrix(en_fr)
+    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+    E210.seq_dun[NP, -c(1:2)] <- aa210_p
+    }, error = function(e) {
+     cat("Error downloading file:", e$message, "\n")
+    })
+}
+
+
+```
+
+# table3
+
+```{r}
+df <- data.frame(method=c('GR-Align','RMSD','TM-Score',
+                          'YH(10Rotation)','YH(2500Rotation)','TM-Vec','CPE'),
+                 Accuracy=c(62.3, 59.2, 61.5, 70.8, 81.5, 100, 100),
+                 TimeS=c(120, 3600, 33600, 600, 18600, 67, 1))
+
+df$Time <- round((df$TimeS*100)/(12*3600),5)
+df$ratio<-log10(df$Accuracy/df$Time+1)
+
+df <- df[order(df$ratio, decreasing = T),]
+df$method <- factor(df$method, 
+                    levels = df$method)
+mycol <-c('magenta','orange','skyblue3','purple','red','yellow4','green')
+
+p <- ggplot(df, aes(x = method, y = ratio, fill= method)) +
+  geom_bar(stat="identity")+
+  coord_polar(theta="x") +
+  theme_light(base_rect_size = 0,base_line_size = 1)+
+  theme(axis.text = element_blank(),
+        axis.ticks=element_blank(),
+        axis.title = element_blank(),
+        legend.title = element_blank())+
+  scale_fill_manual(values = mycol)
+
+
+p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
+  geom_bar(stat="identity")+
+  coord_polar(theta="y") +
+  theme_light(base_rect_size = 0,base_line_size = 1)+
+  theme(axis.text = element_blank(),
+        axis.ticks=element_blank(),
+        axis.title = element_blank(),
+        legend.title = element_blank(),
+        legend.position = 'none')+
+  scale_fill_manual(values = mycol)+
+  ylim(0,100)
+
+p3m <- p12h+xlim(c('CPE','TM-Vec','GR-Align'))+ylim(0,.3)+theme_void()
+
+
+source('mytheme.R')
+df2 <- df
+df2$Time <- df2$TimeS+1
+#df2 <- melt(df2[,-c(3,5)])
+p2 <- ggplot(df2,aes(Accuracy,Time,col=method,label=method))+
+      #geom_bar(stat="identity", width = .3,position=position_dodge(),alpha=.7)+
+  geom_point(size=7,show.legend = F)+    
+  geom_text(show.legend = F,vjust=0,hjust=-.2,col='black',size=5)+
+  mytheme()+ylab('Time (s)')+
+  scale_color_manual(values = mycol)+
+      scale_y_log10()+xlim(55,103)
+
+```
+
