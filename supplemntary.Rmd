@@ -77,32 +77,12 @@ adjustedRandIndex(cutree(hc, 3), spike$virus)
 classError(cutree(hc, 3), spike$virus)
 
 
-df <- spike
-df <- df[with(df, order(df$virus)), ]
-rn <- df$pdbID
-tree_data <- as.phylo(hc)
-grp <- list(MERS_Cov  = rn[1:32],
-            SARS_Cov  = rn[33:63],
-            SARS_Cov2 = rn[64:143])
-
-p_data <- ggtree(tree_data, layout = 'circular',
-                 size = 1) 
-
-p <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
-       theme(legend.position="none",
-             plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
-       geom_tiplab2(aes(label=label,angle=angle),
-                    hjust=-.1,size=3.5,fontface="bold",align=F)+
-       scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
-                            type =  c("blue","green","red" ))
-
 labcol <- c("blue","green","red" )
 ord_sml <- spike[,][order.dendrogram(dend),3]
 group_cols <- labcol[as.factor(ord_sml)]
 
 dend <- hc %>% as.dendrogram
 dend2 <- dend %>%
-  #color_branches(k=3, col = c("red","blue","green3")) %>%
   color_labels(col =   group_cols) %>%
   set("labels_cex", .5) %>%
   set("leaves_cex", .5) %>%
@@ -120,6 +100,32 @@ plot(dend2, ylab = "Height",leaflab = "none")
 spike <- read.csv("Data/covidPDB/spike_close.csv")
 df <- spike
 
+tm_vec <- read.csv('Data/covidPDB/disTM_vec.csv')
+colnames(tm_vec) <- rownames(tm_vec) <- spike$pdbID
+tm_vec <- 1 - tm_vec
+
+hc <- as.dist(tm_vec)
+hc <- hc%>% hclust(method = "ward.D2")
+
+adjustedRandIndex(cutree(hc, 3), spike$virus)
+classError(cutree(hc, 3), spike$virus)
+dend <- hc %>% as.dendrogram
+
+labcol <- c("blue","green","red" )
+ord_sml <- df[,][order.dendrogram(dend),3]
+group_cols <- labcol[as.factor(ord_sml)]
+
+dend2 <- dend %>%
+  #color_branches(k=3, col = c("red","blue","green3")) %>%
+  color_labels(col =   group_cols) %>%
+  set("labels_cex", .5) %>%
+  set("leaves_cex", .5) %>%
+  set("leaves_pch", 19) %>%
+  set("leaves_col", group_cols)
+
+plot(dend2, ylab = "Height",leaflab = "none")
+
+# --------------TM score-------------
 tm <- read.csv('Data/covidPDB/TM_Score.csv')
 rownames(tm) <- colnames(tm) <- df$pdbID
 
@@ -132,16 +138,11 @@ for (i in 1:nrow(tm_max)) {
   }
 }
 tm_max <- 1 - tm_max
-
-tm_vec <- read.csv('Data/covidPDB/disTM_vec.csv')
-colnames(tm_vec) <- rownames(tm_vec) <- spike$pdbID
-tm_vec <- 1 - tm_vec
-
-hc <- as.dist(tm_vec)
+hc <- as.dist(tm_max)
 hc <- hc%>% hclust(method = "ward.D2")
 
-adjustedRandIndex(cutree(hc, 2), spike$virus)
-classError(cutree(hc, 2), spike$virus)
+adjustedRandIndex(cutree(hc, 3), spike$virus)
+classError(cutree(hc, 3), spike$virus)
 dend <- hc %>% as.dendrogram
 
 df <- df[with(df, order(df$virus)), ]
@@ -151,36 +152,17 @@ grp <- list(MERS_Cov  = rn[1:32],
             SARS_Cov  = rn[33:63],
             SARS_Cov2 = rn[64:143])
 
-p_data <- ggtree(tree_data, layout = 'circular',
+p_data <- ggtree(tree_data, layout = 'dendrogram',
                  size = 1) 
 
-p <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
+t_tmScore <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
        theme(#legend.position="none",
              plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
-       geom_tiplab2(aes(label=label,angle=angle),
-                    hjust=-.1,size=3.5,fontface="bold",align=F)+
+       #geom_tiplab2(aes(label=label,angle=angle),
+      #              hjust=-.1,size=3.5,fontface="bold",align=F)+
        scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
-                            type =  c("blue","green","red" ))
-
-
-labcol <- c("blue","green","red" )
-ord_sml <- df[,][order.dendrogram(dend),7]
-group_cols <- labcol[as.factor(ord_sml)]
-
-dend2 <- dend %>%
-  #color_branches(k=3, col = c("red","blue","green3")) %>%
-  color_labels(col =   group_cols) %>%
-  set("labels_cex", .5) %>%
-  set("leaves_cex", .5) %>%
-  set("leaves_pch", 19) %>%
-  set("leaves_col", group_cols)
-
-plot(dend2, ylab = "Height",leaflab = "none")
-legend("topright", legend = as.character(unique(ord_sml)),
-       pch = 15, pt.cex = 2.3, cex = 1.4, bty = 'n',
-       inset = c(-.3, -.5), # place outside
-       col = unique(group_cols),horiz = FALSE,xpd = TRUE)
-
+                            type =  c("blue","green","red" ))+
+  ggtitle('TM-Score')
 ```
 
 # cor SPE&CPE
@@ -368,7 +350,7 @@ for (NP in NP:Nprotein) {
 
 ```
 
-# table3
+# table2 -> fig
 
 ```{r}
 df <- data.frame(method=c('GR-Align','RMSD','TM-Score',
@@ -407,7 +389,7 @@ p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
   scale_fill_manual(values = mycol)+
   ylim(0,100)
 
-p3m <- p12h+xlim(c('CPE','TM-Vec','GR-Align'))+ylim(0,.3)+theme_void()
+p3m <- p12h+xlim(c('CPE','TM-Vec','GR-Align'))+ylim(0,.3)
 
 
 source('mytheme.R')
@@ -422,5 +404,32 @@ p2 <- ggplot(df2,aes(Accuracy,Time,col=method,label=method))+
   scale_color_manual(values = mycol)+
       scale_y_log10()+xlim(55,103)
 
+```
+
+
+```{r}
+spe <- read.csv('~/Downloads/final_paywise_energy.csv',row.names = 'X0')
+spe <- read.csv('Data/Dunbrack/cpe.csv')
+library(Biostrings)
+data(BLOSUM45)
+data(BLOSUM50)
+data(BLOSUM62)
+data(BLOSUM80)
+data(BLOSUM100)
+data(PAM30)
+data(PAM40)
+data(PAM70)
+data(PAM120)
+data(PAM250)
+colnames(spe)<- rownames(spe)<-aa321(colnames(spe))
+x <- spe[lower.tri(spe,diag = T)]
+x <- (x- min(x))/(max(x)-min(x))*(1 - (-1))+(-1)
+x <- colMeans(spe[,-c(1,2)])/apply(spe[,-c(1,2)],2,sd)
+
+sm <- PAM30[letters_list,letters_list]
+y <- sm[lower.tri(sm,diag = T)]
+
+df <- data.frame(spe=x,sc=y)
+ggplot(df,aes(spe,sc))+geom_point()+xlim(c(-500,0))+stat_cor()
 ```
 
