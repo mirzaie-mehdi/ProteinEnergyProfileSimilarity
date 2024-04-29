@@ -169,14 +169,16 @@ t_tmScore <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
 
 ```{r}
 aij <- read.csv('Data/Dunbrack/PijReweight.csv',header = F)
+aij[c(8,16),]<-.5
 aij <- (aij+t(aij))/2
 aij210 <- aij[lower.tri(aij,diag = T)]
 # astral 40
 df_seq <- readRDS("Data/rds/E210.seq_astral_40.rds") 
-df_seq = df_seq[!is.na(df_seq$FL),] 
+df_seq <- df_seq[!is.na(df_seq$FL),] 
+df_seq2 <- df_seq
 
 df_str <- readRDS("Data/rds/E210.astral_40.rds") 
-df_str = df_str[!is.na(df_str$FL),] 
+df_str <- df_str[!is.na(df_str$FL),] 
 m<-match(df_str$scopeID,df_seq$scopeID)
 df_str <- df_str[-which(is.na(m)),]
 
@@ -188,6 +190,7 @@ manh <- rep(NA,n)
 for (i in 1:n) {
   print(i)
   x <- as.numeric(df_seq[i,-c(1:8)])*aij210
+  df_seq[i,-c(1:8)]<-x
   y <- as.numeric(df_str[i,-c(1:8)])
   csin[i] <- cosine(x,y) #lsa package
   corr[i] <- cor(x,y)
@@ -202,7 +205,9 @@ manh2 <- (-1)*manh2
 
 df <- data.frame(Correlation=corr,
                  Cosine=csin,
-                 Manhattan=manh2)
+                 Manhattan=manh2,
+                 cpe=rowSums(df_seq[,-c(1:8)]),
+                 spe=rowSums(df_str[,-c(1:8)]))
 df <- melt(df)
 df_med <- aggregate(.~variable,df,median)
 df_med$value <- round(df_med$value,2)
@@ -272,34 +277,10 @@ colnames(dis) <- rownames(dis) <- df$pdbID
 dis <- 1 - dis
 dis <- as.dist(dis)
 
-
-df2 <- df[with(df, order(df$group)),]
-rn <- df2$pdbID
-rownames(df2) <- rn
-grp <- list(Bacteri     = rn[1:5],
-            BMM_alpha = rn[6:7],
-            BMM_beta  = rn[8:9],
-            Dps  = rn[10:24],
-            Fatty_acid  = rn[25:28],
-            Ferritins  = rn[29:39],
-            RNRR2  = rn[40:47],
-            NAA  = rn[48:52])
+nnet <- neighborNet(dis)
+write.nexus.networx(nnet,'Data/rds/ferritin_TMvec.nxs')
 
 
-hc <- dis %>% hclust(method = "ward.D2") 
-hc <- ape::bionj(dis)
-
-adjustedRandIndex(cutree(hc, 8), df$group)
-classError(cutree(hc, 8), df$group)
-
-p_data <- ggtree(hc,layout = 'dendrogram',
-                 branch.length='none',size = 1.5) 
-
-p<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
-  theme(#legend.position="none",
-        plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
-  geom_tiplab(aes(label=label,),
-               hjust=1,size=3.5,fontface="bold",align=F)
 ```
 # Dunbrack
 
@@ -405,31 +386,85 @@ p2 <- ggplot(df2,aes(Accuracy,Time,col=method,label=method))+
       scale_y_log10()+xlim(55,103)
 
 ```
-
+#table3 -> fig
 
 ```{r}
-spe <- read.csv('~/Downloads/final_paywise_energy.csv',row.names = 'X0')
-spe <- read.csv('Data/Dunbrack/cpe.csv')
-library(Biostrings)
-data(BLOSUM45)
-data(BLOSUM50)
-data(BLOSUM62)
-data(BLOSUM80)
-data(BLOSUM100)
-data(PAM30)
-data(PAM40)
-data(PAM70)
-data(PAM120)
-data(PAM250)
-colnames(spe)<- rownames(spe)<-aa321(colnames(spe))
-x <- spe[lower.tri(spe,diag = T)]
-x <- (x- min(x))/(max(x)-min(x))*(1 - (-1))+(-1)
-x <- colMeans(spe[,-c(1,2)])/apply(spe[,-c(1,2)],2,sd)
+df <- data.frame(method=c('RMSD','TM-Score','SPE','TM-Vec','CPE'),
+                 basedOn=rep(c('Structure', 'Sequence'),c(3,2)),
+                 CT_3=c(50, 50, 100, 16, 50),
+                 CT_4=c(50, 56, 95, 48, 95),
+                 CT_5=c(46, 40, 93, 87, 94),
+                 #CT6=c(73, 40, 66, 86, 92),
+                 TimeS=c(70*60, 9.7*3600, 3*60, 80,0.9))
 
-sm <- PAM30[letters_list,letters_list]
-y <- sm[lower.tri(sm,diag = T)]
+df$Time <- round((df$TimeS*100)/(12*3600),5)
 
-df <- data.frame(spe=x,sc=y)
-ggplot(df,aes(spe,sc))+geom_point()+xlim(c(-500,0))+stat_cor()
+
+df <- df[order(df$Time, decreasing = F),]
+df$method <- factor(df$method, 
+                    levels = df$method)
+mycol <-c('magenta','orange','cyan','red','green')
+
+
+
+
+p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
+  geom_bar(stat="identity")+
+  coord_polar(theta="y") +
+  theme_light(base_rect_size = 0,base_line_size = 1)+
+  theme(axis.text = element_blank(),
+        axis.ticks=element_blank(),
+        axis.title = element_blank(),
+        legend.title = element_blank(),
+        legend.position = 'none')+
+  scale_fill_manual(values = mycol)+
+  ylim(0,100)
+
+p3m <- p12h+xlim(c('CPE','TM-Vec','SPE'))+ylim(0,.44) #4.4*12*3.6 sec
+
+
+df2 <- melt(df[,1:5])
+p <- ggplot(df2, aes(variable,value, fill=method))+
+  geom_bar(stat="identity", width = .3,
+           position=position_dodge2(preserve = "single"),alpha=.7)+
+  facet_grid( ~ basedOn)+xlab('')+ylab('ARI')+
+  scale_fill_manual(values = mycol)+
+  mytheme()+
+  theme()
+```
+
+# scop
+```{r}
+sc<-read.delim2('~/Desktop/dir.cla.scope.2.08-stable.txt',header = F)
+sc$sf<-str_match(sc$V4,'(.*).')[,2]
+freq<-data.frame(table(sc$sf))
+dim(freq[freq$Freq>100,])
+dim(freq[freq$Freq>1000,])
+z<-freq[freq$Freq>1000,1]
+sc1000<-sc[sc$sf%in%z,]
+# -----------
+astral <- readRDS("Data/rds/astral_95.rds") 
+scID <- unique(astral$scopeID)
+m <- match(sc1000$V1, scID)
+# -------------------------------------
+cath<-read.delim2('~/Desktop/cath/cath-domain-list-v4_3_0.txt',header = F,
+                  comment.char = '#',sep ='')
+cath$superfamily<-apply(cath[,2:5],1,FUN = function(x)(paste0(x,collapse = '.')))
+s40<-readFASTA('~/Desktop/cath/cath-dataset-nonredundant-S40-v4_3_0.atom.fa')
+ns40<-names(s40)
+
+ns40<-gsub('(\\|)','',ns40)
+ns40<-gsub('cathcurrent','',ns40)
+ns40<-str_match(ns40, '(.*)(/)')[,2]
+names(s40)<-ns40
+
+cath40 <- cath[cath$V1%in%ns40,]
+ff <- data.frame(table(cath40$superfamily))
+sf <- ff[ff$Freq>10,1]
+dID <- cath40$V1[cath40$superfamily%in%sf]
+
+df <- s40[dID]
+
+
 ```
 

@@ -1190,13 +1190,17 @@ ggsplitnet(nnet) + geom_tiplab2(aes(label=label),
 # --------------- CPE -----------------
 E210.seq_spike <- readRDS("Data/rds/E210.seq_spike_close.rds")
 df <- E210.seq_spike
+for (i in 1:nrow(df)) {
+  print(i)
+  df[i,-c(1:5)]<-df[i,-c(1:5)]*aij210
+}
 
 rownames(df) = df$pdbID
 x <- df[,-c(1:5)]/df$length
 x  <- as.matrix(x) 
 hc <- x %>% proxy::dist(method = manhat)
 hc <- hc%>% hclust(method = "ward.D2")
-adjustedRandIndex(cutree(hc, 4), df$virus)
+adjustedRandIndex(cutree(hc, 3), df$virus)
 classError(cutree(hc, 3), df$virus)
 dend <- hc %>% as.dendrogram
 
