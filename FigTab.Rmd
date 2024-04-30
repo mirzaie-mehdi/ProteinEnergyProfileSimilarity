@@ -214,8 +214,6 @@ source('mytheme.R')
 df <- readRDS("Data/rds/E210.astral_40.rds")
 df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
 df <- df[,c(5,3,9:218)]
-sc <- apply(df[-c(1:2)], 2, FUN = function(x){x/sd(x)})
-df[-c(1:2)] <- sc
 dis <- as.matrix(proxy::dist(df[,-c(1,2)]/df$length, method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
