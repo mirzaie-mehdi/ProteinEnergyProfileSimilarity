@@ -57,7 +57,7 @@ for i in range(0,n,1):
   protrans_seq = featurize_prottrans(seq, model, tokenizer, device).detach()
   embedded_seq = embed_tm_vec(protrans_seq, model_deep, device)
   emb.loc[i,:] = embedded_seq
-#emb.to_csv(path+'TM_vec_emb_bac.csv',index=False)
+emb.to_csv(path+'TM_vec_emb_bac.csv',index=False)
 elapsed1 = (time.time() - start)
 
 start = time.time()
@@ -75,7 +75,7 @@ for i in range(0,n,1):
     disTM[i,j] = predicted_tm_score.numpy()[0]
     disTM[j,i] = predicted_tm_score.numpy()[0]
 disTM = pd.DataFrame(disTM)
-disTM.to_csv(path+'disTM_vec_Ferritin_Like_seq.csv',index=False)
+disTM.to_csv(path+'disTM_vec_bac.csv',index=False)
 elapsed2 = (time.time() - start)
 print(elapsed1, elapsed2)
 

@@ -1468,11 +1468,11 @@ dis <- as.matrix(dist(df5[,-c(1:8)],method = manhat))
 diag(dis) <- NA
 
 im <- apply(dis,1, FUN = which.min)
-res <- data.frame(sorce=df5$superfamily, target=df5$superfamily[im])
+res <- data.frame(source=df5$superfamily, target=df5$superfamily[im])
 cm <- matrix(0,5,5)
 colnames(cm) <- rownames(cm) <- fiveSF
 for (sf in fiveSF) {
-  x <- res[res$sorce%in%sf,]
+  x <- res[res$source%in%sf,]
   z <- table(x$target)
   cm[sf,names(z)]<-z
 }
@@ -1520,12 +1520,12 @@ dis <- as.matrix(dist(df[,-c(1:9)], method = manhat))
 diag(dis) <- NA
 
 im <- apply(dis,1, FUN = which.min)
-res <- data.frame(sorce=df$cathID, target=df$cathID[im])
+res <- data.frame(source=df$cathID, target=df$cathID[im])
 ## ----------
 cm <- matrix(0,2,2)
 colnames(cm) <- rownames(cm) <- twoSF
 for (sf in twoSF) {
-  x <- res[res$sorce%in%sf,]
+  x <- res[res$source%in%sf,]
   z <- table(x$target)
   cm[sf,names(z)]<-z
 }

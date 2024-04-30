@@ -10,9 +10,16 @@ Energy_PC210 <- function(NetworkFrame,energy_dell_dunbrack){ # Pairwise Contact 
       cn <- cn+1
     }
   }
-  cn <- 1; index20 <- matrix(0,ncol = 20,nrow = 20)
-  for (i in 1:20){
-    for (j in i: 20){
+#  cn <- 1; index20 <- matrix(0,ncol = 20,nrow = 20)
+#  for (i in 1:20){
+#    for (j in i: 20){
+#      index20[i,j] <- cn
+#      cn <- cn+1
+#    }
+#  }
+  cn <- 1; index20 <- matrix(0,ncol = 39,nrow = 39)
+  for (i in 1:39){
+    for (j in i: 39){
       index20[i,j] <- cn
       cn <- cn+1
     }
@@ -42,14 +49,18 @@ Energy_PC210 <- function(NetworkFrame,energy_dell_dunbrack){ # Pairwise Contact 
     }
   }
   NetworkFrame <- data.frame(NetworkFrame,energy)
-  es <- matrix(0, nrow = 20, ncol = 20)
   ami <- NetworkFrame$amif;amj <- NetworkFrame$amjf
   am2numi <- sapply(as.character(ami), amacid2num)
   am2numj <- sapply(as.character(amj), amacid2num)
   NetworkFrame <- data.frame(NetworkFrame,am2numi,am2numj,numi,numj)
-  energy_pair_am <- aggregate(NetworkFrame$energy,by=list(NetworkFrame$am2numi,NetworkFrame$am2numj),FUN=sum, na.rm=TRUE)
+  #energy_pair_am <- aggregate(NetworkFrame$energy,by=list(NetworkFrame$am2numi,NetworkFrame$am2numj),FUN=sum, na.rm=TRUE)
+  # ----------------------------------
+  NetworkFrame$amSCi <- mapply(amacid2numSC, NetworkFrame$am2numi,NetworkFrame$numi)
+  NetworkFrame$amSCj <- mapply(amacid2numSC, NetworkFrame$am2numj,NetworkFrame$numj)
+  energy_pair_am <- aggregate(NetworkFrame$energy,by=list(NetworkFrame$amSCi,NetworkFrame$amSCj),FUN=sum, na.rm=TRUE)
+  # ----------------------------------
   colnames(energy_pair_am) <- c("aminoacid1","aminoacid2",'energy')
-  energy210 <- rep(0,210); ninter <- dim(energy_pair_am)[1]
+  energy210 <- rep(0, max(index20)); ninter <- dim(energy_pair_am)[1]
   for (i in 1:ninter){
     r <-energy_pair_am$aminoacid1[i]; c <-energy_pair_am$aminoacid2[i]
     rw=min(r,c); cl=max(r,c)

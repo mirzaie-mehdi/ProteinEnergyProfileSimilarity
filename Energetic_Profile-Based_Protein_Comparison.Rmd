@@ -191,6 +191,7 @@ The following chunk retrieves the predicted pairwise energy values from the trai
 ```{r}
 energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
 energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
+source('Functions/amacid2numSC.R')
 source("Functions/amacid2num.R")
 source("Functions/atomtype2num167.R")
 source("Functions/Energy_PC210.R")
@@ -222,9 +223,10 @@ This chunk calculate the profile of energy for ASTRAL95/40 based on sequence and
 ```{r}
 # -------- At first, run the 'Energy Calculation prerequisite' chunk.
 # ----------------------------------------------------
-astral <- readRDS("Data/rds/astral_95.rds")  # astral_40.rds 
+astral <- readRDS("Data/rds/astral_40.rds")  # astral_40.rds 
+astral <- astral[astral$class%in%c('a','b'),]
 Nprotein <- nrow(astral)
-num_columns <- 210
+num_columns <- 780
 E210.astral <- data.frame(pdbID = astral$pdbID,
                             scopeID= astral$scopeID,
                             length = rep(NA,Nprotein),
@@ -268,44 +270,44 @@ for (NP in 1:Nprotein) {
     E210.seqPDB_astral$length[NP] = length(unique(pdbX$resno))
     Net_Frame <- NetworkFrame(PDB = new_pdb)
     energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
-    E210.astral[NP,9:218] <- energy210
+    E210.astral[NP,-c(1:8)] <- energy210
     # ****************keep res helix & sheet************************
-    indhs <- inedx_HelixSheet(PDB = new_pdb)
-    Net_Frame_hs <- Net_Frame[Net_Frame$resnoif %in% indhs & Net_Frame$resnojf %in% indhs,]
-    if(dim(Net_Frame_hs)[1]!=0){
-        Net_Frame <- Net_Frame_hs
-    }
-    energy210_ss <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
-    E210.astral_SS[NP,9:218] <- energy210_ss
-    #-----------sequence enregy based on PDB--------
-    pdbXca <- pdbX[pdbX$elety == "CA",]
-    seq = aa321(pdbXca$resid)
-    E210.seqPDB_astral$length[NP] = length(seq)
-    freq = c()
-    for (j in 1:20){
-        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-    E210.seqPDB_astral[NP,9:218] <- aa210_p
-#-----------sequence enregy based on astral--------
-    seq = astral$seq[NP]
-    seq = gsub("X", "", seq)
-    E210.seq_astral$length[NP] = nchar(seq)
-    seq = unlist(strsplit(seq,""))
-    freq = c()
-    for (j in 1:20){
-        freq[j] <-  length(grep(letters_list[j],tolower(seq)))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-    E210.seq_astral[NP,9:218] <- aa210_p
+#    indhs <- inedx_HelixSheet(PDB = new_pdb)
+#    Net_Frame_hs <- Net_Frame[Net_Frame$resnoif %in% indhs & Net_Frame$resnojf %in% indhs,]
+#    if(dim(Net_Frame_hs)[1]!=0){
+#        Net_Frame <- Net_Frame_hs
+#    }
+#    energy210_ss <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+#    E210.astral_SS[NP,9:218] <- energy210_ss
+#    #-----------sequence enregy based on PDB--------
+#    pdbXca <- pdbX[pdbX$elety == "CA",]
+#    seq = aa321(pdbXca$resid)
+#    E210.seqPDB_astral$length[NP] = length(seq)
+#    freq = c()
+#    for (j in 1:20){
+#        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+#    }
+#    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+#    en_fr <- aaenergy * freq_matrix
+#    en_fr <- en_fr/length(seq)
+#    pair_es <- diag(freq) %*% as.matrix(en_fr)
+#    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+#    E210.seqPDB_astral[NP,9:218] <- aa210_p
+##-----------sequence enregy based on astral--------
+#    seq = astral$seq[NP]
+#    seq = gsub("X", "", seq)
+#    E210.seq_astral$length[NP] = nchar(seq)
+#    seq = unlist(strsplit(seq,""))
+#    freq = c()
+#    for (j in 1:20){
+#        freq[j] <-  length(grep(letters_list[j],tolower(seq)))
+#    }
+#    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+#    en_fr <- aaenergy * freq_matrix
+#    en_fr <- en_fr/length(seq)
+#    pair_es <- diag(freq) %*% as.matrix(en_fr)
+#    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+#    E210.seq_astral[NP,9:218] <- aa210_p
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
     })

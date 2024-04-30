@@ -443,9 +443,40 @@ dim(freq[freq$Freq>1000,])
 z<-freq[freq$Freq>1000,1]
 sc1000<-sc[sc$sf%in%z,]
 # -----------
-astral <- readRDS("Data/rds/astral_95.rds") 
-scID <- unique(astral$scopeID)
-m <- match(sc1000$V1, scID)
+astral <- readRDS("Data/rds/E210.seq_astral_95.rds") 
+ff <- data.frame(table(astral$superfamily))
+sf <- ff[ff$Freq>500,1]
+df <- astral[astral$superfamily%in%sf,]
+df <- df[!is.na(df$FF),]
+
+dis <- as.matrix(dist(df[,-c(1:8)], method = manhat))
+diag(dis) <- NA
+colnames(dis)<-rownames(dis)<-df$scopeID
+
+dis2 <- dis[df$scopeID, df$scopeID]
+dim(dis2)
+
+# ------------ kNN
+res <- data.frame(source=df$family, 
+                  targetK1=NA, targetK3=NA, targetK5=NA, targetK10=NA)
+for(i in 1:nrow(df)){
+  print(i)
+  for (k in c(1,3,5,10)) {
+  p <- sort(dis2[i,])[1:k]
+  sf_pred<-data.frame(table(df$family[df$scopeID%in%names(p)]))
+  sf_pred <- sf_pred[order(sf_pred$Freq,decreasing = T),]
+  sf_pred<-sf_pred$Var1[1]
+  res[i,paste0('targetK',k)] <- as.character(sf_pred)
+  }
+}
+res$resK1 <- ifelse(res$source==res$targetK1,1,0)
+res$resK3 <- ifelse(res$source==res$targetK3,1,0)
+res$resK5 <- ifelse(res$source==res$targetK5,1,0)
+res$resK10 <- ifelse(res$source==res$targetK10,1,0)
+sum(res$resK1)/nrow(res)
+sum(res$resK3)/nrow(res)
+sum(res$resK5)/nrow(res)
+sum(res$resK10)/nrow(res)
 # -------------------------------------
 cath<-read.delim2('~/Desktop/cath/cath-domain-list-v4_3_0.txt',header = F,
                   comment.char = '#',sep ='')
@@ -457,13 +488,6 @@ ns40<-gsub('(\\|)','',ns40)
 ns40<-gsub('cathcurrent','',ns40)
 ns40<-str_match(ns40, '(.*)(/)')[,2]
 names(s40)<-ns40
-
-cath40 <- cath[cath$V1%in%ns40,]
-ff <- data.frame(table(cath40$superfamily))
-sf <- ff[ff$Freq>10,1]
-dID <- cath40$V1[cath40$superfamily%in%sf]
-
-df <- s40[dID]
 
 
 ```
