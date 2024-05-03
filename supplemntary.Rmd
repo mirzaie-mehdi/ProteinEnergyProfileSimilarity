@@ -1,11 +1,11 @@
 ---
-title: "supplemntary"
+  title: "supplemntary"
 author: "peyman"
 date: "2024-04-05"
 output: html_document
 ---
-
-```{r setup, include=FALSE}
+  
+  ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -156,12 +156,12 @@ p_data <- ggtree(tree_data, layout = 'dendrogram',
                  size = 1) 
 
 t_tmScore <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
-       theme(#legend.position="none",
-             plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
-       #geom_tiplab2(aes(label=label,angle=angle),
-      #              hjust=-.1,size=3.5,fontface="bold",align=F)+
-       scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
-                            type =  c("blue","green","red" ))+
+  theme(#legend.position="none",
+    plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
+  #geom_tiplab2(aes(label=label,angle=angle),
+  #              hjust=-.1,size=3.5,fontface="bold",align=F)+
+  scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
+                       type =  c("blue","green","red" ))+
   ggtitle('TM-Score')
 ```
 
@@ -230,10 +230,10 @@ p <- ggplot(df, aes(variable, value, fill=variable))+
   #geom_segment(aes(x = df_med$value[3], y = 0, xend = df_med$value[3], yend = 6.5),linetype=2)+
   scale_color_manual(values = c('green4','orange','magenta4'),
                      #name = "variable", labels = c("Correlation", "Cosine",'Manhattan')
-                     )+
+  )+
   scale_fill_manual(values = c('green4','orange','magenta4'),
                     #name = "variable", labels = c("Correlation", "Cosine", 'Manhattan')
-                    )
+  )
 
 # save Cor_Cosine.pdf 7x6
 ```
@@ -289,7 +289,7 @@ dun <- read.delim('Data/Dunbrack/list_with_chainID.txt',header = F)
 
 Nprotein <- nrow(dun)
 E210.dun <- data.frame(pdbID = dun$V1, length=NA,
-                            matrix(NA, ncol = 210, nrow = Nprotein))
+                       matrix(NA, ncol = 210, nrow = Nprotein))
 colnames(E210.dun)[-c(1:2)] = pair_inter
 E210.seq_dun <- E210.dun 
 for (NP in NP:Nprotein) {
@@ -315,7 +315,7 @@ for (NP in NP:Nprotein) {
     E210.seq_dun$length[NP] = length(seq)
     freq = c()
     for (j in 1:20){
-        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+      freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
     }
     freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
     en_fr <- aaenergy * freq_matrix
@@ -323,9 +323,9 @@ for (NP in NP:Nprotein) {
     pair_es <- diag(freq) %*% as.matrix(en_fr)
     aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
     E210.seq_dun[NP, -c(1:2)] <- aa210_p
-    }, error = function(e) {
-     cat("Error downloading file:", e$message, "\n")
-    })
+  }, error = function(e) {
+    cat("Error downloading file:", e$message, "\n")
+  })
 }
 
 
@@ -378,12 +378,12 @@ df2 <- df
 df2$Time <- df2$TimeS+1
 #df2 <- melt(df2[,-c(3,5)])
 p2 <- ggplot(df2,aes(Accuracy,Time,col=method,label=method))+
-      #geom_bar(stat="identity", width = .3,position=position_dodge(),alpha=.7)+
+  #geom_bar(stat="identity", width = .3,position=position_dodge(),alpha=.7)+
   geom_point(size=7,show.legend = F)+    
   geom_text(show.legend = F,vjust=0,hjust=-.2,col='black',size=5)+
   mytheme()+ylab('Time (s)')+
   scale_color_manual(values = mycol)+
-      scale_y_log10()+xlim(55,103)
+  scale_y_log10()+xlim(55,103)
 
 ```
 #table3 -> fig
@@ -436,47 +436,95 @@ p <- ggplot(df2, aes(variable,value, fill=method))+
 # scop
 ```{r}
 sc<-read.delim2('~/Desktop/dir.cla.scope.2.08-stable.txt',header = F)
-sc$sf<-str_match(sc$V4,'(.*).')[,2]
-freq<-data.frame(table(sc$sf))
-dim(freq[freq$Freq>100,])
-dim(freq[freq$Freq>1000,])
-z<-freq[freq$Freq>1000,1]
-sc1000<-sc[sc$sf%in%z,]
-# -----------
+colnames(sc)[1] <- 'scopeID'
+sc$family<-sc$V4
+sc$superfamily<-str_match(sc$family,'(.*)[.]')[,2]
+sc$fold<-str_match(sc$superfamily,'(.*)[.]')[,2]
+sc$class<-str_match(sc$fold,'(.*)[.]')[,2]
+sc <- sc[sc$class%in%c('a','b','c','d'),]
+# ------------------------------------------------------
+sc_seq <- readFASTA('~/Downloads/astral-scopedom-seqres-all-2.08-stable.fa')
+sc_seq <- data.frame(sc_seq)
+sc_seq <- data.frame(seq=t(sc_seq))
+sc_seq$scopeID <- rownames(sc_seq)
+# ----------------------------------------------
+ff<-data.frame(table(sc$superfamily))
+dim(ff[ff$Freq>500,])
+sf<-ff[ff$Freq>500,1]
+sc<-sc[sc$superfamily%in%sf,]
+table(sc$class)
+sc <- left_join(sc,sc_seq,'scopeID')
+sc$length <- nchar(sc$seq)
+sc <- sc[!is.na(sc$seq)&sc$length>100&sc$length<300,]
+sc <- sc[!duplicated(sc$seq),]
+# -----------------------------------------------
 astral <- readRDS("Data/rds/E210.seq_astral_95.rds") 
-ff <- data.frame(table(astral$superfamily))
-sf <- ff[ff$Freq>500,1]
-df <- astral[astral$superfamily%in%sf,]
-df <- df[!is.na(df$FF),]
+astral <- astral[!is.na(astral$FF),]
+# -----------------------------------------
+m <- intersect(sc$scopeID, astral$scopeID)
+sc <- sc[!sc$scopeID%in%m,-c(5,6)]
+sc$seq <- toupper(sc$seq)
+# -----------------------------------------
+write.csv(sc,'../../sc500_300N95_2.csv',row.names = F)
+# -----------------------------------
+E210.seq_sc500_300N95 <- data.frame(sc,
+                                    matrix(NA, ncol = 210, nrow = nrow(sc)))
 
-dis <- as.matrix(dist(df[,-c(1:8)], method = manhat))
-diag(dis) <- NA
-colnames(dis)<-rownames(dis)<-df$scopeID
+colnames(E210.seq_sc500_300N95)[-c(1:10)] <- pair_inter
 
-dis2 <- dis[df$scopeID, df$scopeID]
-dim(dis2)
-
+tictoc::tic()
+for(NP in 1:nrow(E210.seq_sc500_300N95)){
+  if(NP%%100==0)print(NP)
+  tryCatch({
+    seq <- unlist(strsplit(toupper(E210.seq_sc500_300N95$seq[NP]),''))
+    freq = c()
+    for (j in 1:20){
+      freq[j] <- length(grep(letters_list[j],seq))
+    }
+    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+    en_fr <- aaenergy * freq_matrix
+    en_fr <- en_fr/length(seq)
+    pair_es <- diag(freq) %*% as.matrix(en_fr)
+    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+    E210.seq_sc500_300N95[NP,-c(1:10)] <- aa210_p
+  }, error = function(e) {
+    cat("Error downloading file:", e$message, "\n")
+  }
+  )
+}
+#-------------
+disCPE <- as.matrix(dist(E210.seq_sc500_300N95[,-c(1:10)], method = manhat))
+colnames(disCPE) <- rownames(disCPE) <- E210.seq_sc500_300N95$scopeID
+diag(disCPE) <- NA
+tictoc::toc()
+# -------------------------------------
+disTm <- read.csv('~/Desktop/disTM_vec_sc500_300N95_2.csv')
+colnames(disTm) <- rownames(disTm) <- E210.seq_sc500_300N95$scopeID
+disTm <- 1 - disTm
+diag(disTm) <- NA
+disTm <- as.matrix(disTm)
+# -------------------------------------
 # ------------ kNN
-res <- data.frame(source=df$class, 
-                  targetK1=NA, targetK3=NA, targetK5=NA, targetK10=NA)
+df <- E210.seq_sc500_300N95
+dis <- disTm
+res <- data.frame(df[,1:10],
+                  targetK1=NA,targetK3=NA, targetK5=NA)
 for(i in 1:nrow(df)){
-  print(i)
-  for (k in c(1,3,5,10)) {
-  p <- sort(dis[i,])[1:k]
-  sf_pred<-data.frame(table(df$class[df$scopeID%in%names(p)]))
-  sf_pred <- sf_pred[order(sf_pred$Freq,decreasing = T),]
-  sf_pred<-sf_pred$Var1[1]
-  res[i,paste0('targetK',k)] <- as.character(sf_pred)
+  if(i%%100==0)print(i)
+  for (k in c(1,3,5)) {
+    p <- sort(dis[i,])[1:k]
+    sf_pred<-data.frame(table(df$family[df$scopeID%in%names(p)]))
+    sf_pred <- sf_pred[order(sf_pred$Freq,decreasing = T),]
+    sf_pred<-sf_pred$Var1[1]
+    res[i,paste0('targetK',k)] <- as.character(sf_pred)
   }
 }
-res$resK1 <- ifelse(res$source==res$targetK1,1,0)
-res$resK3 <- ifelse(res$source==res$targetK3,1,0)
-res$resK5 <- ifelse(res$source==res$targetK5,1,0)
-res$resK10 <- ifelse(res$source==res$targetK10,1,0)
-sum(res$resK1)/nrow(res)
-sum(res$resK3)/nrow(res)
-sum(res$resK5)/nrow(res)
-sum(res$resK10)/nrow(res)
+res$resK1 <- ifelse(res$family==res$targetK1,1,0)
+res$resK3 <- ifelse(res$family==res$targetK3,1,0)
+res$resK5 <- ifelse(res$family==res$targetK5,1,0)
+round(sum(res$resK1)/nrow(res),2)
+round(sum(res$resK3)/nrow(res),2)
+round(sum(res$resK5)/nrow(res),2)
 # -------------------------------------
 cath<-read.delim2('~/Desktop/cath/cath-domain-list-v4_3_0.txt',header = F,
                   comment.char = '#',sep ='')
