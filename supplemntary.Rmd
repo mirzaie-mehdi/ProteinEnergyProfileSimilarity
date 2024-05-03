@@ -536,7 +536,39 @@ ns40<-gsub('(\\|)','',ns40)
 ns40<-gsub('cathcurrent','',ns40)
 ns40<-str_match(ns40, '(.*)(/)')[,2]
 names(s40)<-ns40
+##########################################
+tm95 <- read.csv('../../TM_vec_emb_astral95_100.csv')
+astral <- readRDS("Data/rds/E210.seq_astral_95.rds") 
+astral <- astral[!is.na(astral$FF),]
+ff<-data.frame(table(astral$superfamily))
+dim(ff[ff$Freq>100,])
+sf<-ff[ff$Freq>100,1]
+astral<-astral[astral$superfamily%in%sf,]
+tm<-data.frame(astral[,1:8],tm95)
+tm <- tm[tm$class%in%c('a','b','c','d')&tm$length>300,]
+# ---------------------
+dis <- read.csv('../../disTM_vec_astral95_100.csv')
+dim(dis)
+colnames(dis)<-rownames(dis)<-astral$scopeID
+dis2<-as.matrix(dis[tm$scopeID, tm$scopeID])
+dim(dis2)
+dis2 <- 1 - dis2
+ump <- umap(d = dis2,
+            n_neighbors = 300,
+            min_dist = 0.9,
+            input="dist")
+
+ump_df <- data.frame(class=tm$class,
+                           UMAP1 = ump$layout[, 1],
+                           UMAP2 = ump$layout[, 2])
+
+p<-ggplot(ump_df,aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7,size=.5) + 
+  mytheme()+
+  scale_color_manual(values = c('green','magenta','blue','red'))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 5)))
 
 
-```
 
