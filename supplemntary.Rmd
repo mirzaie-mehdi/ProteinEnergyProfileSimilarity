@@ -570,6 +570,74 @@ p<-ggplot(ump_df,aes(UMAP1, UMAP2, color= class)) +
   theme(legend.title = element_blank(),
         legend.text = element_text(size = 18))+
   guides(color = guide_legend(override.aes = list(size = 5)))
+```
 
+# point mutation
 
+```{r}
+df <- read.csv('~/Downloads/S9028.csv')
+df <- df[df$type%in%'Forward',]
+df <- cbind(t(data.frame(strsplit(df$pdb_mut_chain,split = '_'))),df)
+rownames(df)<-NULL
+colnames(df)[1:3]<-unlist(strsplit(colnames(df)[4],split = '_'))
+
+pdbs <- unique(df$pdb)
+
+dis <- data.frame(pdb_mut_chain=df$pdb_mut_chain, dis=NA, disE=NA)
+for (i in 1:length(pdbs)) {
+  pdbname <- pdbs[i]
+  dfp <- df[df$pdb%in%pdbname,]
+  nM <- nrow(dfp)
+  ch <- dfp$chain[1]
+  tryCatch({
+    pdb0 <- read.pdb(tolower(pdbname))
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
+    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+    sele4 <- atom.select(pdb0, "noh")
+    sele <- combine.select(sele1, sele2,sele4, operator="AND")
+    # -------------------
+    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+    pdbX <- new_pdb$atom
+    pdbXca <- pdbX[pdbX$elety == "CA",]
+    resno <- pdbXca$resno
+    seqN <- aa321(pdbXca$resid)
+    freq = c()
+    for (j in 1:20){
+        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seqN)))
+    }
+    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+    en_fr <- aaenergy * freq_matrix
+    en_fr <- en_fr/length(seqN)
+    pair_es <- diag(freq) %*% as.matrix(en_fr)
+    aa210_N <- pair_es[lower.tri(pair_es,diag = T)]
+    for (k in 1:nM) {
+      print(paste0(i,':',171,' -> ',k,':',nM))
+      mut <- dfp$mut[k]
+      posAAm <- as.numeric(substr(mut,2,nchar(mut)-1))
+      aam <- substr(mut,nchar(mut),nchar(mut))
+      seqM <- seqN
+      seqM[which(resno==posAAm)] <- aam
+      # ---------CPE----------------
+      freq = c()
+      for (j in 1:20){
+          freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seqM)))
+      }
+      freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+      en_fr <- aaenergy * freq_matrix
+      en_fr <- en_fr/length(seqM)
+      pair_es <- diag(freq) %*% as.matrix(en_fr)
+      aa210_M <- pair_es[lower.tri(pair_es,diag = T)]
+      # ---------------dis----------
+      d <- manhat(aa210_N, aa210_M)
+      pmc <- paste0(pdbname,'_',mut,'_',ch)
+      dis$dis[dis$pdb_mut_chain==pmc] <- d
+      dis$disE[dis$pdb_mut_chain==pmc] <- sum(aa210_N) - sum(aa210_M)
+      }
+    }, error = function(e) {
+     cat("Error downloading file:", e$message, "\n")
+    })
+}
+
+df <- left_join(df, dis, 'pdb_mut_chain')
+```
 
