@@ -575,16 +575,34 @@ p<-ggplot(ump_df,aes(UMAP1, UMAP2, color= class)) +
 # point mutation
 
 ```{r}
-df <- read.csv('~/Downloads/S9028.csv')
+musd<-function(seq){
+  m <- s <- rep(0,20)
+  for (a in 1:20) {
+    pos <- which(seq==letters_list[a])
+    m[a] <- mean(pos)
+    s[a] <- sd(pos)
+  }
+  ms <- c(m,s)
+  ms[which(is.na(ms))] <- 0
+  return(ms)
+}
+infile<-'S9028'
+df <- read.csv(paste0('~/Desktop/', infile, '.csv'))
 df <- df[df$type%in%'Forward',]
+# ---------------------------------
 df <- cbind(t(data.frame(strsplit(df$pdb_mut_chain,split = '_'))),df)
 rownames(df)<-NULL
 colnames(df)[1:3]<-unlist(strsplit(colnames(df)[4],split = '_'))
 
 pdbs <- unique(df$pdb)
+np <- length(pdbs)
 
-dis <- data.frame(pdb_mut_chain=df$pdb_mut_chain, dis=NA, disE=NA)
-for (i in 1:length(pdbs)) {
+dis <- data.frame(pdb_mut_chain=df$pdb_mut_chain, matrix(NA,nrow(df),271))
+colnames(dis)[-1] <- c('pos',
+                       paste0(letters_list,'_N'),
+                       paste0(letters_list,'_M'),
+                       paste0(letters_list,'_NM'),pair_inter)
+for (i in 1:np) {
   pdbname <- pdbs[i]
   dfp <- df[df$pdb%in%pdbname,]
   nM <- nrow(dfp)
@@ -595,7 +613,7 @@ for (i in 1:length(pdbs)) {
     sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
     sele4 <- atom.select(pdb0, "noh")
     sele <- combine.select(sele1, sele2,sele4, operator="AND")
-    # -------------------
+    # -------------------CPE
     new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
     pdbX <- new_pdb$atom
     pdbXca <- pdbX[pdbX$elety == "CA",]
@@ -610,34 +628,94 @@ for (i in 1:length(pdbs)) {
     en_fr <- en_fr/length(seqN)
     pair_es <- diag(freq) %*% as.matrix(en_fr)
     aa210_N <- pair_es[lower.tri(pair_es,diag = T)]
+    ms40_N <- musd(seqN)
     for (k in 1:nM) {
-      print(paste0(i,':',171,' -> ',k,':',nM))
+      print(paste0(i,':',np,' -> ',k,':',nM))
       mut <- dfp$mut[k]
       posAAm <- as.numeric(substr(mut,2,nchar(mut)-1))
+      pos <- which(resno==posAAm)
       aam <- substr(mut,nchar(mut),nchar(mut))
       seqM <- seqN
-      seqM[which(resno==posAAm)] <- aam
+      seqM[pos] <- aam
       # ---------CPE----------------
       freq = c()
       for (j in 1:20){
-          freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seqM)))
-      }
+        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seqM)))
+        }
       freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
       en_fr <- aaenergy * freq_matrix
       en_fr <- en_fr/length(seqM)
       pair_es <- diag(freq) %*% as.matrix(en_fr)
       aa210_M <- pair_es[lower.tri(pair_es,diag = T)]
+      ms40_M <- musd(seqM)
       # ---------------dis----------
-      d <- manhat(aa210_N, aa210_M)
+      d <- (aa210_N) - (aa210_M)
+      ms40 <- ms40_N - ms40_M
       pmc <- paste0(pdbname,'_',mut,'_',ch)
-      dis$dis[dis$pdb_mut_chain==pmc] <- d
-      dis$disE[dis$pdb_mut_chain==pmc] <- sum(aa210_N) - sum(aa210_M)
+      dis[dis$pdb_mut_chain==pmc,-1] <- c(pos/length(seqM), 
+                                          ms40_N, ms40_M,ms40, d)
       }
     }, error = function(e) {
-     cat("Error downloading file:", e$message, "\n")
+      cat("Error downloading file:", e$message, "\n")
     })
 }
 
-df <- left_join(df, dis, 'pdb_mut_chain')
+df <- left_join(df,dis,'pdb_mut_chain')
+saveRDS(df,paste0('~/Desktop/df', infile, '.rds'))
+```
+
+# predict PM
+
+```{r}
+df <- readRDS('~/Desktop/dfS9028.rds')
+df <- df[!is.na(df$FF),]
+# ---------------------------------
+df0 <- readRDS('~/Downloads/dfs2648.rds')
+colnames(df0)[5]<-'ddG'
+df<-rbind(df[,-c(1:6,8:9)],df0[,-c(1:4,6:8)])
+# ---------------- Reverse ----------
+rev <- -1*df[,-c(1)]
+colnames(rev) <- paste0(pair_inter,'_Rev')
+df <- cbind(df, rev)
+# ---------------------------------
+rf <- tuneRF(df[,-c(1:9)], df$ddG, doBest = T,plot = F)
+rf
+
+pred <- predict(rf, df[,-c(1:9)])
+tr <- data.frame(ddG=df$ddG, pred)
+tr <- tr[!is.na(tr$pred),]
+sqrt(mean((tr$ddG -tr$pred)^2))
+cor(tr$ddG , tr$pred)
+plot(tr$ddG , tr$pred)
+
+df2 <- readRDS('~/Desktop/dfS1304.rds')
+df2 <- df2[!is.na(df2$FF),]
+
+
+pred <- predict(rf, df2[,-c(1:9)])
+te <- data.frame(ddG=df2$ddG, pred)
+te <- te[!is.na(te$pred),]
+sqrt(mean((te$ddG - te$pred)^2))
+cor(te$ddG , te$pred)
+plot(te$ddG , te$pred)
+# ------------------------------------------
+kfolds <- createFolds(df$ddG, k = 5)
+res<-c()
+for (i in 1:5) {
+  print(i)
+  x <- kfolds[[i]]
+  tr <- df[-x, ]
+  te <- df[x, ]
+  rf <- randomForest(ddG~., data = tr[,-c(1:6,8:9)],ntree=1000,
+  importance=TRUE, na.action=na.omit)
+  pred <- predict(rf, tr)
+  rmseTR <- sqrt(mean((tr$ddG - pred)^2))
+  corrTR <- cor(tr$ddG , pred)
+  pred <- predict(rf, te[,-c(1:6,8:9)])
+  rmseTE <- sqrt(mean((te$ddG - pred)^2))
+  corrTE <- cor(te$ddG , pred)
+  res <- rbind(res, c(rmseTR, corrTR, rmseTE, corrTE))
+  }
+
 ```
 
