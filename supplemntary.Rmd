@@ -578,7 +578,7 @@ p<-ggplot(ump_df,aes(UMAP1, UMAP2, color= class)) +
 musd<-function(seq){
   m <- s <- rep(0,20)
   for (a in 1:20) {
-    pos <- which(seq==letters_list[a])
+    pos <- which(seq==letters_list[a])/length(seq)
     m[a] <- mean(pos)
     s[a] <- sd(pos)
   }
@@ -589,6 +589,11 @@ musd<-function(seq){
 infile<-'S9028'
 df <- read.csv(paste0('~/Desktop/', infile, '.csv'))
 df <- df[df$type%in%'Forward',]
+# ----------------- remove S552
+#rem <-c(73,  74,  75,  76,  77,  83,  84,  
+#        85,  92, 204, 209, 210, 211, 235, 237, 
+#        239, 241, 243, 245, 247, 249, 251)
+#df <- df[-rem,]
 # ---------------------------------
 df <- cbind(t(data.frame(strsplit(df$pdb_mut_chain,split = '_'))),df)
 rownames(df)<-NULL
@@ -597,11 +602,12 @@ colnames(df)[1:3]<-unlist(strsplit(colnames(df)[4],split = '_'))
 pdbs <- unique(df$pdb)
 np <- length(pdbs)
 
-dis <- data.frame(pdb_mut_chain=df$pdb_mut_chain, matrix(NA,nrow(df),271))
-colnames(dis)[-1] <- c('pos',
-                       paste0(letters_list,'_N'),
-                       paste0(letters_list,'_M'),
-                       paste0(letters_list,'_NM'),pair_inter)
+dis <- data.frame(pdb_mut_chain=df$pdb_mut_chain, matrix(NA,nrow(df),252))
+colnames(dis)[-1] <- c('pos','kyte', #c('HPi','NFA','AASA','RGSC','NFB','ASA'),
+                       #paste0(rep(letters_list,2),rep(c('_muN','_sdN'),each=20)),
+                       #paste0(rep(letters_list,2),rep(c('_muM','_sdM'),each=20)),
+                       paste0(rep(letters_list,2),rep(c('_muNM','_sdNM'),each=20)),
+                       pair_inter)
 for (i in 1:np) {
   pdbname <- pdbs[i]
   dfp <- df[df$pdb%in%pdbname,]
@@ -629,6 +635,13 @@ for (i in 1:np) {
     pair_es <- diag(freq) %*% as.matrix(en_fr)
     aa210_N <- pair_es[lower.tri(pair_es,diag = T)]
     ms40_N <- musd(seqN)
+    kyte_N <- aa2index(seqN)
+#    grs <- GRS(paste0(seqN,collapse = ''))
+#    grs <- grs[c(19,27,28,36,37,89)]
+#    EL_N <- rep(0,6)
+#    for(u in 1:6){ # 1:158
+#      EL_N[u] <- ME(grs[[u]])
+#    }
     for (k in 1:nM) {
       print(paste0(i,':',np,' -> ',k,':',nM))
       mut <- dfp$mut[k]
@@ -648,12 +661,22 @@ for (i in 1:np) {
       pair_es <- diag(freq) %*% as.matrix(en_fr)
       aa210_M <- pair_es[lower.tri(pair_es,diag = T)]
       ms40_M <- musd(seqM)
+      kyte_M <- aa2index(seqM)
+#      grs <- GRS(paste0(seqM,collapse = ''))
+#      grs <- grs[c(19,27,28,36,37,89)]
+#      EL_M <- rep(0,6)
+#      for(u in 1:6){ # 1:158
+#        EL_M[u] <- ME(grs[[u]])
+#      }
       # ---------------dis----------
       d <- (aa210_N) - (aa210_M)
       ms40 <- ms40_N - ms40_M
+      ky <- kyte_N[pos] - kyte_M[pos]
+#      el <- (EL_N - EL_M)*1000
       pmc <- paste0(pdbname,'_',mut,'_',ch)
-      dis[dis$pdb_mut_chain==pmc,-1] <- c(pos/length(seqM), 
-                                          ms40_N, ms40_M,ms40, d)
+      dis[dis$pdb_mut_chain==pmc,-1] <- c(pos/length(seqM), ky, #el,
+                                          #ms40_N, ms40_M,
+                                          ms40, aa210_N)
       }
     }, error = function(e) {
       cat("Error downloading file:", e$message, "\n")
@@ -661,7 +684,75 @@ for (i in 1:np) {
 }
 
 df <- left_join(df,dis,'pdb_mut_chain')
-saveRDS(df,paste0('~/Desktop/df', infile, '.rds'))
+saveRDS(df,paste0('~/Desktop/df', infile, 'N.rds'))
+```
+
+# merge features
+
+```{r}
+df <- readRDS('~/Desktop/dfS9028N.rds')
+df <- df[!is.na(df$FF),]
+df210<-df[,52:261]
+varsd <-apply(df210,2,sd)
+
+cor_matrix <- cor(df210)
+
+# Set a threshold for high correlation (e.g., 0.9)
+threshold <- 0.8
+
+# Find highly correlated features
+high_cor_pairs <- which(abs(cor_matrix) > threshold, arr.ind = TRUE)
+high_cor_pairs <- high_cor_pairs[high_cor_pairs[,1] != high_cor_pairs[,2], ]
+
+# Create a list to store groups of highly correlated features
+cor_groups <- list()
+added <- rep(FALSE, 210)
+
+for (i in 1:nrow(high_cor_pairs)) {
+  if (!added[high_cor_pairs[i,1]] && !added[high_cor_pairs[i,2]]) {
+    group <- c(high_cor_pairs[i,1], high_cor_pairs[i,2])
+    cor_groups[[length(cor_groups) + 1]] <- group
+    added[group] <- TRUE
+  }
+}
+
+# Function to calculate the average of columns in a group and create a new data frame
+average_correlated_features <- function(df, groups) {
+  new_df <- df
+  for (group in groups) {
+    group_cols <- colnames(df)[group]
+    new_col_name <- paste(group_cols, collapse = "_avg_")
+    new_df[[new_col_name]] <- rowSums(df[, group_cols, drop = FALSE])
+    new_df <- new_df[, !colnames(new_df) %in% group_cols]
+  }
+  return(new_df)
+}
+
+remove_correlated_features <- function(df, groups) {
+  new_df <- df
+  for (gr in groups) {
+    group_cols <- colnames(df)[gr]
+    new_df <- new_df[, !colnames(new_df) %in% group_cols[1]]
+  }
+  return(new_df)
+}
+# Apply the function to the training data frame
+train_data_transformed <- remove_correlated_features(df210, cor_groups)
+df <- cbind(df[,1:51],train_data_transformed)
+# Apply the same transformation to the testing data frame
+
+tN <- readRDS('~/Desktop/dfS2024.rds')
+tM <- readRDS('~/Desktop/dfS2024M.rds')
+test_data_transformed_N <- average_correlated_features(tN[,132:341], cor_groups)
+test_data_transformed_M <- average_correlated_features(tM[,132:341], cor_groups)
+
+df2 <- cbind(tN[,1:11],test_data_transformed_N - test_data_transformed_M)
+colnames(df2)[-c(1:11)] <- colnames(df)[-c(1:11)]
+df2 <- df2[!is.na(df2$pos),]
+
+# View the transformed training and testing data
+print(head(train_data_transformed))
+print(head(test_data_transformed))
 ```
 
 # predict PM
@@ -669,16 +760,14 @@ saveRDS(df,paste0('~/Desktop/df', infile, '.rds'))
 ```{r}
 df <- readRDS('~/Desktop/dfS9028.rds')
 df <- df[!is.na(df$FF),]
+df210<-df[,52:261]
+varsd <-apply(df210,2,sd)
+idx <- which(varsd>.4)
+df210 <- df210[,names(varsd[idx])]
+df <- cbind(df[,1:11],df210)
 # ---------------------------------
-df0 <- readRDS('~/Downloads/dfs2648.rds')
-colnames(df0)[5]<-'ddG'
-df<-rbind(df[,-c(1:6,8:9)],df0[,-c(1:4,6:8)])
-# ---------------- Reverse ----------
-rev <- -1*df[,-c(1)]
-colnames(rev) <- paste0(pair_inter,'_Rev')
-df <- cbind(df, rev)
-# ---------------------------------
-rf <- tuneRF(df[,-c(1:9)], df$ddG, doBest = T,plot = F)
+rf <- tuneRF(df[df$pH==7&df$TEMP==25,-c(1:9)], df$ddG, doBest = T,plot = F,
+             stepFactor = 1.5,improve = 0.1)
 rf
 
 pred <- predict(rf, df[,-c(1:9)])
@@ -688,9 +777,11 @@ sqrt(mean((tr$ddG -tr$pred)^2))
 cor(tr$ddG , tr$pred)
 plot(tr$ddG , tr$pred)
 
-df2 <- readRDS('~/Desktop/dfS1304.rds')
+df2 <- readRDS('~/Desktop/dfS552.rds')
 df2 <- df2[!is.na(df2$FF),]
 
+df2r <- remove_correlated_features(df2[,-c(1:51)], cor_groups)
+df2 <- cbind(df2[,1:51],df2r)
 
 pred <- predict(rf, df2[,-c(1:9)])
 te <- data.frame(ddG=df2$ddG, pred)
@@ -707,7 +798,7 @@ for (i in 1:5) {
   tr <- df[-x, ]
   te <- df[x, ]
   rf <- randomForest(ddG~., data = tr[,-c(1:6,8:9)],ntree=1000,
-  importance=TRUE, na.action=na.omit)
+                     importance=TRUE, na.action=na.omit,proximity=TRUE)
   pred <- predict(rf, tr)
   rmseTR <- sqrt(mean((tr$ddG - pred)^2))
   corrTR <- cor(tr$ddG , pred)
@@ -715,7 +806,24 @@ for (i in 1:5) {
   rmseTE <- sqrt(mean((te$ddG - pred)^2))
   corrTE <- cor(te$ddG , pred)
   res <- rbind(res, c(rmseTR, corrTR, rmseTE, corrTE))
+  print(c(rmseTR, corrTR, rmseTE, corrTE))
   }
 
+res<-c()
+for (i in 1:10) {
+  print(i)
+  x <- sample(1:4473,round(0.25*4473),replace = F)
+  tr <- df[-x, ]
+  te <- df[x, ]
+  rf <- randomForest(ddG~., data = tr[,-c(1:6,8:9)],ntree=1000,
+                     importance=TRUE, na.action=na.omit,proximity=TRUE)
+  pred <- predict(rf, tr)
+  rmseTR <- sqrt(mean((tr$ddG - pred)^2))
+  corrTR <- cor(tr$ddG , pred)
+  pred <- predict(rf, te[,-c(1:6,8:9)])
+  rmseTE <- sqrt(mean((te$ddG - pred)^2))
+  corrTE <- cor(te$ddG , pred)
+  res <- rbind(res, c(rmseTR, corrTR, rmseTE, corrTE))
+}
 ```
 
