@@ -285,50 +285,60 @@ write.nexus.networx(nnet,'Data/rds/ferritin_TMvec.nxs')
 # Dunbrack
 
 ```{r}
-dun <- read.delim('Data/Dunbrack/list_with_chainID.txt',header = F)
-
+AA <- c("PHE","LEU","ILE","VAL","TRP","TYR","MET","CYS","HIS","THR",
+        "ARG","ALA","ASN","GLN","PRO","SER","ASP","GLY","LYS","GLU")
+letters_list <- aa321(AA)
+source("Functions/amacid2num.R")
+source("../Profile_Energy/structure_energy/Energy_DA20.R")
+energy_Dihedral_Dunbrack <- readRDS('Data/rds/energy_torsion_Dunbrack.rds')
+path <- '~/Desktop/proj/Dunbrack/'
+dun <- read.delim(paste0(path,"list_with_chainID.txt"), header = F)
 Nprotein <- nrow(dun)
-E210.dun <- data.frame(pdbID = dun$V1, length=NA,
-                       matrix(NA, ncol = 210, nrow = Nprotein))
-colnames(E210.dun)[-c(1:2)] = pair_inter
-E210.seq_dun <- E210.dun 
+E20_torsion.dun <- data.frame(pdbID = dun$V1,
+                       matrix(NA, ncol = 20, nrow = Nprotein))
+freqAA20.dun <- data.frame(pdbID = dun$V1, seq=NA, length=NA,
+                       matrix(NA, ncol = 20, nrow = Nprotein))
+colnames(E20_torsion.dun)[-c(1)] <- colnames(freqAA20.dun)[-c(1:3)] <- letters_list
 for (NP in NP:Nprotein) {
   #if (NP %% 50 == 0) {print(NP)}
   print(NP)
-  pdbname <- substr(E210.dun$pdbID[NP],1,4)
-  ch <- substr(E210.dun$pdbID[NP], 5,5)
+  pdbname <- paste0(tolower(substr(E20_torsion.dun[NP,1],1,4)),'.pdb')
+  ch <- substr(E20_torsion.dun$pdbID[NP], 5,5)
   tryCatch({
-    pdb0 <- read.pdb(pdbname,verbose = FALSE)
+    pdb0 <- read.pdb(paste0(path,'PDBs/',pdbname),verbose = FALSE)
     sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
     sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
     sele4 <- atom.select(pdb0, "noh")
     sele <- combine.select(sele1, sele2,sele4, operator="AND")
-    new_pdb = trim.pdb(pdb0, sele,verbose = FALSE)
+    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+    E20_torsion.dun[NP,-1]<-Energy_DA20(new_pdb)
     pdbX <- new_pdb$atom
-    E210.dun$length[NP] = length(unique(pdbX$resno))
-    Net_Frame <- NetworkFrame(PDB = new_pdb)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
-    E210.dun[NP, -c(1:2)] <- energy210
-    #-----------sequence enregy based on PDB--------
-    pdbXca <- pdbX[pdbX$elety == "CA",]
-    seq = aa321(pdbXca$resid)
-    E210.seq_dun$length[NP] = length(seq)
+    pdbX <- pdbX[pdbX$elety=='CA',]
+    seq <- aa321(pdbX$resid)
+    freqAA20.dun$seq[NP] <- paste0(seq,collapse = '')
+    freqAA20.dun$length[NP] <- nrow(pdbX)
+    #-----------freq--------
     freq = c()
     for (j in 1:20){
       freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
     }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-    E210.seq_dun[NP, -c(1:2)] <- aa210_p
+    freqAA20.dun[NP, -c(1:3)] <- freq
   }, error = function(e) {
     cat("Error downloading file:", e$message, "\n")
   })
 }
 
+write.csv(E20_torsion.dun,'Data/Dunbrack/E20_torsion.dun.csv',row.names = F)
+write.csv(freqAA20.dun,'Data/Dunbrack/freqAA20.dun.csv',row.names = F)
 
+Pi <- read.csv('Data/Dunbrack/Pi_torsion.csv',header = F)
+colnames(Pi) <- letters_list
+E20.seq_torsion.dun<-data.frame(pdbID = dun$V1, seq=NA, length=NA,
+                       matrix(NA, ncol = 20, nrow = Nprotein))
+for (NP in 1:Nprotein) {
+  print(NP)
+  E20.seq_torsion.dun[NP,-c(1:3)]<-freqAA20.dun[NP,-c(1:3)]*Pi[1,]
+}
 ```
 
 # table2 -> fig

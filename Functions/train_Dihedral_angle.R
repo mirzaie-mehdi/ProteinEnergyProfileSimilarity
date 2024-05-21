@@ -60,8 +60,8 @@ for (NP in 1:Nprotein) {
     freq[df$indphi[i], df$indpsi[i], df$am2num[i]] <- freq[df$indphi[i], df$indpsi[i], df$am2num[i]]+1
   }
 }
-saveRDS(freq,'Data/rds/freq_torsion_Dunbrack.rds')
-#**************  save freq by saveRDS(x,file="x.rds") and read by readRDS
+saveRDS(freq,'Data/Dunbrack/freq_torsion_Dunbrack.rds')
+# **************  
 RT <- 0.582
 Sigma <- 0.01
 E <- array(0, c(72,72,20))
@@ -79,6 +79,6 @@ for (i in 1:20) {
 }
 
 
-saveRDS(E,"Data/rds/energy_torsion_Dunbrack.rds")
+saveRDS(E,"Data/Dunbrack/energy_torsion_Dunbrack.rds")
 
 
