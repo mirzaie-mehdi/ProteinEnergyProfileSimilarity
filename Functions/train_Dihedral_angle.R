@@ -1,24 +1,24 @@
 library(bio3d)
 
-setwd("E:/Proj/structure/report/Phylogenetic Networks for Classification/ferritin/")
 rm(list = setdiff(ls(), lsf.str()))
 #************Initialization***************************
-binw <- 5;
-filaname_chain <- read.delim("~/Desktop/proj/ProteinEnergyProfileSimilarity/Data/Dunbrack/list_with_chainID.txt", header = F)
-Nprotein <- length(filaname_chain[,1])
-freq <- array(0,c(72,72,20))
 inda <- function(Phi, Psi, Binw){
   indphi <- floor(Phi/Binw)+1
   indpsi <- floor(Psi/Binw)+1
   cbind(indphi,indpsi)
 }
+path <- '~/Desktop/proj/Dunbrack/'
+binw <- 5;
+filaname_chain <- read.delim(paste0(path,"list_with_chainID.txt"), header = F)
+Nprotein <- length(filaname_chain[,1])
 
+freq <- array(0,c(72,72,20))
 for (NP in 1:Nprotein) {
   #NP <- 4
   print(NP)
-  pdbname <- tolower(substr(filaname_chain[NP,1],1,4))
+  pdbname <- paste0(tolower(substr(filaname_chain[NP,1],1,4)),'.pdb')
   #********read pdb and select atom section, remove hydrogen atoms********
-  pdb0 <- read.pdb(pdbname)
+  pdb0 <- read.pdb(paste0(path,'PDBs/',pdbname))
   if(nchar(filaname_chain[NP,1])>4 & substr(filaname_chain[NP,1],5,5) != " " & !is.na(match(substr(filaname_chain[NP,1],5,5),unique(pdb0$atom$chain)))){
     ch <- substr(filaname_chain[NP,1],5,5)
     sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
@@ -42,10 +42,12 @@ for (NP in 1:Nprotein) {
   sele <- combine.select(sele1, sele2,sele3, operator="AND")
   pdb1 <- trim.pdb(pdb0,sele)
   pdb <- pdb1$atom
-  seqres <- pdb[!duplicated(pdb$resno),"resid"]
+  pdb<-pdb[pdb$elety=='CA',]
   tor <- torsion.pdb(pdb1)
-  phi <- tor$phi; psi <- tor$psi
-  df <- data.frame(phi, psi, seqres)
+  tortbl <- tor$tbl
+  annot <- strsplit(rownames(tortbl), split = "\\.")
+  tortbl<-data.frame(tortbl,seqres=unlist(lapply(annot, function(x){return(x[3])})))
+  df <- tortbl[,c(1,2,8)]
   ind <- which(!is.na(df$phi) & !is.na(df$psi))
   df <- df[ind,]
   df[df[,1]<0,1] <- df[df[,1]<0,1]+360
@@ -58,9 +60,8 @@ for (NP in 1:Nprotein) {
     freq[df$indphi[i], df$indpsi[i], df$am2num[i]] <- freq[df$indphi[i], df$indpsi[i], df$am2num[i]]+1
   }
 }
-
+saveRDS(freq,'Data/rds/freq_torsion_Dunbrack.rds')
 #**************  save freq by saveRDS(x,file="x.rds") and read by readRDS
-
 RT <- 0.582
 Sigma <- 0.01
 E <- array(0, c(72,72,20))
@@ -77,6 +78,7 @@ for (i in 1:20) {
   E[,,i] <- RT*log(1+Mi[i]*Sigma)-RT*log(1+Mi[i]*Sigma*(fi[,,i]/fx))
 }
 
-saveRDS(E,"C:/Users/Choopanian/Desktop/New folder/energy_Dihedral_angle.rds")
+
+saveRDS(E,"Data/rds/energy_torsion_Dunbrack.rds")
 
 
