@@ -62,9 +62,12 @@ for (NP in 1:Nprotein) {
 }
 saveRDS(freq,'Data/Dunbrack/freq_torsion_Dunbrack.rds')
 # **************  
+freq_torsion_Dunbrack<-readRDS('Data/Dunbrack/freq_torsion_Dunbrack.rds')
+freq <- freq_torsion_Dunbrack+1
 RT <- 0.582
 Sigma <- 0.01
-E <- array(0, c(72,72,20))
+E1 <- array(0, c(72,72,20))
+E2 <- array(0, c(72,72,20))
 fi <- array(0, c(72,72,20))
 Mi <- rep(0,20)
 for (i in 1:20) {
@@ -73,12 +76,20 @@ for (i in 1:20) {
 }
 
 fx <- rowSums(freq, dims = 2)/sum(Mi)
-
+x<-which(fx==0,arr.ind = T)
 for (i in 1:20) {
-  E[,,i] <- RT*log(1+Mi[i]*Sigma)-RT*log(1+Mi[i]*Sigma*(fi[,,i]/fx))
+  E1[,,i] <- RT*log(1+Mi[i]*Sigma)-RT*log(1+Mi[i]*Sigma*(fi[,,i]/fx))
+  E2[,,i] <- -RT*log(1+(freq[,,i]/mean(freq[,,i])))
+}
+for (i in 1:20) {
+  print(i)
+  for (j in 1:nrow(x)) {
+    ro <- x[j,1]
+    cl <- x[j,2]
+    E1[ro, cl, i] <- 0
+  }
 }
 
-
-saveRDS(E,"Data/Dunbrack/energy_torsion_Dunbrack.rds")
-
+saveRDS(E1,"Data/Dunbrack/energy_torsion_Dunbrack1.rds")
+saveRDS(E2,"Data/Dunbrack/energy_torsion_Dunbrack2.rds")
 
