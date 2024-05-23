@@ -1,6 +1,6 @@
 clear;clc
 path='../Data/Dunbrack/';
-load([path 'zzi_torsion.mat']);
+load([path 'zzi_torsion2.mat']);
 Pi = zeros(1,20);
 for i=1:20
     disp(num2str(i))
@@ -9,4 +9,4 @@ for i=1:20
     slv = solve(grd);
     Pi(1,i) = vpa(slv,10);
 end
-writematrix(Pi,[path '/Pi_torsion.csv'])
+writematrix(Pi,[path '/Pi_torsion2.csv'])

@@ -301,7 +301,7 @@ E20_torsion.dun <- data.frame(pdbID = dun$V1,
 freqAA20.dun <- data.frame(pdbID = dun$V1, seq=NA, length=NA,
                        matrix(NA, ncol = 20, nrow = Nprotein))
 colnames(E20_torsion.dun)[-c(1)] <- colnames(freqAA20.dun)[-c(1:3)] <- letters_list
-for (NP in 1:Nprotein) {
+for (NP in NP:Nprotein) {
   #if (NP %% 50 == 0) {print(NP)}
   print(NP)
   pdbname <- paste0(tolower(substr(E20_torsion.dun[NP,1],1,4)),'.pdb')
@@ -331,13 +331,13 @@ for (NP in 1:Nprotein) {
   })
 }
 
-write.csv(E20_torsion.dun,'Data/Dunbrack/E20_torsion.dun.csv',row.names = F)
-write.csv(freqAA20.dun,'Data/Dunbrack/freqAA20.dun.csv',row.names = F)
+write.csv(E20_torsion.dun,'Data/Dunbrack/E20_torsion.dun2.csv',row.names = F)
+write.csv(freqAA20.dun,'Data/Dunbrack/freqAA20.dun2.csv',row.names = F)
 
 freqAA20.dun <- read.csv('Data/Dunbrack/freqAA20.dun.csv')
 E20_torsion.dun <- read.csv('Data/Dunbrack/E20_torsion.dun.csv')
 
-Pi <- read.csv('Data/Dunbrack/Pi_torsion.csv',header = F)
+Pi <- read.csv('Data/Dunbrack/Pi_torsion2.csv',header = F)
 colnames(Pi) <- letters_list
 E20.seq_torsion.dun<-data.frame(pdbID = dun$V1, seq=NA, length=NA,
                        matrix(NA, ncol = 20, nrow = Nprotein))

@@ -19,7 +19,7 @@
      end     
  end
  toc
- save([path '/zi_torsion.mat'], 'zi')
+ %save([path '/zi_torsion.mat'], 'zi')
  zzi=cell(1,20);
  for i=1:20
      for j=2:size(zi,1)
@@ -27,4 +27,4 @@
      end
      zzi{1,i}=zi{1,i};
  end
-save([path '/zzi_torsion.mat'],'zzi')
+save([path '/zzi_torsion2.mat'],'zzi')
