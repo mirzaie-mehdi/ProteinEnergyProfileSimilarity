@@ -292,7 +292,7 @@ letters_list <- aa321(AA)
 source("Functions/split_position.R")
 source("Functions/amacid2num.R")
 source("../Profile_Energy/structure_energy/Energy_DA20.R")
-energy_Dihedral_Dunbrack <- readRDS('Data/Dunbrack/energy_torsion_Dunbrack1.rds')
+energy_Dihedral_Dunbrack <- readRDS('Data/Dunbrack/energy_torsion_Dunbrack2.rds')
 path <- '~/Desktop/proj/Dunbrack/'
 dun <- read.delim(paste0(path,"list_with_chainID.txt"), header = F)
 Nprotein <- nrow(dun)
