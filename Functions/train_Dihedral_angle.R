@@ -77,6 +77,7 @@ for (i in 1:20) {
 
 fx <- rowSums(freq, dims = 2)/sum(Mi)
 x<-which(fx==0,arr.ind = T)
+
 for (i in 1:20) {
   E1[,,i] <- RT*log(1+Mi[i]*Sigma)-RT*log(1+Mi[i]*Sigma*(fi[,,i]/fx))
   E2[,,i] <- -RT*log(1+(freq[,,i]/mean(freq[,,i])))

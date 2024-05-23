@@ -301,7 +301,7 @@ E20_torsion.dun <- data.frame(pdbID = dun$V1,
 freqAA20.dun <- data.frame(pdbID = dun$V1, seq=NA, length=NA,
                        matrix(NA, ncol = 20, nrow = Nprotein))
 colnames(E20_torsion.dun)[-c(1)] <- colnames(freqAA20.dun)[-c(1:3)] <- letters_list
-for (NP in NP:Nprotein) {
+for (NP in 1:Nprotein) {
   #if (NP %% 50 == 0) {print(NP)}
   print(NP)
   pdbname <- paste0(tolower(substr(E20_torsion.dun[NP,1],1,4)),'.pdb')
@@ -354,7 +354,7 @@ E20_torsion_astral <- data.frame(matrix(NA, ncol = 20, nrow = Nprotein))
 E20_seq_torsion_astral <- data.frame(matrix(NA, ncol = 20, nrow = Nprotein))
 colnames(E20_torsion_astral) <- colnames(E20_seq_torsion_astral) <- letters_list
 
-for (NP in 1:Nprotein) {
+for (NP in NP:Nprotein) {
   print(NP)
   pdbname <- tolower(astral$pdbID[NP])
   chain_resno <- split_position(astral$Position[NP])
@@ -399,6 +399,8 @@ for (NP in 1:Nprotein) {
   })
 }
 plot(rowSums(E20_seq_torsion_astral[1:NP,]),rowSums(E20_torsion_astral[1:NP,]))
+cor(rowSums(E20_seq_torsion_astral[1:NP,]),rowSums(E20_torsion_astral[1:NP,]),use = 'pairwise.complete.obs')
+# ---------------------
 saveRDS(E20_seq_torsion_astral,'Data/rds/E20_seq_torsion_astral.rds')
 saveRDS(E20_torsion_astral,'Data/rds/E20_torsion_astral.rds')
 ```
