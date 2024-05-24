@@ -401,8 +401,8 @@ for (NP in NP:Nprotein) {
 plot(rowSums(E20_seq_torsion_astral[1:NP,]),rowSums(E20_torsion_astral[1:NP,]))
 cor(rowSums(E20_seq_torsion_astral[1:NP,]),rowSums(E20_torsion_astral[1:NP,]),use = 'pairwise.complete.obs')
 # ---------------------
-saveRDS(E20_seq_torsion_astral,'Data/rds/E20_seq_torsion_astral.rds')
-saveRDS(E20_torsion_astral,'Data/rds/E20_torsion_astral.rds')
+saveRDS(E20_seq_torsion_astral,'Data/rds/E20_seq_torsion_astral2.rds')
+saveRDS(E20_torsion_astral,'Data/rds/E20_torsion_astral2.rds')
 ```
 
 # table2 -> fig
@@ -676,12 +676,12 @@ colnames(df)[1:3]<-unlist(strsplit(colnames(df)[4],split = '_'))
 pdbs <- unique(df$pdb)
 np <- length(pdbs)
 
-dis <- data.frame(pdb_mut_chain=df$pdb_mut_chain, matrix(NA,nrow(df),252))
+dis <- data.frame(pdb_mut_chain=df$pdb_mut_chain, matrix(NA,nrow(df),272))
 colnames(dis)[-1] <- c('pos','kyte', #c('HPi','NFA','AASA','RGSC','NFB','ASA'),
                        #paste0(rep(letters_list,2),rep(c('_muN','_sdN'),each=20)),
                        #paste0(rep(letters_list,2),rep(c('_muM','_sdM'),each=20)),
                        paste0(rep(letters_list,2),rep(c('_muNM','_sdNM'),each=20)),
-                       pair_inter)
+                       pair_inter, letters_list)
 for (i in 1:np) {
   pdbname <- pdbs[i]
   dfp <- df[df$pdb%in%pdbname,]
@@ -710,6 +710,7 @@ for (i in 1:np) {
     aa210_N <- pair_es[lower.tri(pair_es,diag = T)]
     ms40_N <- musd(seqN)
     kyte_N <- aa2index(seqN)
+    E20tor_N <- freq*Pi[1,]
 #    grs <- GRS(paste0(seqN,collapse = ''))
 #    grs <- grs[c(19,27,28,36,37,89)]
 #    EL_N <- rep(0,6)
@@ -736,6 +737,7 @@ for (i in 1:np) {
       aa210_M <- pair_es[lower.tri(pair_es,diag = T)]
       ms40_M <- musd(seqM)
       kyte_M <- aa2index(seqM)
+      E20tor_M <- freq*Pi[1,]
 #      grs <- GRS(paste0(seqM,collapse = ''))
 #      grs <- grs[c(19,27,28,36,37,89)]
 #      EL_M <- rep(0,6)
@@ -746,11 +748,12 @@ for (i in 1:np) {
       d <- (aa210_N) - (aa210_M)
       ms40 <- ms40_N - ms40_M
       ky <- kyte_N[pos] - kyte_M[pos]
+      E20tor <- E20tor_N - E20tor_M
 #      el <- (EL_N - EL_M)*1000
       pmc <- paste0(pdbname,'_',mut,'_',ch)
       dis[dis$pdb_mut_chain==pmc,-1] <- c(pos/length(seqM), ky, #el,
                                           #ms40_N, ms40_M,
-                                          ms40, aa210_N)
+                                          ms40, aa210_N, E20tor)
       }
     }, error = function(e) {
       cat("Error downloading file:", e$message, "\n")
@@ -758,7 +761,7 @@ for (i in 1:np) {
 }
 
 df <- left_join(df,dis,'pdb_mut_chain')
-saveRDS(df,paste0('~/Desktop/df', infile, 'N.rds'))
+saveRDS(df,paste0('~/Desktop/df', infile, '.rds'))
 ```
 
 # merge features
@@ -834,13 +837,14 @@ print(head(test_data_transformed))
 ```{r}
 df <- readRDS('~/Desktop/dfS9028.rds')
 df <- df[!is.na(df$FF),]
+# ---------
 df210<-df[,52:261]
 varsd <-apply(df210,2,sd)
 idx <- which(varsd>.4)
 df210 <- df210[,names(varsd[idx])]
 df <- cbind(df[,1:11],df210)
 # ---------------------------------
-rf <- tuneRF(df[df$pH==7&df$TEMP==25,-c(1:9)], df$ddG, doBest = T,plot = F,
+rf <- tuneRF(df[,-c(1:9)], df$ddG, doBest = T,plot = F,
              stepFactor = 1.5,improve = 0.1)
 rf
 

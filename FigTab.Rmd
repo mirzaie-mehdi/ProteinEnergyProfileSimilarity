@@ -1188,10 +1188,6 @@ ggsplitnet(nnet) + geom_tiplab2(aes(label=label),
 # --------------- CPE -----------------
 E210.seq_spike <- readRDS("Data/rds/E210.seq_spike_close.rds")
 df <- E210.seq_spike
-for (i in 1:nrow(df)) {
-  print(i)
-  df[i,-c(1:5)]<-df[i,-c(1:5)]*aij210
-}
 
 rownames(df) = df$pdbID
 x <- df[,-c(1:5)]/df$length
@@ -1333,15 +1329,24 @@ mylegend <- get_legend(t_SPE+
 AB<-ggarrange(NULL,NULL,
     t_CPE,t_SPE, NULL,NULL,
     t_RMSS,t_tmVec,
-    ncol = 2,nrow = 4,
-    heights = c(.15, 1, .3, 1),
+    ncol = 2,nrow = 5,
+    heights = c(.55, 1, .3, 1),
     widths = c(1,1),
     labels = c('',"", "A", "B",'','','C','D'),
     font.label = list(size = 55), # color = "red"
     hjust = 0,vjust = .5
     )
+title_grob <- grobTree(
+  textGrob("Evolution of Spike protein", x = 0.5, y = -1, just = "center", gp = gpar(col = "black", fontsize = 23, fontface = "bold")),
+  textGrob("MERS_Cov",           x = 0.38, y = -5,   just = "center", gp = gpar(col = "blue",  fontsize = 20, fontface = "bold")),
+  textGrob(expression('\u2192'), x = 0.44, y = -5.5, just = "center", gp = gpar(col = "black", fontsize = 30, fontface = "bold")),
+  textGrob("SARS_Cov",           x = 0.50, y = -5,   just = "center", gp = gpar(col = "green", fontsize = 20, fontface = "bold")),
+  textGrob(expression('\u2192'), x = 0.56, y = -5.5, just = "center", gp = gpar(col = "black", fontsize = 30, fontface = "bold")),
+  textGrob("SARS_Cov2",          x = 0.62, y = -5,   just = "center", gp = gpar(col = "red"  , fontsize = 20, fontface = "bold"))
+)
+#cowplot::plot_grid(AB, mylegend, ncol = 1, rel_heights = c(1,.1))
+annotate_figure(AB, top = title_grob)
 
-cowplot::plot_grid(AB, mylegend, ncol = 1, rel_heights = c(1,.1))
 # save FIG6.pdf 20x10
 ```
 
