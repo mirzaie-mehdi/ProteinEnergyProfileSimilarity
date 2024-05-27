@@ -42,7 +42,7 @@ model_deep = model_deep.eval()
 start = time.time()
 path = '/home/peymanc/Desktop/proj/ProteinEnergyProfileSimilarity/Data/csv/'
 # ----------------------------------------------
-df = pd.read_csv(path+'Ferritin_Like_seq.csv')
+df = pd.read_csv(path+'fiveSF.csv')
 # Ferritin_Like_seq.csv
 # CT_Ho_cathID_filtered.csv
 # ----------------------------------------------
@@ -57,25 +57,24 @@ for i in range(0,n,1):
   protrans_seq = featurize_prottrans(seq, model, tokenizer, device).detach()
   embedded_seq = embed_tm_vec(protrans_seq, model_deep, device)
   emb.loc[i,:] = embedded_seq
-emb.to_csv(path+'TM_vec_emb_bac.csv',index=False)
+emb.to_csv(path+'TM_vec_emb_fiveSF.csv',index=False)
 elapsed1 = (time.time() - start)
 
+# Calculate cosine similarity for each pair of rows
 start = time.time()
-disTM = np.zeros((n,n))
-for i in range(0,n,1):
-  emb1 = emb.loc[i,:]
-  emb1 = emb1.to_numpy()
-  emb1 = emb1.reshape(1, -1)
-  for j in range(i+1,n,1):
-    print(i,j)
-    emb2 = emb.loc[j,:]
-    emb2 = emb2.to_numpy()
-    emb2 = emb2.reshape(1, -1)
-    predicted_tm_score = cosine_similarity_tm(torch.tensor(emb1), torch.tensor(emb2))
-    disTM[i,j] = predicted_tm_score.numpy()[0]
-    disTM[j,i] = predicted_tm_score.numpy()[0]
-disTM = pd.DataFrame(disTM)
-disTM.to_csv(path+'disTM_vec_bac.csv',index=False)
+tensor_df = torch.tensor(emb.values)
+cosine_similarity = torch.zeros(len(emb), len(emb))
+for i in range(len(emb)):
+    print(i)
+    output_seq1_tensor = tensor_df[i].unsqueeze(0).repeat(len(emb), 1)
+    output_seq2_tensor = tensor_df
+    cosine_similarity[i] = cosine_similarity_tm(output_seq1_tensor, output_seq2_tensor)
+
+# Convert result to DataFrame
+cosine_similarity_df = pd.DataFrame(cosine_similarity.numpy(), index=emb.index, columns=emb.index)
+
+cosine_similarity_df.to_csv(path+'disTM_vec_fiveSF.csv',index=False)
 elapsed2 = (time.time() - start)
+
 print(elapsed1, elapsed2)
 
