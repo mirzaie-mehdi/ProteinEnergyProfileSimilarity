@@ -59,7 +59,6 @@ file.remove('aln.fa')
 tictoc::toc()
 rownames(rms) <- colnames(rms) <- spike$pdbID
 saveRDS(rms,'Data/covidPDB/RMSD.rds')
-
 ```
 
 ## plot RMSD
@@ -157,9 +156,11 @@ p_data <- ggtree(tree_data, layout = 'dendrogram',
 
 t_tmScore <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
   theme(#legend.position="none",
-    plot.title = element_text(size = 17, hjust = 0.5,vjust = 5))+
+    plot.title = element_text(size = 17, hjust = 0.5,vjust = 0))+
   #geom_tiplab2(aes(label=label,angle=angle),
   #              hjust=-.1,size=3.5,fontface="bold",align=F)+
+    geom_tiplab(aes(label=label),
+               hjust=1,size=1.5,fontface="bold",align=F)+
   scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
                        type =  c("blue","green","red" ))+
   ggtitle('TM-Score')
@@ -440,7 +441,8 @@ p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
         axis.ticks=element_blank(),
         axis.title = element_blank(),
         legend.title = element_blank(),
-        legend.position = 'none')+
+        #legend.position = 'none'
+        )+
   scale_fill_manual(values = mycol)+
   ylim(0,100)
 
@@ -463,6 +465,7 @@ p2 <- ggplot(df2,aes(Accuracy,Time,col=method,label=method))+
 #table3 -> fig
 
 ```{r}
+source('mytheme.R')
 df <- data.frame(method=c('RMSD','TM-Score','SPE','TM-Vec','CPE'),
                  basedOn=rep(c('Structure based', 'Sequence based'),c(3,2)),
                  CT_3=c(50, 50, 100, 16, 50),
@@ -500,7 +503,7 @@ p3m <- p12h+xlim(c('CPE','TM-Vec','SPE'))+ylim(0,.44) #4.4*12*3.6 sec
 df2 <- melt(df[,1:4])
 df2$variable <- factor(ifelse(df2$variable=='CT_3',3,4))
 p <- ggplot(df2, aes(variable,value, fill=method))+
-  geom_bar(stat="identity", width = .3,
+  geom_bar(stat="identity", width = .5,
            position=position_dodge2(preserve = "single"),alpha=.7)+
   facet_grid( ~ basedOn)+xlab('Cut tree')+ylab('ARI')+
   scale_fill_manual(values = mycol)+
