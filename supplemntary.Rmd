@@ -446,7 +446,8 @@ p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
   scale_fill_manual(values = mycol)+
   ylim(0,100)
 
-p3m <- p12h+xlim(c('CPE','TM-Vec','GR-Align'))+ylim(0,.3)
+p3m <- p12h+xlim(c('CPE','TM-Vec','GR-Align'))+ylim(0,.3)+
+  theme(legend.text = element_text(face = 'bold',size = 15))
 
 
 source('mytheme.R')
@@ -456,10 +457,12 @@ df2$Time <- df2$TimeS+1
 p2 <- ggplot(df2,aes(Accuracy,Time,col=method,label=method))+
   #geom_bar(stat="identity", width = .3,position=position_dodge(),alpha=.7)+
   geom_point(size=7,show.legend = F)+    
-  geom_text(show.legend = F,vjust=0,hjust=-.2,col='black',size=5)+
+  geom_text(show.legend = F,vjust=.7,hjust=1.2,col='black',size=6, fontface='bold')+
   mytheme()+ylab('Time (s)')+
   scale_color_manual(values = mycol)+
-  scale_y_log10()+xlim(55,103)
+  scale_y_log10()+xlim(50,103)+
+  theme(axis.text.x = element_text(face = 'bold',color = 'black',size = 20),
+        axis.text.y = element_text(face = 'bold',color = 'black',size = 20))
 
 ```
 #table3 -> fig
@@ -497,18 +500,24 @@ p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
   scale_fill_manual(values = mycol)+
   ylim(0,100)
 
-p3m <- p12h+xlim(c('CPE','TM-Vec','SPE'))+ylim(0,.44) #4.4*12*3.6 sec
+p3m <- p12h+xlim(c('CPE','TM-Vec','SPE'))+ylim(0,.44)+ #4.4*12*3.6 sec
+    theme(legend.text = element_text(face = 'bold',size = 15))
 
 
 df2 <- melt(df[,1:4])
 df2$variable <- factor(ifelse(df2$variable=='CT_3',3,4))
 p <- ggplot(df2, aes(variable,value, fill=method))+
   geom_bar(stat="identity", width = .5,
-           position=position_dodge2(preserve = "single"),alpha=.7)+
+           position=position_dodge2(preserve = "single"),alpha=1,show.legend = F)+
   facet_grid( ~ basedOn)+xlab('Cut tree')+ylab('ARI')+
   scale_fill_manual(values = mycol)+
   mytheme()+
-  theme(strip.text.x = element_text(size = 13))
+  theme(strip.text.x = element_text(size = 20, face = 'bold'),
+        legend.text = element_text(face = 'bold',size=30),
+        axis.text.x = element_text(size = 25, face = 'bold',color = 'black'),
+        axis.text.y = element_text(size = 25, face = 'bold',color = 'black'),
+        axis.title.x = element_text(size = 25, face = 'bold',color = 'black'),
+        axis.title.y = element_text(size = 25, face = 'bold',color = 'black'))
 ```
 
 # scop

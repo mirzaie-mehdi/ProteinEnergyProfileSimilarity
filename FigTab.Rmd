@@ -1207,15 +1207,15 @@ grp <- list(MERS_Cov     = rn[1:32],
             SARS_Cov2  = rn[64:143])
 
 p_data <- ggtree(tree_data, layout = 'dendrogram',
-                 size = 1) 
+                 size = 2) 
 
 t_CPE = groupOTU(p_data, grp, "groups") + aes(color=groups) +
   theme(legend.position="none",
-        plot.title = element_text(size = 20, face="bold",hjust = 0.5,vjust = -3))+
+        plot.title = element_text(size = 50, face="bold",hjust = 0.5,vjust = 2))+
 #  geom_tiplab2(aes(label=label,angle=angle),
 #               hjust=-.1,size=1.5,fontface="bold",align=F)+
-  geom_tiplab(aes(label=label),
-               hjust=1,size=1.5,fontface="bold",align=F)+
+#  geom_tiplab(aes(label=label),
+#               hjust=1,size=1.5,fontface="bold",align=F)+
   scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
                       type =  c('black',"blue","green","red" ))+
   ggtitle('CPE')
@@ -1244,13 +1244,13 @@ grp <- list(MERS_Cov     = rn[1:32],
 
 p_data <- ggtree(tree_data, layout = 'dendrogram',
                  #branch.length='none',
-                 size = 1) 
+                 size = 2) 
 
 t_SPE = groupOTU(p_data, grp, "groups") + aes(color=groups) +
   theme(legend.position="none",
-        plot.title = element_text(size = 20, face="bold",hjust = 0.5,vjust = -3))+
-  geom_tiplab(aes(label=label),
-               hjust=1,size=1.5,fontface="bold",align=F)+
+        plot.title = element_text(size = 50, face="bold",hjust = 0.5,vjust = 2))+
+#  geom_tiplab(aes(label=label),
+#               hjust=1,size=1.5,fontface="bold",align=F)+
   scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
                       type =  c('black',"blue","green","red"  ))+
   ggtitle('SPE')
@@ -1275,13 +1275,13 @@ grp <- list(MERS_Cov  = rn[1:32],
             SARS_Cov2 = rn[64:143])
 
 p_data <- ggtree(tree_data, layout = 'dendrogram',
-                 size = 1) 
+                 size = 2) 
 
 t_RMSS <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
        theme(legend.position="none",
-             plot.title = element_text(size = 20, face="bold",hjust = 0.5,vjust = -3))+
-       geom_tiplab(aes(label=label),
-                    hjust=1,size=1.5,fontface="bold",align=F)+
+             plot.title = element_text(size = 50, face="bold",hjust = 0.5,vjust = 2))+
+#       geom_tiplab(aes(label=label),
+#                    hjust=1,size=1.5,fontface="bold",align=F)+
        scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
                             type =  c("blue","green","red" ))+
   ggtitle('RMSD')
@@ -1307,15 +1307,15 @@ grp <- list(MERS_Cov  = rn[112:143],
             SARS_Cov2 = rn[1:80])
 
 p_data <- ggtree(tree_data, layout = 'dendrogram',
-                 size = 1) 
+                 size = 2) 
 # ggtree(tr) + geom_text(aes(label=node))
 p_data <- flip(p_data, 152, 151)
 
 t_tmVec <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
        theme(legend.position="none",
-             plot.title = element_text(size = 20, face = 'bold',hjust = 0.5,vjust = -3))+
-       geom_tiplab(aes(label=label),
-                    hjust=1,size=1.5,fontface="bold",align=F)+
+             plot.title = element_text(size = 50, face = 'bold',hjust = 0.5,vjust = 2))+
+#       geom_tiplab(aes(label=label),
+#                    hjust=1,size=1.5,fontface="bold",align=F)+
        scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
                             type =  c("blue","green","red" ))+
   ggtitle('TM-Vec')
@@ -1337,12 +1337,12 @@ AB<-ggarrange(NULL,NULL,
     hjust = 0,vjust = .5
     )
 title_grob <- grobTree(
-  textGrob("Evolution of Spike protein", x = 0.5, y = -1, just = "center", gp = gpar(col = "black", fontsize = 23, fontface = "bold")),
-  textGrob("MERS_Cov",           x = 0.38, y = -5,   just = "center", gp = gpar(col = "blue",  fontsize = 20, fontface = "bold")),
-  textGrob(expression('\u2192'), x = 0.44, y = -5.5, just = "center", gp = gpar(col = "black", fontsize = 30, fontface = "bold")),
-  textGrob("SARS_Cov",           x = 0.50, y = -5,   just = "center", gp = gpar(col = "green", fontsize = 20, fontface = "bold")),
-  textGrob(expression('\u2192'), x = 0.56, y = -5.5, just = "center", gp = gpar(col = "black", fontsize = 30, fontface = "bold")),
-  textGrob("SARS_Cov2",          x = 0.62, y = -5,   just = "center", gp = gpar(col = "red"  , fontsize = 20, fontface = "bold"))
+  textGrob("Evolution of Spike protein", x = 0.5, y = -3, just = "center", gp = gpar(col = "black", fontsize = 45, fontface = "bold")),
+  textGrob("MERS_Cov",           x = 0.34, y = -9,   just = "center", gp = gpar(col = "blue",  fontsize = 30, fontface = "bold")),
+  textGrob(expression('\u2192'), x = 0.42, y = -9.5, just = "center", gp = gpar(col = "black", fontsize = 40, fontface = "bold")),
+  textGrob("SARS_Cov",           x = 0.50, y = -9,   just = "center", gp = gpar(col = "green", fontsize = 30, fontface = "bold")),
+  textGrob(expression('\u2192'), x = 0.58, y = -9.5, just = "center", gp = gpar(col = "black", fontsize = 40, fontface = "bold")),
+  textGrob("SARS_Cov2",          x = 0.67, y = -9,   just = "center", gp = gpar(col = "red"  , fontsize = 30, fontface = "bold"))
 )
 #cowplot::plot_grid(AB, mylegend, ncol = 1, rel_heights = c(1,.1))
 annotate_figure(AB, top = title_grob)
