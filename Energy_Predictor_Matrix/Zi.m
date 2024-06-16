@@ -1,7 +1,7 @@
  clear;clc
  tic
  rcsb = 'https://files.rcsb.org/download/';
- path='../Data/Dunbrack/';
+ path='../Train_Energy/';
  load([path 'energy_dell_dunbrack.mat']);
  Tdist=6;start=0.75;binw=0.5;seqsep =1;
  zi=cell(1,20);
@@ -16,7 +16,6 @@
      disp(num2str(Nfile))
      temp_file = websave('temp.pdb', [rcsb ff '.pdb']);
      pdb=pdbread(temp_file);
-     %pdb=pdbread([path 'PDBs/' ff '.pdb']);
      if length(filaname_chain)==5
          chain=filaname_chain(end);
          for i=1:length(pdb.Sequence)
@@ -126,14 +125,12 @@
          catch        
          end 
      end   
-     es=zeros(20,20);  
-     %count_pair=zeros(20,20); 
+     es=zeros(20,20); 
      try
         for u=1:20
             a1=find(am==u);
             for s=1:20
                 a2=find(am==s);
-                %count_pair(u,s)=sum(sum(cnt(a1,a2)));
                 es(u,s) =sum(sum(ER(a1,a2)));
             end
         end
@@ -146,7 +143,6 @@
           pos = strfind(seq,x(i));
           ni(i) = size(pos,2);
      end 
-     %ni = ni/length(seq);
      for i=1:20
         syms E;
         ei=sum(es(i,:));
@@ -161,7 +157,7 @@
      Nfile=Nfile+1;      
  end
  toc
- save([path '/zi.mat'], 'zi')
+ %save([path '/zi.mat'], 'zi')
  zzi=cell(1,20);
  for i=1:20
      for j=2:size(zi,1)
