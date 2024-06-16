@@ -1,2 +1,4 @@
 # ProteinEnergyProfileSimilarity
-This repository contains all the code and resources needed to assess the similarity of protein structures based on their energy profile similarities.
+TThis repository includes all the code and resource data necessary for constructing the distance-dependent knowledge-based potential and energy profile derived from protein structure and sequence. It contains the following functions and data:
+
+1. To extract the distance-dependent knowledge-based potential, a non-redundant structural dataset of 6,944 protein chains was curated by PISCES from the PDB, with criteria including pairwise sequence identity of less than 50%, resolution under 1.6 Å, R-factor below 0.25, and protein lengths between 40 and 1,000 residues. These proteins were used to train and calculate the knowledge-based potential function. The list of PDB IDs is found in the file `list_with_ChainID.txt`, and the `energy_calculator.m` code computes the knowledge-based potential. The output of this function is the distance dependent potential between pair of atoms across distance, saved as energy_dell_dunbrack.mat and energy_dell_dunbrack.csv file.
