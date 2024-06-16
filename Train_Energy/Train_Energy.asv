@@ -1,4 +1,5 @@
 clear;clc
+tic
 rcsb = 'https://files.rcsb.org/download/';
 Tdist=15;
 start=0.75;binw=0.5;
@@ -39,7 +40,7 @@ while ischar(filaname_chain)
                atomname{j,1}=row.AtomName;
                amacidname{j,1}=row.resName;j=j+1;
             end           
-        end
+        endfilename
     end
     natom=numel(amnumber);
     neighbour=cell(1,natom);
@@ -91,7 +92,7 @@ while ischar(filaname_chain)
     filename=[ff(1:4) '.pdb'];
     Nfile=Nfile+1;
 end
-% save('pair_freq.mat', 'pair_freq')
+%save('\pair_freq.mat', 'pair_freq')
 % ----------------------------------------------
 fr=zeros(1,29);
 natom=167;
@@ -112,4 +113,4 @@ for i=1:natom
         energy_dell_dunbrack{i,j}=0.582*log(1+M(i,j)*(1/50))+log(1+M(i,j)*(1/50)*(pr{i,j}./pfr))*(-0.582);
     end
 end
-%save('energy_dell_dunbrack.mat', 'energy_dell_dunbrack')
+%save('\energy_dell_dunbrack.mat', 'energy_dell_dunbrack')
