@@ -59,22 +59,6 @@ library(mclust)
 source('mytheme.R')
 ```
 
-# Custom distance
-
-```{r}
-manhat <- function(X, Y){
-  x<-X; y<-Y
-  xy <- abs(x - y)
-  xy <- xy[xy != 0]
-  if(length(xy)==0){
-    d <- 0
-  }else{
-    d <- sum(xy)/length(xy)
-  }
-  return(d)
-}
-```
-
 # Figures
 # Preprocess for Fig1
 

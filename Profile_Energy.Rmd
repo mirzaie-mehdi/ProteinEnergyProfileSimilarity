@@ -63,37 +63,6 @@ library(readxl)
 library(ggh4x)
 ```
 
-# Custom distance
-
-```{r}
-#  denoiseEnergy<-function(x,n){
-#    # x is a vectore with 210 dimentional
-#    # n is the number of eigenvalues to reconstruct
-#    m <- matrix(0,20,20)
-#    m[lower.tri(m,diag = T)]<-x
-#    m<-m+t(m)
-#    diag(m)<-diag(m)/2
-#    s<-svd(m)
-#    s$d[(n+1):20] <- 0
-#    m <- s$u %*% diag(s$d)  %*% t(s$v)
-#    x <- m[lower.tri(m,diag = T)]
-#    return(x)
-#  }
-# -----------------------------------------
-manhat <- function(X, Y){
-  #x <- denoiseEnergy(X,1); y <- denoiseEnergy(Y,1)
-  x<-X; y<-Y
-  xy <- abs(x - y)
-  xy <- xy[xy != 0]
-  if(length(xy)==0){
-    d <- 0
-  }else{
-    d <- sum(xy)/length(xy)
-  }
-  return(d)
-}
-```
-
 # Parse Scope 2.08
 This chunk parse the astral 95/40 data downloaded form Scope 2.08 and organize it into a suitable data-frame with columns "scopeID","pdbID" ,"Position", "class","fold","superfamily","family","seq". Since we already made astral_95.rds, we do not need to run the following two chunks (ASTRAL95 and ASTRAL40).
 
@@ -191,13 +160,7 @@ The following chunk retrieves the predicted pairwise energy values from the trai
 ```{r}
 energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
 energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
-source('Functions/amacid2numSC.R')
-source("Functions/amacid2num.R")
-source("Functions/atomtype2num167.R")
-source("Functions/Energy_PC210.R")
-source("Functions/NetworkFrame.R")
-source("Functions/inedx_HelixSheet.R")
-source("Functions/split_position.R")
+source('Functions/Functions.R')
 # ------Pairwise Amino Acid names-------------
 AA <- c("PHE","LEU","ILE","VAL","TRP","TYR","MET","CYS","HIS","THR",
         "ARG","ALA","ASN","GLN","PRO","SER","ASP","GLY","LYS","GLU")
