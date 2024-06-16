@@ -1,4 +1,4 @@
-# -------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # -------------------------
 # ------ This function code Amino Acid name into number.
 # ------------------------------------------------------------
@@ -476,4 +476,29 @@ mytheme <- function(){
     )
   return(mythem)
 }
-
+# -------------------------------------------------------------
+# ------------------------------
+# ---- Load Knowledge_based potential from structure and sequence
+# --------------------------------------------
+# --------------------------------------------------------
+# -------------------------------------------------------------------------------------
+energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
+energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
+# ------Pairwise Amino Acid names-------------
+AA <- c("PHE","LEU","ILE","VAL","TRP","TYR","MET","CYS","HIS","THR",
+        "ARG","ALA","ASN","GLN","PRO","SER","ASP","GLY","LYS","GLU")
+letters_list <- bio3d::aa321(AA)
+pair_inter <- character(0)
+for (i in 1:20) {
+  for (j in i:20) {
+    pair_inter <- c(pair_inter, paste0(letters_list[i], letters_list[j]))
+  }
+} 
+# -----------------------------------
+# -----  Sequence Energy Estimator (predictor)
+aaenergy <- read.csv("Data/csv/Pij.csv", header = F,sep = ";")
+aaenergy <- (aaenergy + t(aaenergy))/2
+colnames(aaenergy) <- rownames(aaenergy) <- letters_list
+# -------------------------------------------------------------
+rm(i,j,AA)
+# -----------

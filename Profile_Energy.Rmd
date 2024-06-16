@@ -17,7 +17,6 @@ knitr::opts_chunk$set(echo = FALSE,warning=FALSE, fig.pos= "h")
 
 # Library   
 ```{r libraries, include=FALSE}
-#library(kableExtra)
 options(knitr.table.format = "latex")
 library(readr)
 library(data.table)
@@ -61,12 +60,14 @@ library(proxy)
 library(class)
 library(readxl)
 library(ggh4x)
+# ---------------------------------------
+source('Functions.R')
+# ---------------------------------------
 ```
 
 # Parse Scope 2.08
-This chunk parse the astral 95/40 data downloaded form Scope 2.08 and organize it into a suitable data-frame with columns "scopeID","pdbID" ,"Position", "class","fold","superfamily","family","seq". Since we already made astral_95.rds, we do not need to run the following two chunks (ASTRAL95 and ASTRAL40).
-
-## ASTRAL95
+## ASTRAL95_parse
+This chunk parse the astral 95/40 data downloaded form Scope 2.08 and organize it into a suitable data-frame with columns "scopeID","pdbID" ,"Position", "class","fold","superfamily","family","seq". Since we already made astral_95.rds, we do not need to run the following chunk.
 
 ```{r}
 astrals_95 <- read_table("Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-95-2.08.fa", col_names = FALSE)
@@ -101,7 +102,8 @@ astral_95 <- astral_95[,c("scopeID","pdbID" ,"Position", "class","fold","superfa
 #saveRDS(astral_95, file = "Data/rds/astral_95.rds")
 ```
 
-## ASTRAL40
+## ASTRAL40_parse
+This chunk parse the astral 95/40 data downloaded form Scope 2.08 and organize it into a suitable data-frame with columns "scopeID","pdbID" ,"Position", "class","fold","superfamily","family","seq". Since we already made astral_95.rds, we do not need to run the following chunk.
 
 ```{r}
 astrals_40 <- read_table("Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-40-2.08.fa", col_names = FALSE)
@@ -149,46 +151,15 @@ astral_40 <- cbind(astral_40,df_split)
 ```
 
 
-# Energy Calculation
+## ASTRAL95/40_SPE_CPE
 
-Sequence_Energy_Estimator
-Energy Calculation prerequisite
-
-
-The following chunk retrieves the predicted pairwise energy values from the training dataset for the computation of the energy profile based on sequence.
+This chunk calculate the profile of energy for protein domains in ASTRAL95/40 based on sequence and structure.
 
 ```{r}
-energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
-energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
-source('Functions/Functions.R')
-# ------Pairwise Amino Acid names-------------
-AA <- c("PHE","LEU","ILE","VAL","TRP","TYR","MET","CYS","HIS","THR",
-        "ARG","ALA","ASN","GLN","PRO","SER","ASP","GLY","LYS","GLU")
-letters_list <- aa321(AA)
-pair_inter <- character(0)
-for (i in 1:20) {
-  for (j in i:20) {
-    pair_inter <- c(pair_inter, paste0(letters_list[i], letters_list[j]))
-  }
-} 
-# -----------------------------------
-# -----  Sequence Energy Estimator (predictor)
-aaenergy <- read.csv("Data/csv/Pij.csv", header = F,sep = ";")
-aaenergy <- (aaenergy + t(aaenergy))/2
-colnames(aaenergy) = rownames(aaenergy)<- letters_list
-#aa210 <- aaenergy[lower.tri(aaenergy,diag = T)]
-```
-
-## ASTRAL95/40
-
-This chunk calculate the profile of energy for ASTRAL95/40 based on sequence and structure.
-
-```{r}
-# -------- At first, run the 'Energy Calculation prerequisite' chunk.
 # ----------------------------------------------------
-astral <- readRDS("Data/rds/astral_95.rds")  # astral_40.rds 
+astral <- readRDS("Data/rds/astral_95.rds")
 Nprotein <- nrow(astral)
-num_columns <- 780
+num_columns <- 210
 E210.astral_95 <- data.frame(pdbID = astral$pdbID,
                             scopeID= astral$scopeID,
                             length = rep(NA,Nprotein),
@@ -198,8 +169,8 @@ E210.astral_95 <- data.frame(pdbID = astral$pdbID,
                             superfamily = astral$superfamily,
                             family = astral$family,
                             matrix(NA, ncol = num_columns, nrow = length(astral$pdbID)))
-colnames(E210.astral)[9:218] = pair_inter
-E210.astral_SS <- E210.seq_astral <- E210.seqPDB_astral <- E210.astral 
+colnames(E210.astral_95)[9:218] <- pair_inter
+E210.seq_astral_95 <- E210.astral_95 
 for (NP in 1:Nprotein) {
   if (NP %% 50 == 0) {print(NP)}
   chain_resno <- split_position(astral$Position[NP])
@@ -228,68 +199,36 @@ for (NP in 1:Nprotein) {
     }
     pdbX <- new_pdb$atom
     E210.astral_95$length[NP] = length(unique(pdbX$resno))
-#    E210.astral_SS$length[NP] = length(unique(pdbX$resno))
-#    E210.seqPDB_astral$length[NP] = length(unique(pdbX$resno))
     Net_Frame <- NetworkFrame(PDB = new_pdb)
     energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
     E210.astral_95[NP,-c(1:8)] <- energy210
-    # ****************keep res helix & sheet************************
-#    indhs <- inedx_HelixSheet(PDB = new_pdb)
-#    Net_Frame_hs <- Net_Frame[Net_Frame$resnoif %in% indhs & Net_Frame$resnojf %in% indhs,]
-#    if(dim(Net_Frame_hs)[1]!=0){
-#        Net_Frame <- Net_Frame_hs
-#    }
-#    energy210_ss <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
-#    E210.astral_SS[NP,9:218] <- energy210_ss
-#    #-----------sequence enregy based on PDB--------
-#    pdbXca <- pdbX[pdbX$elety == "CA",]
-#    seq = aa321(pdbXca$resid)
-#    E210.seqPDB_astral$length[NP] = length(seq)
-#    freq = c()
-#    for (j in 1:20){
-#        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
-#    }
-#    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-#    en_fr <- aaenergy * freq_matrix
-#    en_fr <- en_fr/length(seq)
-#    pair_es <- diag(freq) %*% as.matrix(en_fr)
-#    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-#    E210.seqPDB_astral[NP,9:218] <- aa210_p
-##-----------sequence enregy based on astral--------
-#    seq = astral$seq[NP]
-#    seq = gsub("X", "", seq)
-#    E210.seq_astral$length[NP] = nchar(seq)
-#    seq = unlist(strsplit(seq,""))
-#    freq = c()
-#    for (j in 1:20){
-#        freq[j] <-  length(grep(letters_list[j],tolower(seq)))
-#    }
-#    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-#    en_fr <- aaenergy * freq_matrix
-#    en_fr <- en_fr/length(seq)
-#    pair_es <- diag(freq) %*% as.matrix(en_fr)
-#    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-#    E210.seq_astral[NP,9:218] <- aa210_p
+# ----------- sequence enregy based on astral --------
+    seq = astral$seq[NP]
+    seq = gsub("X", "", seq)
+    E210.seq_astral_95$length[NP] = nchar(seq)
+    seq = unlist(strsplit(seq,""))
+    freq = c()
+    for (j in 1:20){
+        freq[j] <-  length(grep(tolower(letters_list[j]), tolower(seq)))
+    }
+    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+    en_fr <- aaenergy * freq_matrix
+    en_fr <- en_fr/length(seq)
+    pair_es <- diag(freq) %*% as.matrix(en_fr)
+    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+    E210.seq_astral_95[NP,9:218] <- aa210_p
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
     })
 }
 # -----------------------------------------------------------
-# ----------- astral 95 ------
-#saveRDS(E210.astral,file = "Data/rds/E210.astral_95.rds")
-#saveRDS(E210.astral_SS,file = "Data/rds/E210.astral_95_SS.rds")
-#saveRDS(E210.seq_astral,file = "Data/rds/E210.seq_astral_95.rds")
-#saveRDS(E210.seqPDB_astral,file = "Data/rds/E210.seqPDB_astral_95.rds")
+#saveRDS(E210.astral_95, file = "Data/rds/E210.astral_95.rds")
+#saveRDS(E210.seq_astral_95, file = "Data/rds/E210.seq_astral_95.rds")
 # -----------------------------------------------------------
 # ----------- astral 40 ------
-#saveRDS(E210.astral,file = "Data/rds/E210.astral_40.rds")
-#saveRDS(E210.astral_SS,file = "Data/rds/E210.astral_40_SS.rds")
-#saveRDS(E210.seq_astral,file = "Data/rds/E210.seq_astral_40.rds")
-#saveRDS(E210.seqPDB_astral,file = "Data/rds/E210.seqPDB_astral_40.rds")
-
-astral <- readRDS("Data/rds/astral_40.rds")  # astral_40.rds 
+astral <- readRDS("Data/rds/astral_40.rds") 
 Nprotein <- nrow(astral)
-num_columns <- 780
+num_columns <- 210
 E210.astral_40 <- data.frame(pdbID = astral$pdbID,
                             scopeID= astral$scopeID,
                             length = rep(NA,Nprotein),
@@ -299,6 +238,8 @@ E210.astral_40 <- data.frame(pdbID = astral$pdbID,
                             superfamily = astral$superfamily,
                             family = astral$family,
                             matrix(NA, ncol = num_columns, nrow = length(astral$pdbID)))
+
+E210.seq_astral_40 <- E210.astral_40
 for (NP in 1:Nprotein) {
   if (NP %% 50 == 0) {print(NP)}
   chain_resno <- split_position(astral$Position[NP])
@@ -330,10 +271,68 @@ for (NP in 1:Nprotein) {
     Net_Frame <- NetworkFrame(PDB = new_pdb)
     energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
     E210.astral_40[NP,-c(1:8)] <- energy210
+    # ----------- sequence enregy based on astral --------
+    seq = astral$seq[NP]
+    seq = gsub("X", "", seq)
+    E210.seq_astral_40$length[NP] = nchar(seq)
+    seq = unlist(strsplit(seq,""))
+    freq = c()
+    for (j in 1:20){
+        freq[j] <-  length(grep(tolower(letters_list[j]), tolower(seq)))
+    }
+    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+    en_fr <- aaenergy * freq_matrix
+    en_fr <- en_fr/length(seq)
+    pair_es <- diag(freq) %*% as.matrix(en_fr)
+    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+    E210.seq_astral_40[NP,9:218] <- aa210_p
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
     })
 }
+
+#saveRDS(E210.astral,file = "Data/rds/E210.astral_40.rds")
+#saveRDS(E210.seq_astral,file = "Data/rds/E210.seq_astral_40.rds")
+```
+
+## C Terminal _Homing
+
+```{r}
+# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+# ----------------------------------------------------
+df <- read.csv('Data/csv/CT_Ho_cathID_filtered.csv')
+
+E210.seq_CT_Ho <- data.frame(df,
+                         matrix(NA, ncol = 210, nrow = nrow(df)))
+
+colnames(E210.seq_CT_Ho)[-c(1:9)] <- pair_inter
+
+tictoc::tic()
+for(NP in 1:nrow(E210.seq_CT_Ho)){
+  print(NP)
+  tryCatch({
+      seq <- unlist(strsplit(toupper(E210.seq_CT_Ho$seq[NP]),''))
+      freq = c()
+      for (j in 1:20){
+          freq[j] <- length(grep(letters_list[j],seq))
+      }
+      freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+      en_fr <- aaenergy * freq_matrix
+      en_fr <- en_fr/length(seq)
+      pair_es <- diag(freq) %*% as.matrix(en_fr)
+      aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+      E210.seq_CT_Ho[NP,10:219] <- aa210_p
+      }, error = function(e) {
+       cat("Error downloading file:", e$message, "\n")
+        }
+  )
+}
+df2 <- E210.seq_CT_Ho
+df2 <- df2[!is.na(df2$FF),]
+dis <- as.matrix(proxy::dist(df2[,-c(1:9)], method = manhat))
+tictoc::toc()
+# saveRDS(dis,'Data/rds/dis.CT_Ho.rds')
+# saveRDS(E210.seq_CT_Ho,'Data/rds/E210.seq_CT_Ho.rds')
 ```
 
 
@@ -673,45 +672,6 @@ tm$status2 <- if_else(tm$Subclass_x==tm$Subclass_y&
 # saveRDS(tm_unique,'Data/rds/E210.seq_bacteriocin.rds')
 ```
 
-## CT_Ho
-
-```{r}
-# -------- At first, run the 'Energy Calculation prerequisite' chunk.
-# ----------------------------------------------------
-df <- read.csv('Data/csv/CT_Ho_cathID_filtered.csv')
-
-E210.seq_CT_Ho <- data.frame(df,
-                         matrix(NA, ncol = 210, nrow = nrow(df)))
-
-colnames(E210.seq_CT_Ho)[-c(1:9)] <- pair_inter
-
-tictoc::tic()
-for(NP in 1:nrow(E210.seq_CT_Ho)){
-  print(NP)
-  tryCatch({
-      seq <- unlist(strsplit(toupper(E210.seq_CT_Ho$seq[NP]),''))
-      freq = c()
-      for (j in 1:20){
-          freq[j] <- length(grep(letters_list[j],seq))
-      }
-      freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-      en_fr <- aaenergy * freq_matrix
-      en_fr <- en_fr/length(seq)
-      pair_es <- diag(freq) %*% as.matrix(en_fr)
-      aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-      E210.seq_CT_Ho[NP,10:219] <- aa210_p
-      }, error = function(e) {
-       cat("Error downloading file:", e$message, "\n")
-        }
-  )
-}
-df2 <- E210.seq_CT_Ho
-df2 <- df2[!is.na(df2$FF),]
-dis <- as.matrix(proxy::dist(df2[,-c(1:9)], method = manhat))
-tictoc::toc()
-# saveRDS(dis,'Data/rds/dis.CT_Ho.rds')
-# saveRDS(E210.seq_CT_Ho,'Data/rds/E210.seq_CT_Ho.rds')
-```
 
 ## five superfamily
 
