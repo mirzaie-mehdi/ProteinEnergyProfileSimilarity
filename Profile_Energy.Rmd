@@ -364,9 +364,9 @@ for (NP in 1:Nprotein) {
   aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
   E210.seq_df5[NP,10:219] <- aa210_p
 }
-df2 <- E210.seq_CT_Ho
-df2 <- df2[!is.na(df2$FF),]
-dis <- as.matrix(proxy::dist(df2[,-c(1:9)], method = manhat))
+#df2 <- E210.seq_CT_Ho
+#df2 <- df2[!is.na(df2$FF),]
+#dis <- as.matrix(proxy::dist(df2[,-c(1:9)], method = manhat))
 tictoc::toc()
 # saveRDS(E210.seq_df5,file = "Data/rds/E210.seq_df5.rds")
 ```
@@ -610,11 +610,12 @@ seq2df<-function(seq){
 }
 
 # ------------------------------
-dti <- read_excel('Data/csv/41467_2019_9186_MOESM4_ESM_dti_barabasi.xlsx')
+dti <- read_excel('Data/csv/41467_2019_9186_MOESM4_ESM.xlsx')
 colnames(dti)<-c('drugID','entrezID')
 dti$entrezID<-as.character(dti$entrezID)
 
-sab<-readRDS('Data/rds/sAB.rds')
+sab<-read_excel('Data/csv/41467_2019_9186_MOESM7_ESM.xlsx')
+sab <- sab[-2081,-6]
 colnames(sab)[1:2]<-c('d1','d2')
 
 d65<-unique(c(sab$d1,sab$d2))

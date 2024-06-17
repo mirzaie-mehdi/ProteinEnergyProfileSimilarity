@@ -1448,10 +1448,10 @@ ntf <- 'd.17.4'
 
 fiveSF <- c(win,imu,ph,ub,ntf)
 #############
-df5 <- readRDS('Data/rds/E210.seq_df5.rds')
+df5 <- readRDS('Data/rds/E210.seq_df52.rds')
 df5 <- df5[!is.na(df5$FF),]
 ###############
-dis <- as.matrix(dist(df5[,-c(1:8)],method = manhat))
+dis <- as.matrix(dist(df5[,-c(1:9)],method = manhat))
 diag(dis) <- NA
 
 im <- apply(dis,1, FUN = which.min)
@@ -1476,8 +1476,8 @@ res<-c()
 for (i in 1:10) {
   print(i)
   x <- kfolds[[i]]
-  tr <- df5[-x,c(7,9:218)]
-  te <- df5[x,c(7,9:218)]
+  tr <- df5[-x,c(7, 10:219)]
+  te <- df5[x,c(7, 10:219)]
   rf = randomForest(superfamily~.,data = tr)
   p2 <- predict(rf, te)
   cm2 <- confusionMatrix(p2, te$superfamily)
