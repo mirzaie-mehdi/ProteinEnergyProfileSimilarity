@@ -43,7 +43,7 @@ model_deep = model_deep.eval()
 path=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 path = path+'/Data/csv/'
 # ----------------------------------------------
-df = pd.read_csv(path+'Bacteriocin.csv')
+df = pd.read_csv(path+'fiveSF.csv')
 # ----------------------------------------------
 start = time.time()
 n=df.shape[0]
@@ -55,7 +55,7 @@ for i in range(0,n,1):
   protrans_seq = featurize_prottrans(seq, model, tokenizer, device).detach()
   embedded_seq = embed_tm_vec(protrans_seq, model_deep, device)
   emb.loc[i,:] = embedded_seq
-#emb.to_csv(path+'TM_vec_emb_bac.csv',index=False)
+#emb.to_csv(path+'TM_vec_emb_Ferritin_Like_seq.csv',index=False)
 
 # Calculate cosine similarity for each pair of rows
 tensor_df = torch.tensor(emb.values)
@@ -69,9 +69,8 @@ for i in range(len(emb)):
 # Convert result to DataFrame
 cosine_similarity_df = pd.DataFrame(cosine_similarity.numpy(), index=emb.index, columns=emb.index)
 
-cosine_similarity_df.to_csv(path+'disTM_vec_bac.csv',index=False)
+cosine_similarity_df.to_csv(path+'disTM_vec_fiveSF.csv',index=False)
 elapsed = (time.time() - start)
 
 print(elapsed)
-
 

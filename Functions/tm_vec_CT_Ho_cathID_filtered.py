@@ -7,6 +7,7 @@ import torch
 from transformers import T5EncoderModel, T5Tokenizer
 import re
 import gc
+import os
 
 import numpy as np
 import pandas as pd
@@ -39,15 +40,12 @@ model_deep = trans_basic_block.load_from_checkpoint(tm_vec_model_cpnt, config=tm
 model_deep = model_deep.to(device)
 model_deep = model_deep.eval()
 # --------------------------------------
+path=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+path = path+'/Data/csv/'
+# ----------------------------------------------
+df = pd.read_csv(path+'CT_Ho_cathID_filtered.csv')
+# ----------------------------------------------
 start = time.time()
-path = '/home/peymanc/Desktop/proj/ProteinEnergyProfileSimilarity/Data/csv/'
-# ----------------------------------------------
-df = pd.read_csv(path+'fiveSF.csv')
-# Ferritin_Like_seq.csv
-# CT_Ho_cathID_filtered.csv
-# ----------------------------------------------
-#df['tm_vec'] = ''
-
 n=df.shape[0]
 emb=pd.DataFrame(np.zeros((n, 512)))
 for i in range(0,n,1):
@@ -57,8 +55,8 @@ for i in range(0,n,1):
   protrans_seq = featurize_prottrans(seq, model, tokenizer, device).detach()
   embedded_seq = embed_tm_vec(protrans_seq, model_deep, device)
   emb.loc[i,:] = embedded_seq
-emb.to_csv(path+'TM_vec_emb_fiveSF.csv',index=False)
-elapsed1 = (time.time() - start)
+#emb.to_csv(path+'TM_vec_emb_CT_Ho_cathID_filtered.csv',index=False)
+)
 
 # Calculate cosine similarity for each pair of rows
 start = time.time()
@@ -73,8 +71,8 @@ for i in range(len(emb)):
 # Convert result to DataFrame
 cosine_similarity_df = pd.DataFrame(cosine_similarity.numpy(), index=emb.index, columns=emb.index)
 
-cosine_similarity_df.to_csv(path+'disTM_vec_fiveSF.csv',index=False)
-elapsed2 = (time.time() - start)
+cosine_similarity_df.to_csv(path+'disTM_vec_CT_Ho_cathID_filtered.csv',index=False)
+elapsed = (time.time() - start)
 
-print(elapsed1, elapsed2)
+print(elapsed)
 
