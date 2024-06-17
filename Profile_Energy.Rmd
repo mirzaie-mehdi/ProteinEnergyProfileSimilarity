@@ -601,8 +601,13 @@ tm$status2 <- if_else(tm$Subclass_x==tm$Subclass_y&
 # saveRDS(tm_unique,'Data/rds/E210.seq_bacteriocin.rds')
 ```
 
-# DTI preprocess
-This chunk extracts AA sequences from the drug-target
+# Drug-Target 
+
+## Protein_Sequence_Target
+
+This section retrieves the protein sequences (drug targets) utilized in the study:
+"Cheng F, Kovács IA, Barabási A-L. Network-based prediction of drug combinations. Nature communications 10, 1197 (2019)". 
+The drug-target information downloaded from its supplementary information (41467_2019_9186_MOESM4_ESM_dti_barabasi.xlsx)
 
 ```{r}
 library(rentrez)
@@ -663,7 +668,10 @@ df_seq$length <- nchar(df_seq$seq)
 #saveRDS(df_seq,'Data/rds/DTI_df_seq.rds')
 ```
 
-## DTI Energy
+## Protein_Targets_CPE
+
+This section calculates the CPE of protein targets, using the sequences retrieved in the "Protein_Sequence_Target" Chunk.
+
 
 ```{r}
 # -------- At first, run the 'Energy Calculation prerequisite' chunk.
@@ -689,8 +697,9 @@ for (NP in 1:nrow(df_seq)) {
 #saveRDS(E210.seq_dti,'Data/rds/E210.seq_dti.rds')
 ```
 
-## DTI drug similarity 
-This Chunk calculates the similarity between drugs based on Eq 6 in the paper.
+## Drug similarity 
+
+This Chunk computes the similarity between drugs using Equation 6 from the manuscript.
 
 ```{r}
 # -------- At first, run the 'Prerequisite of Fig and dis' chunk.
@@ -738,12 +747,4 @@ diag(my_sab)<-NA
 colnames(my_sab)<-rownames(my_sab)<-drugs
 # saveRDS(my_sab,'Data/rds/my_sab.rds')
 ```
-
-
-
-
-
-
-
-
 
