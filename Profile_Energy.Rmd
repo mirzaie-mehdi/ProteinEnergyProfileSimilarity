@@ -437,51 +437,53 @@ for (NP in 1:Nprotein) {
 This segment computes the SPE and CPE for spike glycoprotein proteins. The PDB IDs of these proteins are located in the 'Data/csv/spike.csv' file.
 
 ```{r}
-# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+source('Functions.R')
 # ----------------------------------------------------
 spike <- read.csv("Data/csv/spike.csv")
 Nprotein <- nrow(spike)
 #----------------------------------------------
 num_columns <- 210
-E210_spike_close <- data.frame(spike,
+E210_spike <- data.frame(spike,seq=NA,
                             matrix(NA,ncol=num_columns,nrow=Nprotein))
 
-colnames(E210_spike_close)[6:215] <- pair_inter
+colnames(E210_spike)[4:213] <- pair_inter
 
 tictoc::tic()
 for (NP in 1:Nprotein) {
   print(NP)
-  ch <- substr(E210_spike_close$pdbID[NP],5,5)
-  pdbname <- substr(E210_spike_close$pdbID[NP],1,4)
+  ch <- substr(E210_spike$pdbID[NP],5,5)
+  pdbname <- substr(E210_spike$pdbID[NP],1,4)
   tryCatch({
     pdb0 <- read.pdb(tolower(pdbname))
-    #pdb0 <- read.pdb(paste0('../covpdb/', pdbname, '.pdb'))
     sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
     sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
     sele4 <- atom.select(pdb0, "noh")
     sele <- combine.select(sele1, sele2,sele4, operator="AND")
     # -------------------
     new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+    pdbX <- new_pdb$atom
+    pdbX <- pdbX[pdbX$elety%in%'CA',]
+    E210_spike$seq[NP] <- paste0(aa321(pdbX$resid),collapse = '')
     Net_Frame <- NetworkFrame(PDB = new_pdb)
     energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
-    E210_spike_close[NP,6:215] <- energy210
+    E210_spike[NP,4:213] <- energy210
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
     })
 }
-df <- E210_spike_close
-x  <- as.matrix(df[,-c(1:5)]) 
+df <- E210_spike
+x  <- as.matrix(df[,-c(1:2)]) 
 dis <- x %>% proxy::dist(method = manhat)
 tictoc::toc()
 
-E210.seq_spike_close <- data.frame(E210_spike_close[,1:5],
+E210.seq_spike <- data.frame(E210_spike[,1:3],
                             matrix(NA,ncol=num_columns,nrow=Nprotein))
-colnames(E210.seq_spike_close)[6:215] <- pair_inter
+colnames(E210.seq_spike)[4:213] <- pair_inter
 
 tictoc::tic()
 for (NP in 1:Nprotein) {
   print(NP)
-  seq <- unlist(strsplit(E210.seq_spike_close$seq[NP],''))
+  seq <- unlist(strsplit(E210.seq_spike$seq[NP],''))
   freq <- c()
   for (j in 1:20){
     freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
@@ -491,18 +493,15 @@ for (NP in 1:Nprotein) {
   en_fr <- en_fr/length(seq)
   pair_es <- diag(freq) %*% as.matrix(en_fr)
   aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
-  E210.seq_spike_close[NP,6:215] <- aa210_p
+  E210.seq_spike[NP,4:213] <- aa210_p
 }
-df <- E210.seq_spike_close
-x <- df[,-c(1:5)]/df$length
-x  <- as.matrix(x) 
-dis <- x %>% proxy::dist(method = manhat)
+df <- E210.seq_spike[,-c(1:3)]
+dis <- df %>% proxy::dist(method = manhat)
 tictoc::toc()
 
-saveRDS(E210_spike_close,file = "Data/rds/E210_spike_close.rds")
-#saveRDS(E210_spike_close_SS,file = "Data/rds/E210_spike_close_SS.rds")
-saveRDS(E210.seq_spike_close,file = "Data/rds/E210.seq_spike_close.rds")
-write.csv(E210.seq_spike_close[,1:5], "Data/csv/spike_close.csv",row.names = F)
+#saveRDS(E210_spike,file = "Data/rds/E210_spike.rds")
+#saveRDS(E210.seq_spike_close,file = "Data/rds/E210.seq_spike_close.rds")
+write.csv(E210.seq_spike[,1:3], "Data/csv/spike_seq.csv",row.names = F)
 ```
 
 # Bacteriocin
