@@ -148,7 +148,7 @@ astral_40 <- cbind(astral_40,df_split)
 ```
 
 
-## ASTRAL95/40_SPE_CPE
+# ASTRAL95/40_SPE_CPE
 
 This chunk calculate the profile of energy for protein domains in ASTRAL95/40 based on sequence and structure.
 
@@ -373,9 +373,11 @@ tictoc::toc()
 
 # Ferritin-like Superfamily
 
-This segment computes the SPE for proteins belonging to the Ferritin-like superfamily. The PDB IDs of these proteins are located in the 'Data\csv\Ferritin_Like.csv' file.
+This segment computes the SPE for proteins belonging to the Ferritin-like superfamily. The PDB IDs of these proteins are located in the `Data\csv\Ferritin_Like.csv` file.
 
 ```{r}
+source('Functions.R')
+# ----------------------------------------------------
 ferritin <- read.csv("Data/csv/Ferritin_Like.csv",sep = ",")
 Nprotein <- nrow(ferritin)
 #----------------------------------------------
@@ -385,15 +387,13 @@ E210_ferritin <- data.frame(pdbID = ferritin$pdbID,
                             group = ferritin$group,
                             matrix(NA, ncol = num_columns, 
                                    nrow = Nprotein))
-colnames(E210_ferritin) = c("pdbID","length","group",pair_inter)
-E210_ferritin_SS <- E210_ferritin
+colnames(E210_ferritin)[-c(1:3)] <- pair_inter
+
 for (NP in 1:Nprotein) {
   print(NP)
   pdbname <- ferritin$pdbID[NP]
-  E210_ferritin_SS$pdbID[NP] <- pdbname
   ch <- ferritin$chainID[NP]
   E210_ferritin$pdbID[NP] <- paste0(pdbname,ch)
-  E210_ferritin_SS$pdbID[NP] <- paste0(pdbname,ch)
   tryCatch({
     pdb0 <- read.pdb(pdbname)
     sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
@@ -407,29 +407,17 @@ for (NP in 1:Nprotein) {
       sele <- combine.select(sele1, sele2,sele3,sele4, operator="AND")
     }
     new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
-    pdbX <- pdb0$atom[sele$atom,]
-    #pdbXca <- pdbX[pdbX$elety == "CA",]
-    #seq <- aa321(pdbXca$resid)
-    #E210_ferritin$seq[NP] <- paste0(seq,collapse = '')
-    E210_ferritin$length[NP] = length(unique(pdbX$resno))
-    E210_ferritin_SS$length[NP] = length(unique(pdbX$resno))
+    pdbX <- new_pdb$atom
+    pdbX <- pdbX[pdbX$elety == "CA",]
+    E210_ferritin$length[NP] <- nrow(pdbX)
     Net_Frame <- NetworkFrame(PDB = new_pdb)
     energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
     E210_ferritin[NP,4:213] <- energy210
-    # ****************keep res helix & sheet************************
-    indhs <- inedx_HelixSheet(PDB = pdb0)
-    Net_Frame_hs <- Net_Frame[Net_Frame$resnoif %in% indhs & Net_Frame$resnojf %in% indhs,]
-    if(dim(Net_Frame_hs)[1]!=0){
-        Net_Frame <- Net_Frame_hs
-    }
-    energy210_ss <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
-    E210_ferritin_SS[NP,4:213] <- energy210_ss
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
     })
 }
 #saveRDS(E210_ferritin,file = "Data/rds/E210_ferritin.rds")
-#saveRDS(E210_ferritin_SS,file = "Data/rds/E210_ferritin_SS.rds")
 ```
 
 # Covid_Spike_Proteins
@@ -501,17 +489,58 @@ tictoc::toc()
 
 #saveRDS(E210_spike,file = "Data/rds/E210_spike.rds")
 #saveRDS(E210.seq_spike_close,file = "Data/rds/E210.seq_spike_close.rds")
-write.csv(E210.seq_spike[,1:3], "Data/csv/spike_seq.csv",row.names = F)
+#write.csv(E210.seq_spike[,1:3], "Data/covidPDB/spike_seq.csv",row.names = F)
 ```
+
+# RMSD_spike
+This chunck computes the RMSD for spike glycoprotein proteins. The PDB IDs of these proteins are located in the 'Data/csv/spike.csv' file.
+
+```{r}
+spike <- read.csv("Data/covidPDB/spike_seq.csv")
+Np <- nrow(spike)
+#----------------------------------------------
+rms <- matrix(NA,Np,Np)
+
+tictoc::tic()
+for (i in 1:Np) {
+  print(i)
+  tryCatch({
+    chi <- substr(spike$pdbID[i],5,5)
+    pdbnamei <- substr(spike$pdbID[i],1,4)
+    pdb0 <- read.pdb(tolower(pdbnamei))
+    sele <- atom.select(pdb0,chain=chi)
+    new_pdbi <- trim.pdb(pdb0, sele,verbose = FALSE)
+    for (j in 1:Np) {
+      if(i>j){
+        chj <- substr(spike$pdbID[j],5,5)
+        pdbnamej <- substr(spike$pdbID[j],1,4)
+        pdb0 <- read.pdb(tolower(pdbnamej))
+        sele <- atom.select(pdb0,'protein',chain=chj)
+        new_pdbj <- trim.pdb(pdb0, sele,verbose = FALSE)
+        pdbs <- list(new_pdbi, new_pdbj)
+        aln_pdbs <- pdbaln(pdbs,fit = T)
+        xyz <- pdbfit(aln_pdbs)
+        rms[i,j] <- rms[j,i] <- rmsd(xyz)[1,2]
+      }
+    }
+  }, error = function(e) {
+    cat("Error downloading file:", e$message, "\n")
+  })
+}
+file.remove('aln.fa')
+tictoc::toc()
+rownames(rms) <- colnames(rms) <- spike$pdbID
+saveRDS(rms,'Data/covidPDB/RMSD_spike.rds')
+```
+
 
 # Bacteriocin
 
 This section calculates the CPE and pairwise distances between Bacteriocin proteins. The file 'Data/csv/TM_vec_bac.csv' was obtained by requesting it from the authors of the paper 'Protein remote homology detection and structural alignment using deep learning'. This file contains results from AlphaFold2, OmegaFold, ESMFold, and TM-Vec software tools for comparison purposes. The 'bacteriocin_tm_vec' file includes their results along with those generated using the CPE method.
 
 ```{r}
-# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+source('Functions.R')
 # ----------------------------------------------------
-# ----------- the csv file is from TM-Vec guys.
 tm <- read.csv('Data/csv/TM_vec_bac.csv') 
 # ---------------------------------------------------------
 # ------- ENERGY
@@ -649,7 +678,7 @@ This section calculates the CPE of protein targets, using the sequences retrieve
 
 
 ```{r}
-# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+source('Functions.R')
 # ----------------------------------------------------
 df_seq <- readRDS('Data/rds/DTI_df_seq.rds')
 
@@ -677,10 +706,11 @@ for (NP in 1:nrow(df_seq)) {
 This Chunk computes the similarity between drugs using Equation 6 from the manuscript.
 
 ```{r}
-# -------- At first, run the 'Prerequisite of Fig and dis' chunk.
+source('Functions.R')
 # ----------------------------------------------------
-sab <- readRDS('Data/rds/sAB.rds')
-colnames(sab)[1:2] <- c('d1','d2')
+sab<-read_excel('Data/csv/41467_2019_9186_MOESM7_ESM.xlsx')
+sab <- sab[-2081,-6]
+colnames(sab)[1:2]<-c('d1','d2')
 E210.seq_dti<-readRDS('Data/rds/E210.seq_dti.rds')
 
 df0 <- E210.seq_dti 
