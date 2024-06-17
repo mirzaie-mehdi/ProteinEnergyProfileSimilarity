@@ -334,6 +334,68 @@ tictoc::toc()
 ```
 
 
+## Five superfamily_CPE
+
+This chunk calculates the energy profile (CPE) for five distinct SCOP superfamilies: winged helix (a.4.5), PH domain-like (b.55.1), NTF-like (d.17.4), Ubiquitin-like (d.15.1), and Immunoglobulins (b.1.1).
+
+```{r}
+# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+# ----------------------------------------------------
+df5 <- readRDS('Data/rds/fiveSF.rds')
+Nprotein <- nrow(df5)
+#----------------------------------------------
+num_columns <- 210
+E210.seq_df5 <- data.frame(df5,
+                       matrix(NA,ncol=num_columns,nrow=Nprotein))
+
+for (NP in 1:Nprotein) {
+  print(NP)
+  chain_resno <- split_position(df5$position[NP])
+  pdbname <- df5$pdbID[NP]
+  tryCatch({
+    pdb0 <- read.pdb(pdbname,verbose = FALSE)
+    pdblist = list()
+    for (ind in 1:dim(chain_resno)[1]){
+      sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=chain_resno$chain[ind])
+      sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+      sele4 <- atom.select(pdb0, "noh")
+      sele <- combine.select(sele1, sele2,sele4, operator="AND")
+      if (!(chain_resno$start[ind]=="NA") & !(chain_resno$end[ind])=="NA"){
+         st <- chain_resno$start[ind]
+         en <- chain_resno$end[ind]
+         sele3 <- atom.select(pdb0,  resno=st:en, verbose=FALSE)
+         sele <- combine.select(sele1, sele2,sele3,sele4, operator="AND")
+      }
+      pdblist[[ind]] <- trim.pdb(pdb0, sele,verbose = FALSE)
+    }
+    new_pdb = pdblist[[1]]
+    if (dim(chain_resno)[1] > 1) {
+      for (ind in 2:dim(chain_resno)[1]){
+      new_pdb <- cat.pdb(new_pdb, pdblist[[ind]], rechain=FALSE)
+      }
+    }
+    pdbX <- new_pdb$atom
+    #-----------sequence enregy based on PDB--------
+    pdbXca <- pdbX[pdbX$elety == "CA",]
+    seq <- aa321(pdbXca$resid)
+    freq = c()
+    for (j in 1:20){
+        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+    }
+    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+    en_fr <- aaenergy * freq_matrix
+    en_fr <- en_fr/length(seq)
+    pair_es <- diag(freq) %*% as.matrix(en_fr)
+    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+    E210.seq_df5[NP,9:218] <- aa210_p
+    }, error = function(e) {
+     cat("Error downloading file:", e$message, "\n")
+    })
+}
+
+# saveRDS(E210.seq_df5,file = "Data/rds/E210.seq_df5.rds")
+```
+
 ## Ferritin-like Superfamily
 
 ```{r}
@@ -526,6 +588,78 @@ df_seq$length <- nchar(df_seq$seq)
 #saveRDS(df_seq,'Data/rds/DTI_df_seq.rds')
 ```
 
+## Bacteriocin Tm-Vec
+
+```{r}
+# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+# ----------------------------------------------------
+# ----------- the csv file is from TM-Vec guys.
+tm <- read.csv('Data/csv/TM_vec_bac.csv') 
+# ---------------------------------------------------------
+# ------- ENERGY
+# ---------------------------------------
+seqIDs <- unique(c(tm$ID_x, tm$ID_y))
+idx <- match(seqIDs, tm$ID_x)
+idy <- match(seqIDs[is.na(idx)], tm$ID_y)
+tmx <- tm[idx[!is.na(idx)], c(1,7,8,9,14)]
+tmy <- tm[idy, c(2,10,11,12,16)]
+colnames(tmx)<-colnames(tmy)<-gsub('_','',str_match(names(tmx),'.*_'))
+tm_unique <- rbind(tmx, tmy)
+write.csv(tm_unique, 'Data/csv/Bacteriocin.csv', row.names = FALSE)
+# ------------------------------------
+# add our tm-vec
+disTM <- read.csv('Data/csv/disTM_vec_bac.csv')
+diag(disTM) <- 1
+colnames(disTM) <- rownames(disTM) <- tm_unique$ID
+disTM <- melt(as.matrix(disTM))
+colnames(disTM) <- c('ID_x','ID_y','tm_vec')
+tm <- left_join(tm,disTM,c('ID_x','ID_y'))
+# ---------------------------------
+nprotein <- nrow(tm_unique)
+tm_unique <- data.frame(tm_unique, 
+                        length=nchar(tm_unique$Seq),
+                        matrix(NA,nrow=nprotein,ncol=210))
+colnames(tm_unique)[-c(1:6)] <- pair_inter
+
+tictoc::tic()
+for (i in 1:nprotein){
+  print(i)
+  seq = unlist(strsplit(tolower(tm_unique$seq[i]), ""))
+  freq = c()
+  for (j in 1:20){
+  freq[j] <-  length(grep(tolower(letters_list[j]),seq))
+  }
+freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+en_fr <- aaenergy * freq_matrix
+en_fr <- en_fr/length(seq)
+pair_es <- diag(freq) %*% as.matrix(en_fr)
+aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+tm_unique[i,7:216] <- aa210_p
+}
+df <- tm_unique[,-c(1:6)]
+rownames(df) <- tm_unique$ID
+x <- as.matrix(df) 
+dis <- x %>% proxy::dist(method = manhat)
+tictoc::toc()
+dis <- as.matrix(dis)
+dis <- melt(dis)
+colnames(dis) <- c('ID_x','ID_y', 'CPE_dis')
+tm <- left_join(tm,dis,c('ID_x','ID_y'))
+tm$CPE_dis <- (tm$CPE_dis - min(tm$CPE_dis))/(max(tm$CPE_dis)-min(tm$CPE_dis))
+tm$CPE_dis <- 1-(tm$CPE_dis)
+tm$CPE_dis <- (tm$CPE_dis) - 0.36
+
+tm$status <- if_else(tm$class_x==tm$class_y,'same class','different class')
+tm$status2 <- if_else(tm$Subclass_x==tm$Subclass_y&
+                        tm$class_x=='Class_1'&tm$class_y=='Class_1',
+                      'same class(sub class1)',NA)
+# saveRDS(tm,'Data/rds/bacteriocin_tm_vec.rds')
+# saveRDS(tm_unique,'Data/rds/E210.seq_bacteriocin.rds')
+```
+
+
+
+
 ## DTI Energy
 
 ```{r}
@@ -601,135 +735,7 @@ colnames(my_sab)<-rownames(my_sab)<-drugs
 # saveRDS(my_sab,'Data/rds/my_sab.rds')
 ```
 
-## Bacteriocin Tm-Vec
 
-```{r}
-# -------- At first, run the 'Energy Calculation prerequisite' chunk.
-# ----------------------------------------------------
-# ----------- the csv file is from TM-Vec guys.
-tm <- read.csv('Data/csv/TM_vec_bac.csv') 
-# ---------------------------------------------------------
-# ------- ENERGY
-# ---------------------------------------
-seqIDs <- unique(c(tm$ID_x, tm$ID_y))
-idx <- match(seqIDs, tm$ID_x)
-idy <- match(seqIDs[is.na(idx)], tm$ID_y)
-tmx <- tm[idx[!is.na(idx)], c(1,7,8,9,14)]
-tmy <- tm[idy, c(2,10,11,12,16)]
-colnames(tmx)<-colnames(tmy)<-gsub('_','',str_match(names(tmx),'.*_'))
-tm_unique <- rbind(tmx, tmy)
-write.csv(tm_unique, 'Data/csv/Bacteriocin.csv', row.names = FALSE)
-# ------------------------------------
-# add our tm-vec
-disTM <- read.csv('Data/csv/disTM_vec_bac.csv')
-diag(disTM) <- 1
-colnames(disTM) <- rownames(disTM) <- tm_unique$ID
-disTM <- melt(as.matrix(disTM))
-colnames(disTM) <- c('ID_x','ID_y','tm_vec')
-tm <- left_join(tm,disTM,c('ID_x','ID_y'))
-# ---------------------------------
-nprotein <- nrow(tm_unique)
-tm_unique <- data.frame(tm_unique, 
-                        length=nchar(tm_unique$Seq),
-                        matrix(NA,nrow=nprotein,ncol=210))
-colnames(tm_unique)[-c(1:6)] <- pair_inter
-
-tictoc::tic()
-for (i in 1:nprotein){
-  print(i)
-  seq = unlist(strsplit(tolower(tm_unique$seq[i]), ""))
-  freq = c()
-  for (j in 1:20){
-  freq[j] <-  length(grep(tolower(letters_list[j]),seq))
-  }
-freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-en_fr <- aaenergy * freq_matrix
-en_fr <- en_fr/length(seq)
-pair_es <- diag(freq) %*% as.matrix(en_fr)
-aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-tm_unique[i,7:216] <- aa210_p
-}
-df <- tm_unique[,-c(1:6)]
-rownames(df) <- tm_unique$ID
-x <- as.matrix(df) 
-dis <- x %>% proxy::dist(method = manhat)
-tictoc::toc()
-dis <- as.matrix(dis)
-dis <- melt(dis)
-colnames(dis) <- c('ID_x','ID_y', 'CPE_dis')
-tm <- left_join(tm,dis,c('ID_x','ID_y'))
-tm$CPE_dis <- (tm$CPE_dis - min(tm$CPE_dis))/(max(tm$CPE_dis)-min(tm$CPE_dis))
-tm$CPE_dis <- 1-(tm$CPE_dis)
-tm$CPE_dis <- (tm$CPE_dis) - 0.36
-
-tm$status <- if_else(tm$class_x==tm$class_y,'same class','different class')
-tm$status2 <- if_else(tm$Subclass_x==tm$Subclass_y&
-                        tm$class_x=='Class_1'&tm$class_y=='Class_1',
-                      'same class(sub class1)',NA)
-# saveRDS(tm,'Data/rds/bacteriocin_tm_vec.rds')
-# saveRDS(tm_unique,'Data/rds/E210.seq_bacteriocin.rds')
-```
-
-
-## five superfamily
-
-```{r}
-# -------- At first, run the 'Energy Calculation prerequisite' chunk.
-# ----------------------------------------------------
-df5 <- readRDS('Data/rds/fiveSF.rds')
-Nprotein <- nrow(df5)
-#----------------------------------------------
-num_columns <- 210
-E210.seq_df5 <- data.frame(df5,
-                       matrix(NA,ncol=num_columns,nrow=Nprotein))
-
-for (NP in 1:Nprotein) {
-  print(NP)
-  chain_resno <- split_position(df5$position[NP])
-  pdbname <- df5$pdbID[NP]
-  tryCatch({
-    pdb0 <- read.pdb(pdbname,verbose = FALSE)
-    pdblist = list()
-    for (ind in 1:dim(chain_resno)[1]){
-      sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=chain_resno$chain[ind])
-      sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
-      sele4 <- atom.select(pdb0, "noh")
-      sele <- combine.select(sele1, sele2,sele4, operator="AND")
-      if (!(chain_resno$start[ind]=="NA") & !(chain_resno$end[ind])=="NA"){
-         st <- chain_resno$start[ind]
-         en <- chain_resno$end[ind]
-         sele3 <- atom.select(pdb0,  resno=st:en, verbose=FALSE)
-         sele <- combine.select(sele1, sele2,sele3,sele4, operator="AND")
-      }
-      pdblist[[ind]] <- trim.pdb(pdb0, sele,verbose = FALSE)
-    }
-    new_pdb = pdblist[[1]]
-    if (dim(chain_resno)[1] > 1) {
-      for (ind in 2:dim(chain_resno)[1]){
-      new_pdb <- cat.pdb(new_pdb, pdblist[[ind]], rechain=FALSE)
-      }
-    }
-    pdbX <- new_pdb$atom
-    #-----------sequence enregy based on PDB--------
-    pdbXca <- pdbX[pdbX$elety == "CA",]
-    seq <- aa321(pdbXca$resid)
-    freq = c()
-    for (j in 1:20){
-        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-    E210.seq_df5[NP,9:218] <- aa210_p
-    }, error = function(e) {
-     cat("Error downloading file:", e$message, "\n")
-    })
-}
-
-# saveRDS(E210.seq_df5,file = "Data/rds/E210.seq_df5.rds")
-```
 
 
 
