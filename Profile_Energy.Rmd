@@ -339,60 +339,35 @@ tictoc::toc()
 This chunk calculates the energy profile (CPE) for five distinct SCOP superfamilies: winged helix (a.4.5), PH domain-like (b.55.1), NTF-like (d.17.4), Ubiquitin-like (d.15.1), and Immunoglobulins (b.1.1).
 
 ```{r}
-# -------- At first, run the 'Energy Calculation prerequisite' chunk.
+source('Functions.R')
 # ----------------------------------------------------
-df5 <- readRDS('Data/rds/fiveSF.rds')
+df5 <- read.csv('Data/csv/fiveSF.csv')
 Nprotein <- nrow(df5)
 #----------------------------------------------
 num_columns <- 210
 E210.seq_df5 <- data.frame(df5,
                        matrix(NA,ncol=num_columns,nrow=Nprotein))
 
+colnames(E210.seq_df5)[-c(1:9)] <- pair_inter
+tictoc::tic()
 for (NP in 1:Nprotein) {
-  print(NP)
-  chain_resno <- split_position(df5$position[NP])
-  pdbname <- df5$pdbID[NP]
-  tryCatch({
-    pdb0 <- read.pdb(pdbname,verbose = FALSE)
-    pdblist = list()
-    for (ind in 1:dim(chain_resno)[1]){
-      sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=chain_resno$chain[ind])
-      sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
-      sele4 <- atom.select(pdb0, "noh")
-      sele <- combine.select(sele1, sele2,sele4, operator="AND")
-      if (!(chain_resno$start[ind]=="NA") & !(chain_resno$end[ind])=="NA"){
-         st <- chain_resno$start[ind]
-         en <- chain_resno$end[ind]
-         sele3 <- atom.select(pdb0,  resno=st:en, verbose=FALSE)
-         sele <- combine.select(sele1, sele2,sele3,sele4, operator="AND")
-      }
-      pdblist[[ind]] <- trim.pdb(pdb0, sele,verbose = FALSE)
-    }
-    new_pdb = pdblist[[1]]
-    if (dim(chain_resno)[1] > 1) {
-      for (ind in 2:dim(chain_resno)[1]){
-      new_pdb <- cat.pdb(new_pdb, pdblist[[ind]], rechain=FALSE)
-      }
-    }
-    pdbX <- new_pdb$atom
-    #-----------sequence enregy based on PDB--------
-    pdbXca <- pdbX[pdbX$elety == "CA",]
-    seq <- aa321(pdbXca$resid)
-    freq = c()
-    for (j in 1:20){
-        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-    E210.seq_df5[NP,9:218] <- aa210_p
-    }, error = function(e) {
-     cat("Error downloading file:", e$message, "\n")
-    })
+  if (NP %% 50 == 0) {print(NP)}
+  seq <- unlist(strsplit(E210.seq_df5$seq[NP],split = ''))
+  freq = c()
+  for (j in 1:20){
+      freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+  }
+  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+  en_fr <- aaenergy * freq_matrix
+  en_fr <- en_fr/length(seq)
+  pair_es <- diag(freq) %*% as.matrix(en_fr)
+  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+  E210.seq_df5[NP,10:219] <- aa210_p
 }
-
+df2 <- E210.seq_CT_Ho
+df2 <- df2[!is.na(df2$FF),]
+dis <- as.matrix(proxy::dist(df2[,-c(1:9)], method = manhat))
+tictoc::toc()
 # saveRDS(E210.seq_df5,file = "Data/rds/E210.seq_df5.rds")
 ```
 
