@@ -23,7 +23,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns 
 from tmtools.testing import get_pdb_path
 # --------------------------------------
-pathApp = '/home/peymanc/apps/Rostlab/prot_t5_xl_uniref50'
+pathApp=input('Enter the installation path of the `tm-vec` (ex: /path/to/prot_t5_xl_uniref50): ')
+#pathApp = '/home/peymanc/apps/Rostlab/prot_t5_xl_uniref50'
 tokenizer = T5Tokenizer.from_pretrained(pathApp, do_lower_case=False )
 model = T5EncoderModel.from_pretrained(pathApp)
 gc.collect()

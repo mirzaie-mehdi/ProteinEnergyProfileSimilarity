@@ -610,7 +610,7 @@ tm$status2 <- if_else(tm$Subclass_x==tm$Subclass_y&
 
 This section retrieves the protein sequences (drug targets) utilized in the study:
 "Cheng F, Kovács IA, Barabási A-L. Network-based prediction of drug combinations. Nature communications 10, 1197 (2019)". 
-The drug-target information downloaded from its supplementary information (41467_2019_9186_MOESM4_ESM_dti_barabasi.xlsx)
+The drug-target information downloaded from its supplementary information (`41467_2019_9186_MOESM4_ESM.xlsx`, `41467_2019_9186_MOESM4_ESM.xlsx`)
 
 ```{r}
 library(rentrez)
