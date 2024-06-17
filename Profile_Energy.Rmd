@@ -293,7 +293,7 @@ for (NP in 1:Nprotein) {
 #saveRDS(E210.seq_astral,file = "Data/rds/E210.seq_astral_40.rds")
 ```
 
-## C-terminal_Homing_CPE
+# C-terminal_Homing_CPE
 This chunk calculates the CPE of proteins from two superfamilies: the C-terminal domain in the DNA helicase RuvA subunit and the Homing endonucleases.
 
 ```{r}
@@ -334,7 +334,7 @@ tictoc::toc()
 ```
 
 
-## Five superfamily_CPE
+# Five superfamily_CPE
 
 This chunk calculates the energy profile (CPE) for five distinct SCOP superfamilies: winged helix (a.4.5), PH domain-like (b.55.1), NTF-like (d.17.4), Ubiquitin-like (d.15.1), and Immunoglobulins (b.1.1).
 
@@ -396,7 +396,9 @@ for (NP in 1:Nprotein) {
 # saveRDS(E210.seq_df5,file = "Data/rds/E210.seq_df5.rds")
 ```
 
-## Ferritin-like Superfamily
+# Ferritin-like Superfamily
+
+This segment computes the SPE for proteins belonging to the Ferritin-like superfamily. The PDB IDs of these proteins are located in the 'Data\csv\Ferritin_Like.csv' file.
 
 ```{r}
 ferritin <- read.csv("Data/csv/Ferritin_Like.csv",sep = ",")
@@ -455,13 +457,14 @@ for (NP in 1:Nprotein) {
 #saveRDS(E210_ferritin_SS,file = "Data/rds/E210_ferritin_SS.rds")
 ```
 
+# Covid_Spike_Proteins
 
-## Covid_Spike200
+This segment computes the SPE and CPE for spike glycoprotein proteins. The PDB IDs of these proteins are located in the 'Data/csv/spike.csv' file.
 
 ```{r}
 # -------- At first, run the 'Energy Calculation prerequisite' chunk.
 # ----------------------------------------------------
-spike <- read.csv("Data/csv/spike_close.csv")
+spike <- read.csv("Data/csv/spike.csv")
 Nprotein <- nrow(spike)
 #----------------------------------------------
 num_columns <- 210
@@ -527,68 +530,9 @@ saveRDS(E210.seq_spike_close,file = "Data/rds/E210.seq_spike_close.rds")
 write.csv(E210.seq_spike_close[,1:5], "Data/csv/spike_close.csv",row.names = F)
 ```
 
-## DTI preprocess
-This chunk extracts AA sequences from the drug-target
-```{r}
-library(rentrez)
-get_protids_from_geneids <- function(gene_ids) {
-  # Get the protein elink.
-  protein_elink = rentrez::entrez_link(dbfrom = "gene",
-                                        id = gene_ids,
-                                        db = "protein")
-  # Get the protein id (refseq database)
-  protein_ids = protein_elink$links$gene_protein_refseq
-  return(protein_ids)
-}
+# Bacteriocin
 
-make_aa_fasta <- function(prot_ids) { #, nameFile
-  # Make a multi-fasta file with each protein id
-  sapply(prot_ids, function(x) {
-    protein_esummary = rentrez::entrez_summary(db = "protein", id = x)
-    protein_fasta = rentrez::entrez_fetch(db = "protein",
-                                          id = protein_esummary$uid,
-                                          rettype = "fasta")
-    return(protein_fasta)
-  } )
-}
-
-seq2df<-function(seq){
-  x<-strsplit(seq,'\n')
-  head<-x[[1]][1]
-  seq<-paste(x[[1]][-c(1,10)],collapse = '')
-  return(c(head,seq))
-}
-
-# ------------------------------
-dti <- read_excel('Data/csv/41467_2019_9186_MOESM4_ESM_dti_barabasi.xlsx')
-colnames(dti)<-c('drugID','entrezID')
-dti$entrezID<-as.character(dti$entrezID)
-
-sab<-readRDS('Data/rds/sAB.rds')
-colnames(sab)[1:2]<-c('d1','d2')
-
-d65<-unique(c(sab$d1,sab$d2))
-df_seq<-c()
-for(i in 1:65){
-  df<-dti[dti$drugID%in%d65[i],]
-  df2<-c()
-  for (j in 1:nrow(df)) {
-    print(paste0(i,', ',j,'/',nrow(df)))
-    prot_ids <- get_protids_from_geneids(df$entrezID[j])
-    z<-make_aa_fasta(prot_ids)
-    zz<-data.frame(prot=df$entrezID[j],t(sapply(z, seq2df)))
-    df2<-rbind(df2,zz)
-  }
-  df2<-data.frame(drug=d65[i],df2)
-  df_seq<-rbind(df_seq,df2)
-}
-
-colnames(df_seq)[3:4]<-c('Isoform','seq_aa')
-df_seq$length <- nchar(df_seq$seq)
-#saveRDS(df_seq,'Data/rds/DTI_df_seq.rds')
-```
-
-## Bacteriocin Tm-Vec
+This section calculates the CPE and pairwise distances between Bacteriocin proteins. The file 'Data/csv/TM_vec_bac.csv' was obtained by requesting it from the authors of the paper 'Protein remote homology detection and structural alignment using deep learning'. This file contains results from AlphaFold2, OmegaFold, ESMFold, and TM-Vec software tools for comparison purposes. The 'bacteriocin_tm_vec' file includes their results along with those generated using the CPE method.
 
 ```{r}
 # -------- At first, run the 'Energy Calculation prerequisite' chunk.
@@ -657,8 +601,67 @@ tm$status2 <- if_else(tm$Subclass_x==tm$Subclass_y&
 # saveRDS(tm_unique,'Data/rds/E210.seq_bacteriocin.rds')
 ```
 
+# DTI preprocess
+This chunk extracts AA sequences from the drug-target
 
+```{r}
+library(rentrez)
+get_protids_from_geneids <- function(gene_ids) {
+  # Get the protein elink.
+  protein_elink = rentrez::entrez_link(dbfrom = "gene",
+                                        id = gene_ids,
+                                        db = "protein")
+  # Get the protein id (refseq database)
+  protein_ids = protein_elink$links$gene_protein_refseq
+  return(protein_ids)
+}
 
+make_aa_fasta <- function(prot_ids) { #, nameFile
+  # Make a multi-fasta file with each protein id
+  sapply(prot_ids, function(x) {
+    protein_esummary = rentrez::entrez_summary(db = "protein", id = x)
+    protein_fasta = rentrez::entrez_fetch(db = "protein",
+                                          id = protein_esummary$uid,
+                                          rettype = "fasta")
+    return(protein_fasta)
+  } )
+}
+
+seq2df<-function(seq){
+  x<-strsplit(seq,'\n')
+  head<-x[[1]][1]
+  seq<-paste(x[[1]][-c(1,10)],collapse = '')
+  return(c(head,seq))
+}
+
+# ------------------------------
+dti <- read_excel('Data/csv/41467_2019_9186_MOESM4_ESM_dti_barabasi.xlsx')
+colnames(dti)<-c('drugID','entrezID')
+dti$entrezID<-as.character(dti$entrezID)
+
+sab<-readRDS('Data/rds/sAB.rds')
+colnames(sab)[1:2]<-c('d1','d2')
+
+d65<-unique(c(sab$d1,sab$d2))
+df_seq<-c()
+for(i in 1:65){
+  df<-dti[dti$drugID%in%d65[i],]
+  df2<-c()
+  for (j in 1:nrow(df)) {
+    print(paste0(i,', ',j,'/',nrow(df)))
+    prot_ids <- get_protids_from_geneids(df$entrezID[j])
+    z<-make_aa_fasta(prot_ids)
+    zz<-data.frame(prot=df$entrezID[j],t(sapply(z, seq2df)))
+    df2<-rbind(df2,zz)
+  }
+  df2<-data.frame(drug=d65[i],df2)
+  df_seq<-rbind(df_seq,df2)
+}
+
+colnames(df_seq)[3:4]<-c('Isoform','seq_aa')
+df_seq$length <- nchar(df_seq$seq)
+#saveRDS(df_seq,'Data/rds/DTI_df_seq.rds')
+```
 
 ## DTI Energy
 
@@ -688,6 +691,7 @@ for (NP in 1:nrow(df_seq)) {
 
 ## DTI drug similarity 
 This Chunk calculates the similarity between drugs based on Eq 6 in the paper.
+
 ```{r}
 # -------- At first, run the 'Prerequisite of Fig and dis' chunk.
 # ----------------------------------------------------
