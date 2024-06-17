@@ -46,7 +46,7 @@ for (i in 1:Np) {
         sele <- atom.select(pdb0,'protein',chain=chj)
         new_pdbj <- trim.pdb(pdb0, sele,verbose = FALSE)
         pdbs <- list(new_pdbi, new_pdbj)
-        aln_pdbs <- pdbaln(pdbs,fit = T,)
+        aln_pdbs <- pdbaln(pdbs,fit = T)
         xyz <- pdbfit(aln_pdbs)
         rms[i,j] <- rms[j,i] <- rmsd(xyz)[1,2]
       }

@@ -1498,7 +1498,7 @@ tab1 <- data.frame(method=c('1NN','RF'),tab1)
 
 ```{r}
 # -------------------- 1NN 
-df <- readRDS('Data/rds/E210.seq_CT_Ho.rds')
+df2 <- readRDS('Data/rds/E210.seq_CT_Ho.rds')
 df <- df[!is.na(df$FF),]
 twoSF <- unique(df$cathID)
 
