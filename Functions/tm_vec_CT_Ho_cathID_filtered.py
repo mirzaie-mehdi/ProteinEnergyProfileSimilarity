@@ -23,7 +23,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns 
 from tmtools.testing import get_pdb_path
 # --------------------------------------
-pathApp = '/home/peymanc/apps/Rostlab/prot_t5_xl_uniref50'
+pathApp=input('Enter the installation path of the `tm-vec` (ex: /path/to/prot_t5_xl_uniref50): ')
+#pathApp = '/home/peymanc/apps/Rostlab/prot_t5_xl_uniref50'
 tokenizer = T5Tokenizer.from_pretrained(pathApp, do_lower_case=False )
 model = T5EncoderModel.from_pretrained(pathApp)
 gc.collect()
@@ -55,7 +56,7 @@ for i in range(0,n,1):
   protrans_seq = featurize_prottrans(seq, model, tokenizer, device).detach()
   embedded_seq = embed_tm_vec(protrans_seq, model_deep, device)
   emb.loc[i,:] = embedded_seq
-#emb.to_csv(path+'TM_vec_emb_CT_Ho_cathID_filtered.csv',index=False)
+#emb.to_csv(path+'TM_vec_emb_CT_Ho.csv',index=False)
 )
 
 # Calculate cosine similarity for each pair of rows
@@ -71,7 +72,7 @@ for i in range(len(emb)):
 # Convert result to DataFrame
 cosine_similarity_df = pd.DataFrame(cosine_similarity.numpy(), index=emb.index, columns=emb.index)
 
-cosine_similarity_df.to_csv(path+'disTM_vec_CT_Ho_cathID_filtered.csv',index=False)
+cosine_similarity_df.to_csv(path+'disTM_vec_CT_Ho.csv',index=False)
 elapsed = (time.time() - start)
 
 print(elapsed)

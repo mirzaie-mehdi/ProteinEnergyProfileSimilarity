@@ -1,6 +1,5 @@
 clear;clc
-path='../Data/Dunbrack/';
-load([path 'zziReweight.mat']);
+load('zzi.mat');
 Pij = zeros(20,20);
 for i=1:20
     disp(num2str(i))
@@ -15,4 +14,4 @@ for i=1:20
         end
     end
 end
-writematrix(Pij,[path '/PijReweight.csv'])
+writematrix(Pij,'Pij.csv'])

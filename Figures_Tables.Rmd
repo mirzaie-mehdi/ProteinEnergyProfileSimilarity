@@ -56,13 +56,14 @@ library(class)
 library(readxl)
 library(ggh4x)
 library(mclust)
-source('mytheme.R')
 ```
 
 # Figures
-# Preprocess for Fig1
+## Preprocess for Fig 1
 
 ```{r}
+source('Functions.R')
+# ----------------------------------------------------
 # astral 95
 df_seq <- readRDS("Data/rds/E210.seq_astral_95.rds") 
 df_seq = df_seq[!is.na(df_seq$FL),] 
@@ -111,9 +112,11 @@ df_tot <- rbind(df_tot40, df_tot95)
 #saveRDS(df_tot, 'manuscript/fig_data/df_total_energy.rds')
 ```
 
-## Fig1
+## Fig 1
 
 ```{r}
+source('Functions.R')
+# ----------------------------------------------------
 # ************** total energy 40 and 95
 df_tot <- readRDS('manuscript/fig_data/df_total_energy.rds')
 df_tot$data <- ifelse(df_tot$data=='Astral 40','ASTRAL40','ASTRAL95')
@@ -151,9 +154,11 @@ ggarrange(NULL,
 # save FIG1.pdf 10x9
 ```
 
-## Fig2
+## Fig 2
 
 ```{r}
+source('Functions.R')
+# ----------------------------------------------------
 df_tot <- readRDS('manuscript/fig_data/df_total_energy.rds')
 df_tot <- df_tot[df_tot$class%in%c('a','b','c','d'),]
 df_tot$class[df_tot$class=='a']<-'All_alpha'
@@ -190,10 +195,11 @@ ggarrange(NULL,
 # save FIG2.pdf 10x9
 ```
 
-## Fig3
+## Preprocess for Fig 3
 
 ```{r}
-source('mytheme.R')
+source('Functions.R')
+# ----------------------------------------------------
 # ******** str40
 df <- readRDS("Data/rds/E210.astral_40.rds")
 df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
@@ -263,8 +269,14 @@ ump_df_seq95$class <- ifelse(ump_df_seq95$class=='a','All-alpha','All-beta')
 ump_df <- rbind(ump_df_str40,ump_df_seq40,
                 ump_df_str95,ump_df_seq95)
 
-# save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95,
-#      file = 'manuscript/fig_data/UMPs.RData')
+# save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95, file = 'manuscript/fig_data/UMPs.RData')
+```
+
+## Fig 3
+
+```{r}
+source('Functions.R')
+# ----------------------------------------------------
 load('manuscript/fig_data/UMPs.RData')
 ump_df_str40$type <- ifelse(ump_df_str40$type=='Structure','SPE','CPE')
 ump_df_seq40$type <- ifelse(ump_df_seq40$type=='Structure','SPE','CPE')
@@ -325,9 +337,11 @@ ggarrange(NULL,NULL,NULL,
 # save FIG3.pdf 10x10
 ```
 
-## Fig4A
+## Fig 4 A
 
 ```{r}
+source('Functions.R')
+# ----------------------------------------------------
 # ******** str40
 df <- readRDS("Data/rds/E210.astral40.rds")
 df <- df[df$fold%in%c('a.100','a.104'),]
@@ -433,9 +447,11 @@ A<-ggarrange(NULL,NULL,NULL,NULL,
 
 ```
 
-## Fig4B
+## Fig 4 B
 
 ```{r}
+source('Functions.R')
+# ----------------------------------------------------
 # ******** str40
 df <- readRDS("Data/rds/E210.astral40.rds")
 df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
@@ -539,9 +555,11 @@ B <- ggarrange(NULL,NULL,NULL,NULL,
   hjust = .2,vjust = 0)
 ```
 
-## Fig4C
+## Fig 4 C
 
 ```{r}
+source('Functions.R')
+# ----------------------------------------------------
 # ******** str40
 df <- readRDS("Data/rds/E210.astral40.rds")
 df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
@@ -643,7 +661,7 @@ C <- ggarrange(NULL,NULL,NULL,NULL,
   hjust = .2,vjust = 0)
 ```
 
-##Fig4ABC
+##Fig 4 ABC
 
 ```{r}
 ggarrange(NULL,A,B,C,ncol = 1,
@@ -651,9 +669,11 @@ ggarrange(NULL,A,B,C,ncol = 1,
 # save FIG4.pdf 10x10
 ```
 
-## Fig5EF
+## Fig 5 EF
 
 ```{r}
+source('Functions.R')
+# ----------------------------------------------------
 # ******** a.29.3
 # ****** structure40
 df <- readRDS("Data/rds/E210.astral40.rds") 
@@ -816,9 +836,11 @@ EF<-ggarrange(
 
 ```
 
-## Fig5CD
+## Fig 5 CD
 
 ```{r}
+source('Functions.R')
+# ----------------------------------------------------
 # ******** a.29
 # ****** structure40
 df <- readRDS("Data/rds/E210.astral40.rds") 
@@ -974,9 +996,11 @@ CD<-ggarrange(
     )
 ```
 
-## Fig5AB
+## Fig 5 AB
 
 ```{r}
+source('Functions.R')
+# ----------------------------------------------------
 my_comparisons<-list(c('within','between'))
 # ******** a
 # ****** structure40
@@ -1136,7 +1160,7 @@ AB<-ggarrange(
     )
 ```
 
-##Fig5All
+##Fig 5 All
 
 ```{r}
 f5all <- ggarrange(NULL,AB,CD,EF,ncol = 1,
@@ -1145,13 +1169,115 @@ cowplot::plot_grid(f5all, mylegend, ncol = 1, rel_heights = c(1,.03))
 # save pdf 10x9
 ```
 
-## Fig6 ferritin
+## Fig 6 CT_Ho
 
 ```{r}
+source('Functions.R')
+# ----------------------------------------------------
+df <- data.frame(method=c('GR-Align','RMSD','TM-Score',
+                          'YH(10Rotation)','YH(2500Rotation)','TM-Vec','CPE'),
+                 Accuracy=c(62.3, 59.2, 61.5, 70.8, 81.5, 100, 100),
+                 TimeS=c(120, 3600, 33600, 600, 18600, 67, 1))
+# ------------------------------------------------------------------------
+# ---------   the values for  `GR-Align`, `RMSD`, `TM-Score`, `YH(10Rotation)`, `YH(2500Rotation)` 
+# ----------      were previously reported in the `Yau.S et.al. Journal of Biomolecular Structure and Dynamics (2018)`.
+# --------------------------------------------------------------------------
+df$Time <- round((df$TimeS*100)/(12*3600),5)
+df$ratio<-log10(df$Accuracy/df$Time+1)
+
+df <- df[order(df$ratio, decreasing = T),]
+df$method <- factor(df$method, 
+                    levels = df$method)
+mycol <-c('magenta','orange','skyblue3','purple','red','yellow4','green')
+
+
+p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
+  geom_bar(stat="identity")+
+  coord_polar(theta="y") +
+  theme_light(base_rect_size = 0,base_line_size = 1)+
+  theme(axis.text = element_blank(),
+        axis.ticks=element_blank(),
+        axis.title = element_blank(),
+        legend.title = element_blank(),
+        #legend.position = 'none'
+        )+
+  scale_fill_manual(values = mycol)+
+  ylim(0,100)
+
+p130s <- p12h+xlim(c('CPE','TM-Vec','GR-Align'))+ylim(0,.3)+ #3.0*12*3.6 = 130sec
+  theme(legend.text = element_text(face = 'bold',size = 15))
+
+df2 <- df
+df2$Time <- df2$TimeS+1
+p2 <- ggplot(df2,aes(Accuracy,Time,col=method,label=method))+
+  geom_point(size=7,show.legend = F)+    
+  geom_text(show.legend = F,vjust=.7,hjust=1.2,col='black',size=6, fontface='bold')+
+  mytheme()+ylab('Time (s)')+
+  scale_color_manual(values = mycol)+
+  scale_y_log10()+xlim(50,103)+
+  theme(axis.text.x = element_text(face = 'bold',color = 'black',size = 20),
+        axis.text.y = element_text(face = 'bold',color = 'black',size = 20))
+# --------------------------------------------------------------------------
+# ----------------------------------------------------
+df <- data.frame(method=c('RMSD','TM-Score','SPE','TM-Vec','CPE'),
+                 basedOn=rep(c('Structure based', 'Sequence based'),c(3,2)),
+                 CT_3=c(50, 50, 100, 16, 50),
+                 CT_4=c(50, 56, 95, 48, 95),
+                 TimeS=c(70*60, 9.7*3600, 3*60, 80,0.9))
+
+df$Time <- round((df$TimeS*100)/(12*3600),5)
+
+
+df <- df[order(df$Time, decreasing = F),]
+df$method <- factor(df$method, 
+                    levels = df$method)
+mycol <-c('magenta','orange','cyan','red','green')
+
+
+p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
+  geom_bar(stat="identity")+
+  coord_polar(theta="y") +
+  theme_light(base_rect_size = 0,base_line_size = 1)+
+  theme(axis.text = element_blank(),
+        axis.ticks=element_blank(),
+        axis.title = element_blank(),
+        #legend.position = 'none',
+        legend.title = element_blank())+
+  scale_fill_manual(values = mycol)+
+  ylim(0,100)
+
+p190m <- p12h+xlim(c('CPE','TM-Vec','SPE'))+ylim(0,.44)+ #4.4*12*3.6 = 190sec
+    theme(legend.text = element_text(face = 'bold',size = 15))
+
+
+df2 <- melt(df[,1:4])
+df2$variable <- factor(ifelse(df2$variable=='CT_3',3,4))
+p <- ggplot(df2, aes(variable,value, fill=method))+
+  geom_bar(stat="identity", width = .5,
+           position=position_dodge2(preserve = "single"),alpha=1,show.legend = F)+
+  facet_grid( ~ basedOn)+xlab('Cut tree')+ylab('ARI')+
+  scale_fill_manual(values = mycol)+
+  mytheme()+
+  theme(strip.text.x = element_text(size = 20, face = 'bold'),
+        legend.text = element_text(face = 'bold',size=30),
+        axis.text.x = element_text(size = 25, face = 'bold',color = 'black'),
+        axis.text.y = element_text(size = 25, face = 'bold',color = 'black'),
+        axis.title.x = element_text(size = 25, face = 'bold',color = 'black'),
+        axis.title.y = element_text(size = 25, face = 'bold',color = 'black'))
+
+
+```
+
+
+## Fig 7 ferritin
+
+```{r}
+source('Functions.R')
+# ----------------------------------------------------
 E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
 df <- E210_ferritin
-sc <- apply(df[,-c(1:3)], 2, FUN = function(x){x/sd(x)})
-df[,-c(1:3)] <- sc
+#sc <- apply(df[,-c(1:3)], 2, FUN = function(x){x/sd(x)})
+#df[,-c(1:3)] <- sc
 dis <- proxy::dist(df[,-c(1:3)], method = manhat)
 
 nnet <- neighborNet(dis)
@@ -1166,11 +1292,13 @@ ggsplitnet(nnet) + geom_tiplab2(aes(label=label),
 # --------------------------------------------------------------------
 ```
 
-## Fig7 covid
+## Fig 8 covid
 
 ```{r}
+source('Functions.R')
+# ----------------------------------------------------
 # --------------- CPE -----------------
-E210.seq_spike <- readRDS("Data/rds/E210.seq_spike_close.rds")
+E210.seq_spike <- readRDS("Data/rds/E210.seq_spike.rds")
 df <- E210.seq_spike
 
 rownames(df) = df$pdbID
@@ -1205,7 +1333,7 @@ t_CPE = groupOTU(p_data, grp, "groups") + aes(color=groups) +
   ggtitle('CPE')
 # -----------------------------------------------------
 # ------------ SPE ----------------
-E210_spike <- readRDS("Data/rds/E210_spike_close.rds")
+E210_spike <- readRDS("Data/rds/E210_spike.rds")
 df <- E210_spike
 
 rownames(df) = df$pdbID
@@ -1241,7 +1369,7 @@ t_SPE = groupOTU(p_data, grp, "groups") + aes(color=groups) +
 # -----------------------------------------------
 # ------------- RMSD --------------
 df <- E210.seq_spike
-rms <- data.frame(readRDS('Data/covidPDB/RMSD.rds'))
+rms <- data.frame(readRDS('Data/covidPDB/RMSD_spike.rds'))
 diag(rms)<-0
 
 hc <- as.dist(rms)
@@ -1272,7 +1400,7 @@ t_RMSS <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
 # --------------------------------------------
 # ----------- TM-Vec -----------------
 df <- E210.seq_spike
-tm_vec <- read.csv('Data/covidPDB/disTM_vec.csv')
+tm_vec <- read.csv('Data/covidPDB/disTM_vec_spike.csv')
 colnames(tm_vec) <- rownames(tm_vec) <- df$pdbID
 tm_vec <- 1 - tm_vec
 
@@ -1334,10 +1462,11 @@ annotate_figure(AB, top = title_grob)
 # save FIG6.pdf 20x10
 ```
 
-## Fig8 Bacteriocin Tm-Vec
+## Fig 9 Bacteriocin Tm-Vec
 
 ```{r}
-source('mytheme.R')
+source('Functions.R')
+# ----------------------------------------------------
 tm <- readRDS('Data/rds/bacteriocin_tm_vec.rds')
 tm2 <- tm[!is.na(tm$status2),-24]
 colnames(tm2)[24]<-'status'
@@ -1413,16 +1542,18 @@ ggarrange(p2,NULL,p1,ncol = 3,nrow = 1,
 # save FIG8.pdf 15x8
 ```
 
-##Fig9 DrugTarget
+##Fig 10 DrugTarget
 
 ```{r}
-source('mytheme.R')
+source('Functions.R')
+# ----------------------------------------------------
 my_sab <- readRDS('Data/rds/my_sab.rds')
 my_sab <- as.data.frame(as.table(my_sab)) 
 colnames(my_sab) <- c("d1", "d2", "my_sAB") 
 my_sab <- my_sab[!is.na(my_sab$my_sAB), ]
-sab <- readRDS('Data/rds/sAB.rds')
-colnames(sab)[1:2] <- c('d1','d2')
+sab<-read_excel('Data/csv/41467_2019_9186_MOESM7_ESM.xlsx')
+sab <- sab[-2081,-6]
+colnames(sab)[1:2]<-c('d1','d2')
 
 df <- left_join(sab,my_sab,c('d1','d2'))
 ggplot(df,aes(sAB,my_sAB))+
@@ -1435,10 +1566,15 @@ ggplot(df,aes(sAB,my_sAB))+
 # save FIG9.pdf 10x7
 ```
 
-# Tables
-## Table1 FiveSF
+
+
+
+## Table 2 FiveSF
 
 ```{r}
+source('Functions.R')
+# -----------------------------------------
+# ----------------------CPE------------------------------
 # -------- 5 sf
 win <- 'a.4.5'
 imu <- 'b.1.1'
@@ -1448,10 +1584,11 @@ ntf <- 'd.17.4'
 
 fiveSF <- c(win,imu,ph,ub,ntf)
 #############
-df5 <- readRDS('Data/rds/E210.seq_df5.rds')
-df5 <- df5[!is.na(df5$FF),]
-###############
-dis <- as.matrix(dist(df5[,-c(1:8)],method = manhat))
+df5 <- readRDS('Data/rds/E210.seq_fiveSF.rds')
+# ----------------------------------------
+# ---------- 1NN ----------------
+# ---------------------------------------
+dis <- as.matrix(dist(df5[,-c(1:9)],method = manhat))
 diag(dis) <- NA
 
 im <- apply(dis,1, FUN = which.min)
@@ -1468,16 +1605,19 @@ Precision <- diag(cm)/colSums(cm)
 Recall <- diag(cm)/rowSums(cm)
 F1 <- (2 * Precision * Recall) /(Precision + Recall)
 
-res1nn<-data.frame(t(round(c(Accuracy,F1),2)))
-# ------------------------------------
+res1NN_CPE<-data.frame(t(round(c(Accuracy,F1),2)))
+# ----------------------------------------
+# ---------- 10 fold cross validation Random forest ----------------
+# ---------------------------------------
+set.seed(12345)
 df5$superfamily <- factor(df5$superfamily)
 kfolds <- createFolds(df5$superfamily, k = 10)
 res<-c()
 for (i in 1:10) {
   print(i)
   x <- kfolds[[i]]
-  tr <- df5[-x,c(7,9:218)]
-  te <- df5[x,c(7,9:218)]
+  tr <- df5[-x,c(7, 10:219)]
+  te <- df5[x,c(7, 10:219)]
   rf = randomForest(superfamily~.,data = tr)
   p2 <- predict(rf, te)
   cm2 <- confusionMatrix(p2, te$superfamily)
@@ -1488,24 +1628,57 @@ res <- rbind(res,colMeans(res))
 res <- round(res,2)
 rownames(res) <- c(paste0("Fold_",1:length(kfolds)),'Average')
 colnames(res)[-1] <- gsub('.Class','',colnames(res)[-1])
+resRF_CPE <- res[11,]
 # -----------------
-tab1 <- rbind(res1nn,res[11,])
-colnames(tab1)<-colnames(res)
-tab1 <- data.frame(method=c('1NN','RF'),tab1)
+res_final <- rbind(res1NN_CPE, resRF_CPE)
+colnames(res_final)<-colnames(res)
+res_final <- data.frame(method=c('1NN','RF'),res_final)
+# ----------------------------------------------------------------
+# ----------------------------------------
+# ---------- TM-Vec ----------------
+# -------------------------------------------------------
+# ----------------------------------------
+# ---------- 1NN ----------------
+# ---------------------------------------
+dis <- read.csv('Data/csv/disTM_vec_fiveSF.csv')
+diag(dis) <- NA
+
+im <- apply(dis,1, FUN = which.max)
+res <- data.frame(source=df5$superfamily, target=df5$superfamily[im])
+cm <- matrix(0,5,5)
+colnames(cm) <- rownames(cm) <- fiveSF
+for (sf in fiveSF) {
+  x <- res[res$source%in%sf,]
+  z <- table(x$target)
+  cm[sf,names(z)]<-z
+}
+Accuracy<-sum(diag(cm))/sum(cm)
+Precision <- diag(cm)/colSums(cm)
+Recall <- diag(cm)/rowSums(cm)
+F1 <- (2 * Precision * Recall) /(Precision + Recall)
+
+res1nn_TM_Vec<-data.frame(t(c(Accuracy,F1)))
+colnames(res1nn_TM_Vec) <- colnames(res_final)
+# -----------------
+res_final <- rbind(res_final, res1nn_TM_Vec)
+res_final <- data.frame(method=c('CPE (1NN)','CPE (RF)','TM_Vec (1NN)'),res_final)
 ```
 
-## Table2 CT_Ho
+## Table 1 CT_Ho
 
 ```{r}
-# -------------------- 1NN 
-df2 <- readRDS('Data/rds/E210.seq_CT_Ho.rds')
+source('Functions.R')
+# ----------------------------------------------------
+# ------------------------------------------
+# ------------ CPE ---------------------------
+# -----------------------------------
+df <- readRDS('Data/rds/E210.seq_CT_Ho.rds')
 df <- df[!is.na(df$FF),]
 twoSF <- unique(df$cathID)
-
-#dis <- read.csv('Data/csv/disTM_vec_CTHo.csv')
 dis <- as.matrix(dist(df[,-c(1:9)], method = manhat))
 diag(dis) <- NA
 
+# ---------- 1NN --------------------
 im <- apply(dis,1, FUN = which.min)
 res <- data.frame(source=df$cathID, target=df$cathID[im])
 ## ----------
@@ -1516,5 +1689,103 @@ for (sf in twoSF) {
   z <- table(x$target)
   cm[sf,names(z)]<-z
 }
-round(sum(diag(cm))/sum(cm),2)
+ac<-round(sum(diag(cm))/sum(cm),2)*100
+# ---------------------------------------------
+# -------- Note: --------------
+# the time was obtaind from the `C-terminal_Homing_CPE` chunck in `Profile_Energy.Rmd` script.
+# ---------------------------------------------------------------
+res_final <- data.frame(Method='CPE', Accuracy=ac, Time='1 sec') 
+# ------------------------------------------
+# ------------- TM-vec -----------------------------
+# ---------------------------------------------
+dis <- read.csv('Data/csv/disTM_vec_CT_Ho.csv')
+diag(dis) <- 1
+dis <- 1 - dis
+diag(dis) <- NA
+
+# ---------- 1NN --------------------
+im <- apply(dis,1, FUN = which.min)
+res <- data.frame(source=df$cathID, target=df$cathID[im])
+## ----------
+cm <- matrix(0,2,2)
+colnames(cm) <- rownames(cm) <- twoSF
+for (sf in twoSF) {
+  x <- res[res$source%in%sf,]
+  z <- table(x$target)
+  cm[sf,names(z)]<-z
+}
+ac <- round(sum(diag(cm))/sum(cm),2)*100
+
+res_final <- rbind(res_final, c('TM-Vec', ac, '67 sec'))
 ```
+
+
+## Table 3 
+
+```{r}
+source('Functions.R')
+# ----------------------------------------------------
+# -----------------CPE------------------------
+df <- readRDS("Data/rds/E210.seq_spike.rds")
+x <- as.matrix(df[,-c(1:5)]/df$length)
+hc <- x %>% proxy::dist(method = manhat)
+hc <- hc%>% hclust(method = "ward.D2")
+ARI_CPE <- c()
+for (i in 3:6) {
+  ARI_CPE <- c(ARI_CPE, adjustedRandIndex(cutree(hc, i), df$virus))
+}
+# -----------------------------------
+# -----------------SPE------------------------
+df <- readRDS("Data/rds/E210_spike.rds")
+x <- as.matrix(df[,-c(1:5)]/df$length)
+hc <- x %>% proxy::dist(method = manhat)
+hc <- hc %>% hclust(method = "ward.D2")
+ARI_SPE <- c()
+for (i in 3:6) {
+  ARI_SPE <- c(ARI_SPE, adjustedRandIndex(cutree(hc, i), df$virus))
+}
+# -----------------------------------
+# -----------------RMSD------------------------
+rms <- data.frame(readRDS('Data/covidPDB/RMSD_spike.rds'))
+diag(rms)<-0
+hc <- as.dist(rms)
+hc <- hc %>% hclust(method = "ward.D2")
+ARI_RMSD <- c()
+for (i in 3:6) {
+  ARI_RMSD <- c(ARI_RMSD, adjustedRandIndex(cutree(hc, i), df$virus))
+}
+# -----------------------------------
+# -----------------TM-Vec------------------------
+tm_vec <- read.csv('Data/covidPDB/disTM_vec_spike.csv')
+colnames(tm_vec) <- rownames(tm_vec) <- df$pdbID
+tm_vec <- 1 - tm_vec
+hc <- as.dist(tm_vec)
+hc <- hc %>% hclust(method = "ward.D2")
+ARI_TM_Vec <- c()
+for (i in 3:6) {
+  ARI_TM_Vec <- c(ARI_TM_Vec, adjustedRandIndex(cutree(hc, i), df$virus))
+}
+# -----------------------------------
+# -----------------TM-score------------------------
+tm <- read.csv('Data/covidPDB/disTM_score_spike.csv')
+tm_max <- tm
+for (i in 1:nrow(tm_max)) {
+  print(i)
+  for (j in 1:nrow(tm_max)) {
+    tm_max[i,j] <- max(tm_max[i,j], tm_max[j,i])
+    tm_max[j,i] <- tm_max[i,j]
+  }
+}
+tm_max <- 1 - tm_max
+diag(tm_max) <- NA
+hc <- as.dist(tm_max)
+hc <- hc%>% hclust(method = "ward.D2")
+ARI_TM_score <- c()
+for (i in 3:6) {
+  ARI_TM_score <- c(ARI_TM_score, adjustedRandIndex(cutree(hc, i), df$virus))
+}
+# --------------------------------
+ARI_final <- rbind(ARI_CPE, ARI_SPE, ARI_RMSD, ARI_TM_Vec, ARI_TM_score)
+colnames(ARI_final) <- paste0('cut_tree_', 3:6)
+```
+

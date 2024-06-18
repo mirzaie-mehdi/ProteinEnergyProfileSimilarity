@@ -113,3 +113,7 @@ for i=1:natom
     end
 end
 %save('energy_dell_dunbrack.mat', 'energy_dell_dunbrack')
+% ------------------------------------------------------------------
+% --------------------- Note:
+% ---- Later The `energy_dell_dunbrack.mat` file was converted to the CSV file and save at `Data/csv/energy.csv`.
+% ------------------------------------------------------------------

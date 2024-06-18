@@ -21,111 +21,16 @@ library(lsa)
 library(ggbreak)
 ```
 
-# Covid-19
-## RMSD
-```{r}
-spike <- read.csv("Data/covidPDB/spike_close.csv")
-Np <- nrow(spike)
-#----------------------------------------------
-rms <- matrix(NA,Np,Np)
-
-tictoc::tic()
-for (i in 1:Np) {
-  print(i)
-  tryCatch({
-    chi <- substr(spike$pdbID[i],5,5)
-    pdbnamei <- substr(spike$pdbID[i],1,4)
-    pdb0 <- read.pdb(tolower(pdbnamei))
-    sele <- atom.select(pdb0,chain=chi)
-    new_pdbi <- trim.pdb(pdb0, sele,verbose = FALSE)
-    for (j in 1:Np) {
-      if(i>j){
-        chj <- substr(spike$pdbID[j],5,5)
-        pdbnamej <- substr(spike$pdbID[j],1,4)
-        pdb0 <- read.pdb(tolower(pdbnamej))
-        sele <- atom.select(pdb0,'protein',chain=chj)
-        new_pdbj <- trim.pdb(pdb0, sele,verbose = FALSE)
-        pdbs <- list(new_pdbi, new_pdbj)
-        aln_pdbs <- pdbaln(pdbs,fit = T)
-        xyz <- pdbfit(aln_pdbs)
-        rms[i,j] <- rms[j,i] <- rmsd(xyz)[1,2]
-      }
-    }
-  }, error = function(e) {
-    cat("Error downloading file:", e$message, "\n")
-  })
-}
-file.remove('aln.fa')
-tictoc::toc()
-rownames(rms) <- colnames(rms) <- spike$pdbID
-saveRDS(rms,'Data/covidPDB/RMSD.rds')
-```
-
-## plot RMSD
+# spike
+## Fig S1
 
 ```{r}
-spike <- read.csv("Data/covidPDB/spike_close.csv")
-
-rms <- data.frame(readRDS('Data/covidPDB/RMSD.rds'))
-diag(rms)<-0
-
-hc <- as.dist(rms)
-hc <- hc%>% hclust(method = "ward.D2")
-
-adjustedRandIndex(cutree(hc, 3), spike$virus)
-classError(cutree(hc, 3), spike$virus)
-
-
-labcol <- c("blue","green","red" )
-ord_sml <- spike[,][order.dendrogram(dend),3]
-group_cols <- labcol[as.factor(ord_sml)]
-
-dend <- hc %>% as.dendrogram
-dend2 <- dend %>%
-  color_labels(col =   group_cols) %>%
-  set("labels_cex", .5) %>%
-  set("leaves_cex", .5) %>%
-  set("leaves_pch", 19) %>%
-  set("leaves_col", group_cols)
-
-plot(dend2, ylab = "Height",leaflab = "none")
-
-
-```
-
-## TM score
-
-```{r}
-spike <- read.csv("Data/covidPDB/spike_close.csv")
+source('Functions.R')
+# ----------------------------------------------------
+spike <- read.csv("Data/covidPDB/spike_seq.csv")
 df <- spike
-
-tm_vec <- read.csv('Data/covidPDB/disTM_vec.csv')
-colnames(tm_vec) <- rownames(tm_vec) <- spike$pdbID
-tm_vec <- 1 - tm_vec
-
-hc <- as.dist(tm_vec)
-hc <- hc%>% hclust(method = "ward.D2")
-
-adjustedRandIndex(cutree(hc, 3), spike$virus)
-classError(cutree(hc, 3), spike$virus)
-dend <- hc %>% as.dendrogram
-
-labcol <- c("blue","green","red" )
-ord_sml <- df[,][order.dendrogram(dend),3]
-group_cols <- labcol[as.factor(ord_sml)]
-
-dend2 <- dend %>%
-  #color_branches(k=3, col = c("red","blue","green3")) %>%
-  color_labels(col =   group_cols) %>%
-  set("labels_cex", .5) %>%
-  set("leaves_cex", .5) %>%
-  set("leaves_pch", 19) %>%
-  set("leaves_col", group_cols)
-
-plot(dend2, ylab = "Height",leaflab = "none")
-
 # --------------TM score-------------
-tm <- read.csv('Data/covidPDB/TM_Score.csv')
+tm <- read.csv('Data/covidPDB/disTM_score_spike.csv')
 rownames(tm) <- colnames(tm) <- df$pdbID
 
 tm_max <- tm
@@ -166,754 +71,86 @@ t_tmScore <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
   ggtitle('TM-Score')
 ```
 
-# cor SPE&CPE
+
+
+## Table S1
 
 ```{r}
-aij <- read.csv('Data/Dunbrack/PijReweight.csv',header = F)
-aij[c(8,16),]<-.5
-aij <- (aij+t(aij))/2
-aij210 <- aij[lower.tri(aij,diag = T)]
-# astral 40
-df_seq <- readRDS("Data/rds/E210.seq_astral_40.rds") 
-df_seq <- df_seq[!is.na(df_seq$FL),] 
-df_seq2 <- df_seq
-
-df_str <- readRDS("Data/rds/E210.astral_40.rds") 
-df_str <- df_str[!is.na(df_str$FL),] 
-m<-match(df_str$scopeID,df_seq$scopeID)
-df_str <- df_str[-which(is.na(m)),]
-
-
-n <- nrow(df_seq)
-csin <- rep(NA,n)
-corr <- rep(NA,n)
-manh <- rep(NA,n)
-for (i in 1:n) {
-  print(i)
-  x <- as.numeric(df_seq[i,-c(1:8)])*aij210
-  df_seq[i,-c(1:8)]<-x
-  y <- as.numeric(df_str[i,-c(1:8)])
-  csin[i] <- cosine(x,y) #lsa package
-  corr[i] <- cor(x,y)
-  manh[i] <- manhat(x,y)
+source('Functions.R')
+# ----------------------------------------------------
+# -----------------CPE------------------------
+df <- readRDS("Data/rds/E210.seq_spike.rds")
+x <- as.matrix(df[,-c(1:5)]/df$length)
+hc <- x %>% proxy::dist(method = manhat)
+hc <- hc%>% hclust(method = "ward.D2")
+ARI_CPE <- c()
+CE_CPE <- c()
+for (i in 3:6) {
+  ARI_CPE <- c(ARI_CPE, adjustedRandIndex(cutree(hc, i), df$virus))
+  CE_CPE <- c(CE_CPE, classError(cutree(hc, i), df$virus)$errorRate)
 }
-
-manh2 <- (manh - min(manh))/(max(manh) - min(manh))*(1 - (-1)) + (-1)
-#manh2 <- 1 - manh2
-manh2 <- (-1)*manh2
-#corr2 <- (corr - min(corr))/(max(corr) - min(corr))
-#csin2 <- (csin - min(csin))/(max(csin) - min(csin))
-
-df <- data.frame(Correlation=corr,
-                 Cosine=csin,
-                 Manhattan=manh2,
-                 cpe=rowSums(df_seq[,-c(1:8)]),
-                 spe=rowSums(df_str[,-c(1:8)]))
-df <- melt(df)
-df_med <- aggregate(.~variable,df,median)
-df_med$value <- round(df_med$value,2)
-
-source('mytheme.R')
-
-p <- ggplot(df, aes(variable, value, fill=variable))+
-  geom_boxplot(alpha=.7, outliers = F, show.legend = F)+
-  mytheme()+
-  theme(legend.position = c(.8,.1), 
-        axis.text.x = element_text(size = 13),
-        legend.text = element_text(size = 6))+
-  xlab('')+
-  #ylab('Density')+
-  ylab('')+
-  #geom_text(data = df_med, aes(x=value-.1, y=c(2.7, 4.2, 6.6), label = value, 
-  #                             col=variable), size=6)+
-  #geom_segment(aes(x = df_med$value[1], y = 0, xend = df_med$value[1], yend = 2.6),linetype=2)+
-  #geom_segment(aes(x = df_med$value[2], y = 0, xend = df_med$value[2], yend = 4.1),linetype=2)+
-  #geom_segment(aes(x = df_med$value[3], y = 0, xend = df_med$value[3], yend = 6.5),linetype=2)+
-  scale_color_manual(values = c('green4','orange','magenta4'),
-                     #name = "variable", labels = c("Correlation", "Cosine",'Manhattan')
-  )+
-  scale_fill_manual(values = c('green4','orange','magenta4'),
-                    #name = "variable", labels = c("Correlation", "Cosine", 'Manhattan')
-  )
-
-# save Cor_Cosine.pdf 7x6
-```
-
-# bacteriocine 
-
-```{r}
-tm <- readRDS('Data/rds/bacteriocin_tm_vec.rds')
-tm2 <- tm[!is.na(tm$status2),-24]
-colnames(tm2)[24]<-'status'
-tm2 <- rbind(tm[,-25],tm2)
-
-tm2 <- tm2[,c(5,20,21,6,23,24)] # 22~6 DeepBlast
-colnames(tm2)[-6] <- c('Alphafold2','Omegafold','ESMfold','TM_vec','CPE')
-#tm2[,-6] <- scale(tm2[,-6],center = T, scale = F)
-
-tm2 <- melt(tm2,variable.name = 'method',value.name = 'score')
-tm2$method <- factor(tm2$method,levels = c('TM_vec','Alphafold2','Omegafold','ESMfold','CPE'))
-
-
-tm2sd <- tm2 %>% group_by(status,method) %>%
-  summarise(score = score/sd(score))
-
-tm2sd$method <- factor(tm2sd$method,levels = c('TM_vec','Alphafold2','Omegafold','ESMfold','CPE'))
-
-p <- ggplot(tm2sd,aes(status,score,fill=method))+
-  geom_boxplot(outlier.shape = NA)+
-  #geom_bar(stat="identity", width = .3,position=position_dodge())+ 
-  theme_bw(base_size = 16,base_line_size = .2)
-
-```
-# ferritin
-
-```{r}
-source('mytheme.R')
-df <- read.csv('Data/csv/Ferritin_Like_seq.csv')
-df <- df[df$length!=0,]
-
-dis <- read.csv('Data/csv/disTM_vec_Ferritin_Like_seq.csv')
-colnames(dis) <- rownames(dis) <- df$pdbID
-dis <- 1 - dis
-dis <- as.dist(dis)
-
-nnet <- neighborNet(dis)
-write.nexus.networx(nnet,'Data/rds/ferritin_TMvec.nxs')
-
-
-```
-# Dunbrack
-
-```{r}
-library(bio3d)
-AA <- c("PHE","LEU","ILE","VAL","TRP","TYR","MET","CYS","HIS","THR",
-        "ARG","ALA","ASN","GLN","PRO","SER","ASP","GLY","LYS","GLU")
-letters_list <- aa321(AA)
-source("Functions/split_position.R")
-source("Functions/amacid2num.R")
-source("../Profile_Energy/structure_energy/Energy_DA20.R")
-energy_Dihedral_Dunbrack <- readRDS('Data/Dunbrack/energy_torsion_Dunbrack2.rds')
-path <- '~/Desktop/proj/Dunbrack/'
-dun <- read.delim(paste0(path,"list_with_chainID.txt"), header = F)
-Nprotein <- nrow(dun)
-E20_torsion.dun <- data.frame(pdbID = dun$V1,
-                       matrix(NA, ncol = 20, nrow = Nprotein))
-freqAA20.dun <- data.frame(pdbID = dun$V1, seq=NA, length=NA,
-                       matrix(NA, ncol = 20, nrow = Nprotein))
-colnames(E20_torsion.dun)[-c(1)] <- colnames(freqAA20.dun)[-c(1:3)] <- letters_list
-for (NP in NP:Nprotein) {
-  #if (NP %% 50 == 0) {print(NP)}
-  print(NP)
-  pdbname <- paste0(tolower(substr(E20_torsion.dun[NP,1],1,4)),'.pdb')
-  ch <- substr(E20_torsion.dun$pdbID[NP], 5,5)
-  tryCatch({
-    pdb0 <- read.pdb(paste0(path,'PDBs/',pdbname),verbose = FALSE)
-    sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
-    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
-    sele4 <- atom.select(pdb0, "noh")
-    sele <- combine.select(sele1, sele2,sele4, operator="AND")
-    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
-    E20_torsion.dun[NP,-1]<-Energy_DA20(new_pdb)
-    tor <- torsion.pdb(new_pdb)
-    tortbl <- tor$tbl
-    annot <- strsplit(rownames(tortbl), split = "\\.")
-    seq <- aa321(unlist(lapply(annot, function(x){return(x[3])})))
-    freqAA20.dun$seq[NP] <- seq
-    freqAA20.dun$length[NP] <- nchar(seq)
-    #-----------freq--------
-    freq = c()
-    for (j in 1:20){
-      freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
-    }
-    freqAA20.dun[NP, -c(1:3)] <- freq
-  }, error = function(e) {
-    cat("Error downloading file:", e$message, "\n")
-  })
-}
-
-write.csv(E20_torsion.dun,'Data/Dunbrack/E20_torsion.dun2.csv',row.names = F)
-write.csv(freqAA20.dun,'Data/Dunbrack/freqAA20.dun2.csv',row.names = F)
-
-freqAA20.dun <- read.csv('Data/Dunbrack/freqAA20.dun.csv')
-E20_torsion.dun <- read.csv('Data/Dunbrack/E20_torsion.dun.csv')
-
-Pi <- read.csv('Data/Dunbrack/Pi_torsion2.csv',header = F)
-colnames(Pi) <- letters_list
-E20.seq_torsion.dun<-data.frame(pdbID = dun$V1, seq=NA, length=NA,
-                       matrix(NA, ncol = 20, nrow = Nprotein))
-for (NP in 1:Nprotein) {
-  print(NP)
-  E20.seq_torsion.dun[NP,-c(1:3)]<-freqAA20.dun[NP,-c(1:3)]*Pi[1,]
-}
-
-plot(rowSums(E20.seq_torsion.dun[,-c(1:3)]),rowSums(E20_torsion.dun[,-1]))
-# ---------------------------
-astral <- readRDS('Data/rds/astral_40.rds')
-Nprotein <- nrow(astral)
-E20_torsion_astral <- data.frame(matrix(NA, ncol = 20, nrow = Nprotein))
-E20_seq_torsion_astral <- data.frame(matrix(NA, ncol = 20, nrow = Nprotein))
-colnames(E20_torsion_astral) <- colnames(E20_seq_torsion_astral) <- letters_list
-
-for (NP in NP:Nprotein) {
-  print(NP)
-  pdbname <- tolower(astral$pdbID[NP])
-  chain_resno <- split_position(astral$Position[NP])
-  tryCatch({
-    pdb0 <- read.pdb(pdbname,verbose = FALSE)
-    pdblist = list()
-    for (ind in 1:dim(chain_resno)[1]){
-      sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=chain_resno$chain[ind])
-      sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
-      sele4 <- atom.select(pdb0, "noh")
-      sele <- combine.select(sele1, sele2,sele4, operator="AND")
-      if (!(chain_resno$start[ind]=="NA") & !(chain_resno$end[ind])=="NA"){
-         st <- chain_resno$start[ind]
-         en <- chain_resno$end[ind]
-         sele3 <- atom.select(pdb0,  resno=st:en, verbose=FALSE)
-         sele <- combine.select(sele1, sele2,sele3,sele4, operator="AND")
-      }
-      pdblist[[ind]] <- trim.pdb(pdb0, sele,verbose = FALSE)
-    }
-    new_pdb = pdblist[[1]]
-    if (dim(chain_resno)[1] > 1) {
-      for (ind in 2:dim(chain_resno)[1]){
-      new_pdb <- cat.pdb(new_pdb, pdblist[[ind]], rechain=FALSE)
-      }
-    }
-    E20_torsion_astral[NP,]<-Energy_DA20(new_pdb)
-    tor <- torsion.pdb(new_pdb)
-    tortbl <- tor$tbl
-    annot <- strsplit(rownames(tortbl), split = "\\.")
-    seq <- aa321(unlist(lapply(annot, function(x){return(x[3])})))
-    #pdbX <- new_pdb$atom
-    #pdbX <- pdbX[pdbX$elety=='CA',]
-    #seq <- aa321(pdbX$resid)
-    #-----------freq--------
-    freq = c()
-    for (j in 1:20){
-      freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
-    }
-    E20_seq_torsion_astral[NP,] <- freq*Pi[1,]
-  }, error = function(e) {
-    cat("Error downloading file:", e$message, "\n")
-  })
-}
-plot(rowSums(E20_seq_torsion_astral[1:NP,]),rowSums(E20_torsion_astral[1:NP,]))
-cor(rowSums(E20_seq_torsion_astral[1:NP,]),rowSums(E20_torsion_astral[1:NP,]),use = 'pairwise.complete.obs')
-# ---------------------
-saveRDS(E20_seq_torsion_astral,'Data/rds/E20_seq_torsion_astral2.rds')
-saveRDS(E20_torsion_astral,'Data/rds/E20_torsion_astral2.rds')
-```
-
-# table2 -> fig
-
-```{r}
-df <- data.frame(method=c('GR-Align','RMSD','TM-Score',
-                          'YH(10Rotation)','YH(2500Rotation)','TM-Vec','CPE'),
-                 Accuracy=c(62.3, 59.2, 61.5, 70.8, 81.5, 100, 100),
-                 TimeS=c(120, 3600, 33600, 600, 18600, 67, 1))
-
-df$Time <- round((df$TimeS*100)/(12*3600),5)
-df$ratio<-log10(df$Accuracy/df$Time+1)
-
-df <- df[order(df$ratio, decreasing = T),]
-df$method <- factor(df$method, 
-                    levels = df$method)
-mycol <-c('magenta','orange','skyblue3','purple','red','yellow4','green')
-
-p <- ggplot(df, aes(x = method, y = ratio, fill= method)) +
-  geom_bar(stat="identity")+
-  coord_polar(theta="x") +
-  theme_light(base_rect_size = 0,base_line_size = 1)+
-  theme(axis.text = element_blank(),
-        axis.ticks=element_blank(),
-        axis.title = element_blank(),
-        legend.title = element_blank())+
-  scale_fill_manual(values = mycol)
-
-
-p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
-  geom_bar(stat="identity")+
-  coord_polar(theta="y") +
-  theme_light(base_rect_size = 0,base_line_size = 1)+
-  theme(axis.text = element_blank(),
-        axis.ticks=element_blank(),
-        axis.title = element_blank(),
-        legend.title = element_blank(),
-        #legend.position = 'none'
-        )+
-  scale_fill_manual(values = mycol)+
-  ylim(0,100)
-
-p3m <- p12h+xlim(c('CPE','TM-Vec','GR-Align'))+ylim(0,.3)+
-  theme(legend.text = element_text(face = 'bold',size = 15))
-
-
-source('mytheme.R')
-df2 <- df
-df2$Time <- df2$TimeS+1
-#df2 <- melt(df2[,-c(3,5)])
-p2 <- ggplot(df2,aes(Accuracy,Time,col=method,label=method))+
-  #geom_bar(stat="identity", width = .3,position=position_dodge(),alpha=.7)+
-  geom_point(size=7,show.legend = F)+    
-  geom_text(show.legend = F,vjust=.7,hjust=1.2,col='black',size=6, fontface='bold')+
-  mytheme()+ylab('Time (s)')+
-  scale_color_manual(values = mycol)+
-  scale_y_log10()+xlim(50,103)+
-  theme(axis.text.x = element_text(face = 'bold',color = 'black',size = 20),
-        axis.text.y = element_text(face = 'bold',color = 'black',size = 20))
-
-```
-#table3 -> fig
-
-```{r}
-source('mytheme.R')
-df <- data.frame(method=c('RMSD','TM-Score','SPE','TM-Vec','CPE'),
-                 basedOn=rep(c('Structure based', 'Sequence based'),c(3,2)),
-                 CT_3=c(50, 50, 100, 16, 50),
-                 CT_4=c(50, 56, 95, 48, 95),
-                 CT_5=c(46, 40, 93, 87, 94),
-                 #CT6=c(73, 40, 66, 86, 92),
-                 TimeS=c(70*60, 9.7*3600, 3*60, 80,0.9))
-
-df$Time <- round((df$TimeS*100)/(12*3600),5)
-
-
-df <- df[order(df$Time, decreasing = F),]
-df$method <- factor(df$method, 
-                    levels = df$method)
-mycol <-c('magenta','orange','cyan','red','green')
-
-
-
-
-p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
-  geom_bar(stat="identity")+
-  coord_polar(theta="y") +
-  theme_light(base_rect_size = 0,base_line_size = 1)+
-  theme(axis.text = element_blank(),
-        axis.ticks=element_blank(),
-        axis.title = element_blank(),
-        #legend.position = 'none',
-        legend.title = element_blank())+
-  scale_fill_manual(values = mycol)+
-  ylim(0,100)
-
-p3m <- p12h+xlim(c('CPE','TM-Vec','SPE'))+ylim(0,.44)+ #4.4*12*3.6 sec
-    theme(legend.text = element_text(face = 'bold',size = 15))
-
-
-df2 <- melt(df[,1:4])
-df2$variable <- factor(ifelse(df2$variable=='CT_3',3,4))
-p <- ggplot(df2, aes(variable,value, fill=method))+
-  geom_bar(stat="identity", width = .5,
-           position=position_dodge2(preserve = "single"),alpha=1,show.legend = F)+
-  facet_grid( ~ basedOn)+xlab('Cut tree')+ylab('ARI')+
-  scale_fill_manual(values = mycol)+
-  mytheme()+
-  theme(strip.text.x = element_text(size = 20, face = 'bold'),
-        legend.text = element_text(face = 'bold',size=30),
-        axis.text.x = element_text(size = 25, face = 'bold',color = 'black'),
-        axis.text.y = element_text(size = 25, face = 'bold',color = 'black'),
-        axis.title.x = element_text(size = 25, face = 'bold',color = 'black'),
-        axis.title.y = element_text(size = 25, face = 'bold',color = 'black'))
-```
-
-# scop
-```{r}
-sc<-read.delim2('~/Desktop/dir.cla.scope.2.08-stable.txt',header = F)
-colnames(sc)[1] <- 'scopeID'
-sc$family<-sc$V4
-sc$superfamily<-str_match(sc$family,'(.*)[.]')[,2]
-sc$fold<-str_match(sc$superfamily,'(.*)[.]')[,2]
-sc$class<-str_match(sc$fold,'(.*)[.]')[,2]
-sc <- sc[sc$class%in%c('a','b','c','d'),]
-# ------------------------------------------------------
-sc_seq <- readFASTA('~/Downloads/astral-scopedom-seqres-all-2.08-stable.fa')
-sc_seq <- data.frame(sc_seq)
-sc_seq <- data.frame(seq=t(sc_seq))
-sc_seq$scopeID <- rownames(sc_seq)
-# ----------------------------------------------
-ff<-data.frame(table(sc$superfamily))
-dim(ff[ff$Freq>500,])
-sf<-ff[ff$Freq>500,1]
-sc<-sc[sc$superfamily%in%sf,]
-table(sc$class)
-sc <- left_join(sc,sc_seq,'scopeID')
-sc$length <- nchar(sc$seq)
-sc <- sc[!is.na(sc$seq)&sc$length>100&sc$length<300,]
-sc <- sc[!duplicated(sc$seq),]
-# -----------------------------------------------
-astral <- readRDS("Data/rds/E210.seq_astral_95.rds") 
-astral <- astral[!is.na(astral$FF),]
-# -----------------------------------------
-m <- intersect(sc$scopeID, astral$scopeID)
-sc <- sc[!sc$scopeID%in%m,-c(5,6)]
-sc$seq <- toupper(sc$seq)
-# -----------------------------------------
-write.csv(sc,'../../sc500_300N95_2.csv',row.names = F)
 # -----------------------------------
-E210.seq_sc500_300N95 <- data.frame(sc,
-                                    matrix(NA, ncol = 210, nrow = nrow(sc)))
-
-colnames(E210.seq_sc500_300N95)[-c(1:10)] <- pair_inter
-
-tictoc::tic()
-for(NP in 1:nrow(E210.seq_sc500_300N95)){
-  if(NP%%100==0)print(NP)
-  tryCatch({
-    seq <- unlist(strsplit(toupper(E210.seq_sc500_300N95$seq[NP]),''))
-    freq = c()
-    for (j in 1:20){
-      freq[j] <- length(grep(letters_list[j],seq))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-    E210.seq_sc500_300N95[NP,-c(1:10)] <- aa210_p
-  }, error = function(e) {
-    cat("Error downloading file:", e$message, "\n")
-  }
-  )
+# -----------------SPE------------------------
+df <- readRDS("Data/rds/E210_spike.rds")
+x <- as.matrix(df[,-c(1:5)]/df$length)
+hc <- x %>% proxy::dist(method = manhat)
+hc <- hc %>% hclust(method = "ward.D2")
+ARI_SPE <- c()
+CE_SPE <- c()
+for (i in 3:6) {
+  ARI_SPE <- c(ARI_SPE, adjustedRandIndex(cutree(hc, i), df$virus))
+  CE_SPE <- c(CE_SPE, classError(cutree(hc, i), df$virus)$errorRate)
 }
-#-------------
-disCPE <- as.matrix(dist(E210.seq_sc500_300N95[,-c(1:10)], method = manhat))
-colnames(disCPE) <- rownames(disCPE) <- E210.seq_sc500_300N95$scopeID
-diag(disCPE) <- NA
-tictoc::toc()
-# -------------------------------------
-disTm <- read.csv('~/Desktop/disTM_vec_sc500_300N95_2.csv')
-colnames(disTm) <- rownames(disTm) <- E210.seq_sc500_300N95$scopeID
-disTm <- 1 - disTm
-diag(disTm) <- NA
-disTm <- as.matrix(disTm)
-# -------------------------------------
-# ------------ kNN
-df <- E210.seq_sc500_300N95
-dis <- disTm
-res <- data.frame(df[,1:10],
-                  targetK1=NA,targetK3=NA, targetK5=NA)
-for(i in 1:nrow(df)){
-  if(i%%100==0)print(i)
-  for (k in c(1,3,5)) {
-    p <- sort(dis[i,])[1:k]
-    sf_pred<-data.frame(table(df$family[df$scopeID%in%names(p)]))
-    sf_pred <- sf_pred[order(sf_pred$Freq,decreasing = T),]
-    sf_pred<-sf_pred$Var1[1]
-    res[i,paste0('targetK',k)] <- as.character(sf_pred)
-  }
+# -----------------------------------
+# -----------------RMSD------------------------
+rms <- data.frame(readRDS('Data/covidPDB/RMSD_spike.rds'))
+diag(rms)<-0
+hc <- as.dist(rms)
+hc <- hc %>% hclust(method = "ward.D2")
+ARI_RMSD <- c()
+CE_RMSD <- c()
+for (i in 3:6) {
+  ARI_RMSD <- c(ARI_RMSD, adjustedRandIndex(cutree(hc, i), df$virus))
+  CE_RMSD <- c(CE_RMSD, classError(cutree(hc, i), df$virus)$errorRate)
 }
-res$resK1 <- ifelse(res$family==res$targetK1,1,0)
-res$resK3 <- ifelse(res$family==res$targetK3,1,0)
-res$resK5 <- ifelse(res$family==res$targetK5,1,0)
-round(sum(res$resK1)/nrow(res),2)
-round(sum(res$resK3)/nrow(res),2)
-round(sum(res$resK5)/nrow(res),2)
-# -------------------------------------
-cath<-read.delim2('~/Desktop/cath/cath-domain-list-v4_3_0.txt',header = F,
-                  comment.char = '#',sep ='')
-cath$superfamily<-apply(cath[,2:5],1,FUN = function(x)(paste0(x,collapse = '.')))
-s40<-readFASTA('~/Desktop/cath/cath-dataset-nonredundant-S40-v4_3_0.atom.fa')
-ns40<-names(s40)
-
-ns40<-gsub('(\\|)','',ns40)
-ns40<-gsub('cathcurrent','',ns40)
-ns40<-str_match(ns40, '(.*)(/)')[,2]
-names(s40)<-ns40
-##########################################
-tm95 <- read.csv('../../TM_vec_emb_astral95_100.csv')
-astral <- readRDS("Data/rds/E210.seq_astral_95.rds") 
-astral <- astral[!is.na(astral$FF),]
-ff<-data.frame(table(astral$superfamily))
-dim(ff[ff$Freq>100,])
-sf<-ff[ff$Freq>100,1]
-astral<-astral[astral$superfamily%in%sf,]
-tm<-data.frame(astral[,1:8],tm95)
-tm <- tm[tm$class%in%c('a','b','c','d')&tm$length>300,]
-# ---------------------
-dis <- read.csv('../../disTM_vec_astral95_100.csv')
-dim(dis)
-colnames(dis)<-rownames(dis)<-astral$scopeID
-dis2<-as.matrix(dis[tm$scopeID, tm$scopeID])
-dim(dis2)
-dis2 <- 1 - dis2
-ump <- umap(d = dis2,
-            n_neighbors = 300,
-            min_dist = 0.9,
-            input="dist")
-
-ump_df <- data.frame(class=tm$class,
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-
-p<-ggplot(ump_df,aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7,size=.5) + 
-  mytheme()+
-  scale_color_manual(values = c('green','magenta','blue','red'))+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 5)))
-```
-
-# point mutation
-
-```{r}
-musd<-function(seq){
-  m <- s <- rep(0,20)
-  for (a in 1:20) {
-    pos <- which(seq==letters_list[a])/length(seq)
-    m[a] <- mean(pos)
-    s[a] <- sd(pos)
-  }
-  ms <- c(m,s)
-  ms[which(is.na(ms))] <- 0
-  return(ms)
+# -----------------------------------
+# -----------------TM-Vec------------------------
+tm_vec <- read.csv('Data/covidPDB/disTM_vec_spike.csv')
+colnames(tm_vec) <- rownames(tm_vec) <- df$pdbID
+tm_vec <- 1 - tm_vec
+hc <- as.dist(tm_vec)
+hc <- hc %>% hclust(method = "ward.D2")
+ARI_TM_Vec <- c()
+CE_TM_Vec <- c()
+for (i in 3:6) {
+  ARI_TM_Vec <- c(ARI_TM_Vec, adjustedRandIndex(cutree(hc, i), df$virus))
+  CE_TM_Vec <- c(CE_TM_Vec, classError(cutree(hc, i), df$virus)$errorRate)
 }
-infile<-'S9028'
-df <- read.csv(paste0('~/Desktop/', infile, '.csv'))
-df <- df[df$type%in%'Forward',]
-# ----------------- remove S552
-#rem <-c(73,  74,  75,  76,  77,  83,  84,  
-#        85,  92, 204, 209, 210, 211, 235, 237, 
-#        239, 241, 243, 245, 247, 249, 251)
-#df <- df[-rem,]
-# ---------------------------------
-df <- cbind(t(data.frame(strsplit(df$pdb_mut_chain,split = '_'))),df)
-rownames(df)<-NULL
-colnames(df)[1:3]<-unlist(strsplit(colnames(df)[4],split = '_'))
-
-pdbs <- unique(df$pdb)
-np <- length(pdbs)
-
-dis <- data.frame(pdb_mut_chain=df$pdb_mut_chain, matrix(NA,nrow(df),272))
-colnames(dis)[-1] <- c('pos','kyte', #c('HPi','NFA','AASA','RGSC','NFB','ASA'),
-                       #paste0(rep(letters_list,2),rep(c('_muN','_sdN'),each=20)),
-                       #paste0(rep(letters_list,2),rep(c('_muM','_sdM'),each=20)),
-                       paste0(rep(letters_list,2),rep(c('_muNM','_sdNM'),each=20)),
-                       pair_inter, letters_list)
-for (i in 1:np) {
-  pdbname <- pdbs[i]
-  dfp <- df[df$pdb%in%pdbname,]
-  nM <- nrow(dfp)
-  ch <- dfp$chain[1]
-  tryCatch({
-    pdb0 <- read.pdb(tolower(pdbname))
-    sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=ch)
-    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
-    sele4 <- atom.select(pdb0, "noh")
-    sele <- combine.select(sele1, sele2,sele4, operator="AND")
-    # -------------------CPE
-    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
-    pdbX <- new_pdb$atom
-    pdbXca <- pdbX[pdbX$elety == "CA",]
-    resno <- pdbXca$resno
-    seqN <- aa321(pdbXca$resid)
-    freq = c()
-    for (j in 1:20){
-        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seqN)))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seqN)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_N <- pair_es[lower.tri(pair_es,diag = T)]
-    ms40_N <- musd(seqN)
-    kyte_N <- aa2index(seqN)
-    E20tor_N <- freq*Pi[1,]
-#    grs <- GRS(paste0(seqN,collapse = ''))
-#    grs <- grs[c(19,27,28,36,37,89)]
-#    EL_N <- rep(0,6)
-#    for(u in 1:6){ # 1:158
-#      EL_N[u] <- ME(grs[[u]])
-#    }
-    for (k in 1:nM) {
-      print(paste0(i,':',np,' -> ',k,':',nM))
-      mut <- dfp$mut[k]
-      posAAm <- as.numeric(substr(mut,2,nchar(mut)-1))
-      pos <- which(resno==posAAm)
-      aam <- substr(mut,nchar(mut),nchar(mut))
-      seqM <- seqN
-      seqM[pos] <- aam
-      # ---------CPE----------------
-      freq = c()
-      for (j in 1:20){
-        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seqM)))
-        }
-      freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-      en_fr <- aaenergy * freq_matrix
-      en_fr <- en_fr/length(seqM)
-      pair_es <- diag(freq) %*% as.matrix(en_fr)
-      aa210_M <- pair_es[lower.tri(pair_es,diag = T)]
-      ms40_M <- musd(seqM)
-      kyte_M <- aa2index(seqM)
-      E20tor_M <- freq*Pi[1,]
-#      grs <- GRS(paste0(seqM,collapse = ''))
-#      grs <- grs[c(19,27,28,36,37,89)]
-#      EL_M <- rep(0,6)
-#      for(u in 1:6){ # 1:158
-#        EL_M[u] <- ME(grs[[u]])
-#      }
-      # ---------------dis----------
-      d <- (aa210_N) - (aa210_M)
-      ms40 <- ms40_N - ms40_M
-      ky <- kyte_N[pos] - kyte_M[pos]
-      E20tor <- E20tor_N - E20tor_M
-#      el <- (EL_N - EL_M)*1000
-      pmc <- paste0(pdbname,'_',mut,'_',ch)
-      dis[dis$pdb_mut_chain==pmc,-1] <- c(pos/length(seqM), ky, #el,
-                                          #ms40_N, ms40_M,
-                                          ms40, aa210_N, E20tor)
-      }
-    }, error = function(e) {
-      cat("Error downloading file:", e$message, "\n")
-    })
-}
-
-df <- left_join(df,dis,'pdb_mut_chain')
-saveRDS(df,paste0('~/Desktop/df', infile, '.rds'))
-```
-
-# merge features
-
-```{r}
-df <- readRDS('~/Desktop/dfS9028N.rds')
-df <- df[!is.na(df$FF),]
-df210<-df[,52:261]
-varsd <-apply(df210,2,sd)
-
-cor_matrix <- cor(df210)
-
-# Set a threshold for high correlation (e.g., 0.9)
-threshold <- 0.8
-
-# Find highly correlated features
-high_cor_pairs <- which(abs(cor_matrix) > threshold, arr.ind = TRUE)
-high_cor_pairs <- high_cor_pairs[high_cor_pairs[,1] != high_cor_pairs[,2], ]
-
-# Create a list to store groups of highly correlated features
-cor_groups <- list()
-added <- rep(FALSE, 210)
-
-for (i in 1:nrow(high_cor_pairs)) {
-  if (!added[high_cor_pairs[i,1]] && !added[high_cor_pairs[i,2]]) {
-    group <- c(high_cor_pairs[i,1], high_cor_pairs[i,2])
-    cor_groups[[length(cor_groups) + 1]] <- group
-    added[group] <- TRUE
-  }
-}
-
-# Function to calculate the average of columns in a group and create a new data frame
-average_correlated_features <- function(df, groups) {
-  new_df <- df
-  for (group in groups) {
-    group_cols <- colnames(df)[group]
-    new_col_name <- paste(group_cols, collapse = "_avg_")
-    new_df[[new_col_name]] <- rowSums(df[, group_cols, drop = FALSE])
-    new_df <- new_df[, !colnames(new_df) %in% group_cols]
-  }
-  return(new_df)
-}
-
-remove_correlated_features <- function(df, groups) {
-  new_df <- df
-  for (gr in groups) {
-    group_cols <- colnames(df)[gr]
-    new_df <- new_df[, !colnames(new_df) %in% group_cols[1]]
-  }
-  return(new_df)
-}
-# Apply the function to the training data frame
-train_data_transformed <- remove_correlated_features(df210, cor_groups)
-df <- cbind(df[,1:51],train_data_transformed)
-# Apply the same transformation to the testing data frame
-
-tN <- readRDS('~/Desktop/dfS2024.rds')
-tM <- readRDS('~/Desktop/dfS2024M.rds')
-test_data_transformed_N <- average_correlated_features(tN[,132:341], cor_groups)
-test_data_transformed_M <- average_correlated_features(tM[,132:341], cor_groups)
-
-df2 <- cbind(tN[,1:11],test_data_transformed_N - test_data_transformed_M)
-colnames(df2)[-c(1:11)] <- colnames(df)[-c(1:11)]
-df2 <- df2[!is.na(df2$pos),]
-
-# View the transformed training and testing data
-print(head(train_data_transformed))
-print(head(test_data_transformed))
-```
-
-# predict PM
-
-```{r}
-df <- readRDS('~/Desktop/dfS9028.rds')
-df <- df[!is.na(df$FF),]
-# ---------
-df210<-df[,52:261]
-varsd <-apply(df210,2,sd)
-idx <- which(varsd>.4)
-df210 <- df210[,names(varsd[idx])]
-df <- cbind(df[,1:11],df210)
-# ---------------------------------
-rf <- tuneRF(df[,-c(1:9)], df$ddG, doBest = T,plot = F,
-             stepFactor = 1.5,improve = 0.1)
-rf
-
-pred <- predict(rf, df[,-c(1:9)])
-tr <- data.frame(ddG=df$ddG, pred)
-tr <- tr[!is.na(tr$pred),]
-sqrt(mean((tr$ddG -tr$pred)^2))
-cor(tr$ddG , tr$pred)
-plot(tr$ddG , tr$pred)
-
-df2 <- readRDS('~/Desktop/dfS552.rds')
-df2 <- df2[!is.na(df2$FF),]
-
-df2r <- remove_correlated_features(df2[,-c(1:51)], cor_groups)
-df2 <- cbind(df2[,1:51],df2r)
-
-pred <- predict(rf, df2[,-c(1:9)])
-te <- data.frame(ddG=df2$ddG, pred)
-te <- te[!is.na(te$pred),]
-sqrt(mean((te$ddG - te$pred)^2))
-cor(te$ddG , te$pred)
-plot(te$ddG , te$pred)
-# ------------------------------------------
-kfolds <- createFolds(df$ddG, k = 5)
-res<-c()
-for (i in 1:5) {
+# -----------------------------------
+# -----------------TM-score------------------------
+tm <- read.csv('Data/covidPDB/disTM_score_spike.csv')
+tm_max <- tm
+for (i in 1:nrow(tm_max)) {
   print(i)
-  x <- kfolds[[i]]
-  tr <- df[-x, ]
-  te <- df[x, ]
-  rf <- randomForest(ddG~., data = tr[,-c(1:6,8:9)],ntree=1000,
-                     importance=TRUE, na.action=na.omit,proximity=TRUE)
-  pred <- predict(rf, tr)
-  rmseTR <- sqrt(mean((tr$ddG - pred)^2))
-  corrTR <- cor(tr$ddG , pred)
-  pred <- predict(rf, te[,-c(1:6,8:9)])
-  rmseTE <- sqrt(mean((te$ddG - pred)^2))
-  corrTE <- cor(te$ddG , pred)
-  res <- rbind(res, c(rmseTR, corrTR, rmseTE, corrTE))
-  print(c(rmseTR, corrTR, rmseTE, corrTE))
+  for (j in 1:nrow(tm_max)) {
+    tm_max[i,j] <- max(tm_max[i,j], tm_max[j,i])
+    tm_max[j,i] <- tm_max[i,j]
   }
-
-res<-c()
-for (i in 1:10) {
-  print(i)
-  x <- sample(1:4473,round(0.25*4473),replace = F)
-  tr <- df[-x, ]
-  te <- df[x, ]
-  rf <- randomForest(ddG~., data = tr[,-c(1:6,8:9)],ntree=1000,
-                     importance=TRUE, na.action=na.omit,proximity=TRUE)
-  pred <- predict(rf, tr)
-  rmseTR <- sqrt(mean((tr$ddG - pred)^2))
-  corrTR <- cor(tr$ddG , pred)
-  pred <- predict(rf, te[,-c(1:6,8:9)])
-  rmseTE <- sqrt(mean((te$ddG - pred)^2))
-  corrTE <- cor(te$ddG , pred)
-  res <- rbind(res, c(rmseTR, corrTR, rmseTE, corrTE))
 }
+tm_max <- 1 - tm_max
+diag(tm_max) <- NA
+hc <- as.dist(tm_max)
+hc <- hc%>% hclust(method = "ward.D2")
+ARI_TM_score <- c()
+CE_TM_score <- c()
+for (i in 3:6) {
+  ARI_TM_score <- c(ARI_TM_score, adjustedRandIndex(cutree(hc, i), df$virus))
+  CE_TM_score <- c(CE_TM_score, classError(cutree(hc, i), df$virus)$errorRate)
+}
+# --------------------------------
+ARI_final <- rbind(ARI_CPE, ARI_SPE, ARI_RMSD, ARI_TM_Vec, ARI_TM_score,
+                   CE_CPE, CE_SPE, CE_RMSD, CE_TM_Vec, CE_TM_score)
+colnames(ARI_final) <- paste0('cut_tree_', 3:6)
 ```
+
 
