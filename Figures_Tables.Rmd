@@ -343,7 +343,7 @@ ggarrange(NULL,NULL,NULL,
 source('Functions.R')
 # ----------------------------------------------------
 # ******** str40
-df <- readRDS("Data/rds/E210.astral40.rds")
+df <- readRDS("Data/rds/E210.astral_40.rds")
 df <- df[df$fold%in%c('a.100','a.104'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(6,3,9:218)]
@@ -359,7 +359,7 @@ ump_df_str <- data.frame(data='Astral 40',type='SPE',
                            UMAP2 = ump$layout[, 2])
 
 # ******** seq40
-df <- readRDS("Data/rds/E210.seq_astral40.rds")
+df <- readRDS("Data/rds/E210.seq_astral_40.rds")
 df <- df[df$fold%in%c('a.100','a.104'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(6,3,9:218)]
@@ -453,7 +453,7 @@ A<-ggarrange(NULL,NULL,NULL,NULL,
 source('Functions.R')
 # ----------------------------------------------------
 # ******** str40
-df <- readRDS("Data/rds/E210.astral40.rds")
+df <- readRDS("Data/rds/E210.astral_40.rds")
 df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(7,3,9:218)]
@@ -469,7 +469,7 @@ ump_df_str <- data.frame(data='Astral 40',type='SPE',
                            UMAP2 = ump$layout[, 2])
 
 # ******** seq40
-df <- readRDS("Data/rds/E210.seq_astral40.rds")
+df <- readRDS("Data/rds/E210.seq_astral_40.rds")
 df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(7,3,9:218)]
@@ -561,7 +561,7 @@ B <- ggarrange(NULL,NULL,NULL,NULL,
 source('Functions.R')
 # ----------------------------------------------------
 # ******** str40
-df <- readRDS("Data/rds/E210.astral40.rds")
+df <- readRDS("Data/rds/E210.astral_40.rds")
 df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(8,3,9:218)]
@@ -577,7 +577,7 @@ ump_df_str <- data.frame(data='Astral 40',type='SPE',
                            UMAP2 = ump$layout[, 2])
 
 # ******** seq40
-df <- readRDS("Data/rds/E210.seq_astral40.rds")
+df <- readRDS("Data/rds/E210.seq_astral_40.rds")
 df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(8,3,9:218)]
@@ -676,7 +676,7 @@ source('Functions.R')
 # ----------------------------------------------------
 # ******** a.29.3
 # ****** structure40
-df <- readRDS("Data/rds/E210.astral40.rds") 
+df <- readRDS("Data/rds/E210.astral_40.rds") 
 df = df[!is.na(df$FL),] 
 idx<- df$superfamily%in% 'a.29.3'
 dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
@@ -701,7 +701,7 @@ df_family_str <- data.frame(data='ASTRAL40-superfamily a.29.3',type='SPE',
                                    c(length(within),length(between))),
                             distance=c(within,between)) 
 # ****** sequence40
-df <- readRDS("Data/rds/E210.seq_astral40.rds") 
+df <- readRDS("Data/rds/E210.seq_astral_40.rds") 
 df = df[!is.na(df$FL),] 
 idx<- df$superfamily%in% 'a.29.3'
 dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
@@ -843,7 +843,7 @@ source('Functions.R')
 # ----------------------------------------------------
 # ******** a.29
 # ****** structure40
-df <- readRDS("Data/rds/E210.astral40.rds") 
+df <- readRDS("Data/rds/E210.astral_40.rds") 
 df = df[!is.na(df$FL),] 
 idx<- df$fold%in% 'a.29'
 dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
@@ -868,7 +868,7 @@ df_superfamily_str <- data.frame(data='ASTRAL40-fold a.29',type='SPE',
                                    c(length(within),length(between))),
                             distance=c(within,between)) 
 # ****** sequence40
-df <- readRDS("Data/rds/E210.seq_astral40.rds") 
+df <- readRDS("Data/rds/E210.seq_astral_40.rds") 
 df = df[!is.na(df$FL),] 
 idx<- df$fold%in% 'a.29'
 dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
@@ -1004,7 +1004,7 @@ source('Functions.R')
 my_comparisons<-list(c('within','between'))
 # ******** a
 # ****** structure40
-df <- readRDS("Data/rds/E210.astral40.rds") 
+df <- readRDS("Data/rds/E210.astral_40.rds") 
 df = df[!is.na(df$FL),] 
 idx<- df$class%in% 'a'
 dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
@@ -1030,7 +1030,7 @@ df_fold_str <- data.frame(data='ASTRAL40-class alpha',type='SPE',
                             gr=rep(c('within','between'),c(1000,1000)),
                             distance=c(wit,bet)) 
 # ****** sequence40
-df <- readRDS("Data/rds/E210.seq_astral40.rds") 
+df <- readRDS("Data/rds/E210.seq_astral_40.rds") 
 df = df[!is.na(df$FL),] 
 idx<- df$class%in% 'a'
 dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
@@ -1642,7 +1642,7 @@ res_final <- data.frame(method=c('1NN','RF'),res_final)
 # ----------------------------------------
 # ---------- 1NN ----------------
 # ---------------------------------------
-dis <- read.csv('Data/csv/disTM_vec_fiveSF.csv')
+dis <- read.csv('Data/csv/disTM_vec_fiveSF.csv') "Since this file exceeds 900 MB, you should first run the script `tm_vec_fiveSF.py`."
 diag(dis) <- NA
 
 im <- apply(dis,1, FUN = which.max)
@@ -1719,6 +1719,7 @@ for (sf in twoSF) {
 ac <- round(sum(diag(cm))/sum(cm),2)*100
 
 res_final <- rbind(res_final, c('TM-Vec', ac, '67 sec'))
+res_final
 ```
 
 
@@ -1789,5 +1790,6 @@ for (i in 3:6) {
 # --------------------------------
 ARI_final <- rbind(ARI_CPE, ARI_SPE, ARI_RMSD, ARI_TM_Vec, ARI_TM_score)
 colnames(ARI_final) <- paste0('cut_tree_', 3:6)
+ARI_final
 ```
 
