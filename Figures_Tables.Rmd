@@ -56,6 +56,7 @@ library(class)
 library(readxl)
 library(ggh4x)
 library(mclust)
+library(googledrive)
 ```
 
 # Figures
@@ -1642,7 +1643,11 @@ res_final <- data.frame(method=c('1NN','RF'),res_final)
 # ----------------------------------------
 # ---------- 1NN ----------------
 # ---------------------------------------
-dis <- read.csv('Data/csv/disTM_vec_fiveSF.csv') "Since this file exceeds 900 MB, you should first run the script `tm_vec_fiveSF.py`."
+drive_deauth()
+drive_user()
+public_file <- drive_get(as_id("1coQdrd5zbTT9F0_pBkLARgR-uTHUINiC"))
+drive_download(public_file, overwrite = TRUE)
+dis<-read.csv('disTM_vec_fiveSF.csv')
 diag(dis) <- NA
 
 im <- apply(dis,1, FUN = which.max)
