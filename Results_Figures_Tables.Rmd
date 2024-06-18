@@ -1463,7 +1463,7 @@ ggplot(df,aes(sAB,my_sAB))+
 
 ## Fig S1
 
-```{r}
+```{r Fig S1}
 source('Functions.R')
 # ----------------------------------------------------
 spike <- read.csv("Data/covidPDB/spike_seq.csv")
@@ -1576,7 +1576,6 @@ resRF_CPE <- res[11,]
 # -----------------
 res_final <- rbind(res1NN_CPE, resRF_CPE)
 colnames(res_final)<-colnames(res)
-res_final <- data.frame(method=c('1NN','RF'),res_final)
 # ----------------------------------------------------------------
 # ----------------------------------------
 # ---------- TM-Vec ----------------
@@ -1587,9 +1586,11 @@ drive_user()
 public_file <- drive_get(as_id("1coQdrd5zbTT9F0_pBkLARgR-uTHUINiC"))
 drive_download(public_file, overwrite = TRUE)
 dis<-read.csv('disTM_vec_fiveSF.csv')
+file.remove('disTM_vec_fiveSF.csv')
 diag(dis) <- NA
 # ---------- 1NN ----------------
 im <- apply(dis,1, FUN = which.max)
+rm(dis)
 res <- data.frame(source=df5$superfamily, target=df5$superfamily[im])
 cm <- matrix(0,5,5)
 colnames(cm) <- rownames(cm) <- fiveSF
