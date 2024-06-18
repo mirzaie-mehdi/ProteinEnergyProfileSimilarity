@@ -434,7 +434,7 @@ for (NP in 1:Nprotein) {
 
 # Covid_Spike_Proteins
 
-This segment computes the SPE and CPE for spike glycoprotein proteins. The PDB IDs of these proteins are located in the 'Data/csv/spike.csv' file.
+This segment computes the SPE and CPE for spike glycoprotein proteins. The PDB IDs of these proteins are located in the 'Data/csv/spike.csv' file. 
 
 ```{r}
 # -------- At first, run the 'Energy Calculation prerequisite' chunk.
