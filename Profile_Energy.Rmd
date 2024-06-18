@@ -324,14 +324,17 @@ drive_user()
 public_file <- drive_get(as_id("1URMAZHu5PhsLFPC2PVhGwK2kdRFHvWaN"))
 drive_download(public_file, overwrite = TRUE)
 dis_str <- readRDS('dis_str95.rds')
+file.remove('dis_str95.rds')
 public_file <- drive_get(as_id("1BSID4pwBcvW6-0CaDosuJkiQ4b9-n8ID"))
 drive_download(public_file, overwrite = TRUE)
 dis_seq <- readRDS('dis_seq95.rds')
+file.remove('dis_seq95.rds')
 # ----------------------------------------------------------
 idx <- sample(length(dis_str),100000)
 df_dis95 <- data.frame(data='Astral 95',
                        dis_str=as.vector(dis_str)[idx],
                        dis_seq=as.vector(dis_seq)[idx])
+rm(dis_seq, dis_str)
 #saveRDS(df_dis95,'manuscript/fig_data/dis_95_manhat.rds')
 # ************************************************************
 # astral 40
@@ -356,14 +359,17 @@ drive_user()
 public_file <- drive_get(as_id("1XbBA-7U5gUsq0vM-zOiyO48XwlJPoA6t"))
 drive_download(public_file, overwrite = TRUE)
 dis_str <- readRDS('dis_str40.rds')
+file.remove('dis_str40.rds')
 public_file <- drive_get(as_id("1l3o2w38F8KGMdCjaOPoLV59m1oDg-OO_"))
 drive_download(public_file, overwrite = TRUE)
 dis_seq <- readRDS('dis_seq40.rds')
+file.remove('dis_seq40.rds')
 # ----------------------------------------------------------
 idx <- sample(length(dis_str),100000)
 df_dis40 <- data.frame(data='Astral 40',
                        dis_str=as.vector(dis_str)[idx],
                        dis_seq=as.vector(dis_seq)[idx])
+rm(dis_seq, dis_str)
 #saveRDS(df_dis40,'manuscript/fig_data/dis_40_manhat.rds')
 # **************************************
 df_tot <- rbind(df_tot40, df_tot95)
