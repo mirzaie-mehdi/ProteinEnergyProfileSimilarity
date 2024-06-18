@@ -9,7 +9,8 @@ This repository includes all the code and resource data necessary for constructi
 
     #### Note:
    To obtain the results of TM-Vec, you need to install the TM-Vec software as instructed at https://github.com/tymor22/tm-vec. The `Functions` folder contains four Python scripts that generate the TM-Vec results. For instance, you can reproduce the results for bacteriocins by running the script `tm_vec_bac.py`. The results of `tm_vec_bac.py`, `tm_vec_CT_Ho_cathID_filtered.py`, `tm_vec_Ferritin_Like_seq.py` scripts are already saved  as `disTM_vec_bac.csv`, `disTM_vec_CT_Ho_cathID_filtered.csv`, `disTM_vec_Ferritin_Like_seq.csv` in the `Data/csv/` folder. The result of `tm_vec_fiveSF.py` is shared via the google drive link:
-   https://drive.google.com/file/d/1coQdrd5zbTT9F0_pBkLARgR-uTHUINiC/view
+   https://drive.google.com/drive/folders/1osbntpxhGUFtQsG-beiJDQvAfWeCBMzl?usp=drive_link
+   
 
    To obtain the TM-Vec and TM-score results on the Covid dataset, you need to run the scripts `tm_vec_spike.py` and `tm_score_spike.py` located in the `Data/covidPDB/` folder. The results of these scripts are already saved in this folder as `disTM_score_spike.csv` and `disTM_vec_spike.csv`. The RMSD results for this dataset can be obtained from the Chunk # RMSD_spike in the `Profile_Energy.Rmd` file. To run this chunk, you need to have the `muscle3.8.1551` software installed.
 
