@@ -66,7 +66,7 @@ library(ggh4x)
 ## ASTRAL95_parse
 This chunk parse the astral 95 data downloaded form Scope 2.08 and organize it into a suitable data-frame with columns "scopeID","pdbID" ,"Position", "class","fold","superfamily","family","seq". Since we already made 'astral_95.rds' and 'astrals_95_seq.rds', we do not need to run the following chunk.
 
-```{r}
+```{r Parse_Astral95}
 astrals_95 <- read_table("Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-95-2.08.fa", col_names = FALSE)
 astrals_95_seq <- readFASTA("Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-95-2.08.fa")
 
@@ -102,7 +102,7 @@ astral_95 <- astral_95[,c("scopeID","pdbID" ,"Position", "class","fold","superfa
 ## ASTRAL40_parse
 This chunk parse the astral 40 data downloaded form Scope 2.08 and organize it into a suitable data-frame with columns "scopeID","pdbID" ,"Position", "class","fold","superfamily","family","seq". Since we already made 'astral_40.rds' and 'astrals_40_seq.rds', we do not need to run the following chunk.
 
-```{r}
+```{r Parse_Astral95}
 astrals_40 <- read_table("Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-40-2.08.fa", col_names = FALSE)
 astrals_40_seq <- readFASTA("Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-40-2.08.fa")
 
@@ -152,7 +152,7 @@ astral_40 <- cbind(astral_40,df_split)
 
 This chunk calculate the profile of energy for protein domains in ASTRAL95/40 based on sequence and structure.
 
-```{r}
+```{r Astrals_CPE_SPE}
 source('Functions.R')
 # ----------------------------------------------------
 astral <- readRDS("Data/rds/astral_95.rds")
