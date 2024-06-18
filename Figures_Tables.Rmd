@@ -79,7 +79,9 @@ df_tot95 <- data.frame(data='Astral 95', class=df_str$class,
                        seq=rowSums(df_seq[,-c(1:8)]),
                        str=rowSums(df_str[,-c(1:8)]))
 # **** distance 95
+tictoc::tic()
 dis_seq <- dist(df_seq[,-c(1:8)],method = manhat)
+tictoc::toc()
 dis_str <- dist(df_str[,-c(1:8)],method = manhat)
 idx <- sample(length(dis_str),100000)
 df_dis95 <- data.frame(data='Astral 95',
