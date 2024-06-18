@@ -364,9 +364,9 @@ for (NP in 1:Nprotein) {
   aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
   E210.seq_df5[NP,10:219] <- aa210_p
 }
-#df2 <- E210.seq_CT_Ho
-#df2 <- df2[!is.na(df2$FF),]
-#dis <- as.matrix(proxy::dist(df2[,-c(1:9)], method = manhat))
+df2 <- E210.seq_df5
+df2 <- df2[!is.na(df2$FF),]
+dis <- as.matrix(proxy::dist(df2[,-c(1:9)], method = manhat))
 tictoc::toc()
 # saveRDS(E210.seq_df5,file = "Data/rds/E210.seq_df5.rds")
 ```
@@ -606,74 +606,11 @@ tm$status2 <- if_else(tm$Subclass_x==tm$Subclass_y&
 
 # Drug-Target 
 
-## Protein_Sequence_Target
 
+## Protein_Targets_CPE
 This section retrieves the protein sequences (drug targets) utilized in the study:
 "Cheng F, Kovács IA, Barabási A-L. Network-based prediction of drug combinations. Nature communications 10, 1197 (2019)". 
 The drug-target information downloaded from its supplementary information (`41467_2019_9186_MOESM4_ESM.xlsx`, `41467_2019_9186_MOESM4_ESM.xlsx`)
-
-```{r}
-library(rentrez)
-get_protids_from_geneids <- function(gene_ids) {
-  # Get the protein elink.
-  protein_elink = rentrez::entrez_link(dbfrom = "gene",
-                                        id = gene_ids,
-                                        db = "protein")
-  # Get the protein id (refseq database)
-  protein_ids = protein_elink$links$gene_protein_refseq
-  return(protein_ids)
-}
-
-make_aa_fasta <- function(prot_ids) { #, nameFile
-  # Make a multi-fasta file with each protein id
-  sapply(prot_ids, function(x) {
-    protein_esummary = rentrez::entrez_summary(db = "protein", id = x)
-    protein_fasta = rentrez::entrez_fetch(db = "protein",
-                                          id = protein_esummary$uid,
-                                          rettype = "fasta")
-    return(protein_fasta)
-  } )
-}
-
-seq2df<-function(seq){
-  x<-strsplit(seq,'\n')
-  head<-x[[1]][1]
-  seq<-paste(x[[1]][-c(1,10)],collapse = '')
-  return(c(head,seq))
-}
-
-# ------------------------------
-dti <- read_excel('Data/csv/41467_2019_9186_MOESM4_ESM.xlsx')
-colnames(dti)<-c('drugID','entrezID')
-dti$entrezID<-as.character(dti$entrezID)
-
-sab<-read_excel('Data/csv/41467_2019_9186_MOESM7_ESM.xlsx')
-sab <- sab[-2081,-6]
-colnames(sab)[1:2]<-c('d1','d2')
-
-d65<-unique(c(sab$d1,sab$d2))
-df_seq<-c()
-for(i in 1:65){
-  df<-dti[dti$drugID%in%d65[i],]
-  df2<-c()
-  for (j in 1:nrow(df)) {
-    print(paste0(i,', ',j,'/',nrow(df)))
-    prot_ids <- get_protids_from_geneids(df$entrezID[j])
-    z<-make_aa_fasta(prot_ids)
-    zz<-data.frame(prot=df$entrezID[j],t(sapply(z, seq2df)))
-    df2<-rbind(df2,zz)
-  }
-  df2<-data.frame(drug=d65[i],df2)
-  df_seq<-rbind(df_seq,df2)
-}
-
-colnames(df_seq)[3:4]<-c('Isoform','seq_aa')
-df_seq$length <- nchar(df_seq$seq)
-#saveRDS(df_seq,'Data/rds/DTI_df_seq.rds')
-```
-
-## Protein_Targets_CPE
-
 This section calculates the CPE of protein targets, using the sequences retrieved in the "Protein_Sequence_Target" Chunk.
 
 
