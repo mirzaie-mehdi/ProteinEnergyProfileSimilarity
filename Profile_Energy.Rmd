@@ -592,6 +592,7 @@ colnames(E210.seq_ferritin)[-c(1:4)] <- pair_inter
 for (NP in 1:Nprotein) {
   print(NP)
   seq <- unlist(strsplit(E210.seq_ferritin$seq[NP], ''))
+  #seq <- seq[11:(length(seq)-10)]
   freq <- c()
     for (j in 1:20){
       freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
@@ -617,10 +618,11 @@ spike <- read.csv("Data/csv/spike.csv")
 Nprotein <- nrow(spike)
 #----------------------------------------------
 num_columns <- 210
-E210_spike <- data.frame(spike,seq=NA,
+E210_spike <- data.frame(pdbID=spike$pdbID, length=NA,
+                         virus=spike$virus, seq=NA,
                             matrix(NA,ncol=num_columns,nrow=Nprotein))
 
-colnames(E210_spike)[4:213] <- pair_inter
+colnames(E210_spike)[4:214] <- pair_inter
 
 tictoc::tic()
 for (NP in 1:Nprotein) {
@@ -637,7 +639,9 @@ for (NP in 1:Nprotein) {
     new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
     pdbX <- new_pdb$atom
     pdbX <- pdbX[pdbX$elety%in%'CA',]
-    E210_spike$seq[NP] <- paste0(aa321(pdbX$resid),collapse = '')
+    seq <- paste0(aa321(pdbX$resid),collapse = '')
+    E210_spike$seq[NP] <- seq
+    E210_spike$length[NP] <- nchar(seq)
     Net_Frame <- NetworkFrame(PDB = new_pdb)
     energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
     E210_spike[NP,4:213] <- energy210
@@ -646,13 +650,13 @@ for (NP in 1:Nprotein) {
     })
 }
 df <- E210_spike
-x  <- as.matrix(df[,-c(1:2)]) 
+x  <- as.matrix(df[,-c(1:4)]) 
 dis <- x %>% proxy::dist(method = manhat)
 tictoc::toc()
 
-E210.seq_spike <- data.frame(E210_spike[,1:3],
+E210.seq_spike <- data.frame(E210_spike[,1:4],
                             matrix(NA,ncol=num_columns,nrow=Nprotein))
-colnames(E210.seq_spike)[4:213] <- pair_inter
+colnames(E210.seq_spike)[-c(1:4)] <- pair_inter
 
 tictoc::tic()
 for (NP in 1:Nprotein) {
@@ -667,9 +671,9 @@ for (NP in 1:Nprotein) {
   en_fr <- en_fr/length(seq)
   pair_es <- diag(freq) %*% as.matrix(en_fr)
   aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
-  E210.seq_spike[NP,4:213] <- aa210_p
+  E210.seq_spike[NP,5:214] <- aa210_p
 }
-df <- E210.seq_spike[,-c(1:3)]
+df <- E210.seq_spike[,-c(1:4)]
 dis <- df %>% proxy::dist(method = manhat)
 tictoc::toc()
 
@@ -716,7 +720,7 @@ colnames(tm_unique)[-c(1:6)] <- pair_inter
 tictoc::tic()
 for (i in 1:nprotein){
   print(i)
-  seq = unlist(strsplit(tolower(tm_unique$seq[i]), ""))
+  seq = unlist(strsplit(tolower(tm_unique$Seq[i]), ""))
   freq = c()
   for (j in 1:20){
   freq[j] <-  length(grep(tolower(letters_list[j]),seq))

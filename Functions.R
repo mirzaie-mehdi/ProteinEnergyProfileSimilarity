@@ -497,7 +497,7 @@ for (i in 1:20) {
 } 
 # -----------------------------------
 # -----  Sequence Energy Estimator (predictor)
-aaenergy <- read.csv("Data/csv/Pij.csv", header = F,sep = ";")
+aaenergy <- read.csv("Data/csv/new2_Pij.csv", header = F,sep = ";")
 aaenergy <- (aaenergy + t(aaenergy))/2
 colnames(aaenergy) <- rownames(aaenergy) <- letters_list
 # -------------------------------------------------------------
