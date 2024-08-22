@@ -1121,7 +1121,7 @@ source('Functions.R')
 E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
 df <- E210_ferritin
 rownames(df) <- df$pdbID
-dis <- proxy::dist(df[,-c(1:4)], method = manhat)
+dis <- proxy::dist(df[,-c(1:3)], method = manhat)
 
 nnet <- neighborNet(dis)
 ggsplitnet(nnet) + geom_tiplab2(aes(label=label),
@@ -1145,7 +1145,7 @@ E210.seq_spike <- readRDS("Data/rds/E210.seq_spike.rds")
 df <- E210.seq_spike
 
 rownames(df) <- df$pdbID
-x <- df[,-c(1:4)]/df$length
+x <- df[,-c(1:5)]/df$length
 x  <- as.matrix(x) 
 dis <- x %>% proxy::dist(method = manhat)
 hc <- dis %>% hclust(method = "ward.D2")
@@ -1161,12 +1161,12 @@ grp <- list(MERS_Cov     = rn[1:32],
             SARS_Cov2  = rn[64:143])
 
 tree_data <- as.phylo(dend)
-#p_data <- ggtree(tree_data, layout = 'dendrogram',
-#                 size = 2)
-#myBoots <- boot.phylo(tree_data, as.matrix(dis),B = 1000,
-#                      function(e) bionj(proxy::dist(e,method=manhat)))
+p_data <- ggtree(p_data, layout = 'dendrogram',
+                 size = 2)
+myBoots <- boot.phylo(tree_data, as.matrix(dis), B = 100,
+                      function(e) bionj(dis))
 
-#p_data$data$boots<-c(rep(NA,143),myBoots)
+p_data$data$boots<-c(rep(NA,143),myBoots)
 
 t_CPE <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
   theme(legend.position="none",
@@ -1175,6 +1175,7 @@ t_CPE <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
 #               hjust=-.1,size=1.5,fontface="bold",align=F)+
 #  geom_tiplab(aes(label=label),
 #               hjust=1,size=1.5,fontface="bold",align=F)+
+#  geom_text2(aes(subset=!isTip, label=boots),col='black', hjust=.3)+
   scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
                       type =  c('black',"blue","green","red" ))+
   ggtitle('CPE')
