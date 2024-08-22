@@ -1,0 +1,802 @@
+---
+title: "Reviewers Response"
+author: "peyman"
+date: "2024-08-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Ferritin
+```{r}
+df <- readRDS("Data/rds/E210_ferritin.rds")
+rownames(df) <- df$pdbID
+
+x <- df[,-c(1:3)]
+x  <- as.matrix(x) 
+dis <- as.matrix(x %>% proxy::dist(method = manhat))
+
+data <- df[, -c(1,2)]
+colnames(data)[1]<-'group'
+data$group<-factor(data$group)
+
+tm_vec <- read.csv('Data/csv/disTM_vec_Ferritin_Like_seq.csv')
+colnames(tm_vec) <- rownames(tm_vec) <- df$pdbID
+tm_vec <- 1 - tm_vec
+dis <- as.matrix(as.dist(tm_vec))
+# Function to calculate minimum pairwise distance between two groups
+calculate_min_distance <- function(group1_indices, group2_indices, distance_matrix) {
+  # Extract the submatrix for group1 and group2
+  submatrix <- distance_matrix[group1_indices, group2_indices]
+  return(min(submatrix))
+}
+# Extract groups
+group_indices <- split(seq_len(nrow(data)), data$group)
+# Calculate minimum distances between each pair of groups
+min_distances <- matrix(NA, nrow = 8, ncol = 8, 
+                        dimnames = list(levels(data$group), 
+                                        levels(data$group)))
+for (i in 1:8) {
+  for (j in 1:8) {
+    min_distances[i, j] <- calculate_min_distance(group_indices[[i]], 
+                                                  group_indices[[j]],
+                                                  dis)
+  }
+}
+final_dis <- min_distances
+final_dis <- (final_dis - min(final_dis))/(max(final_dis) - min(final_dis))
+
+final_dis <- round(final_dis,2)
+```
+
+# resPoint
+
+```{r}
+df <- readRDS("Data/rds/E210.seq_spike.rds")
+rownames(df) <- df$pdbID
+
+# -------------------------------------------
+clustalo_I20240806_105328_0545_97518050_p1m <- read_table("~/Downloads/clustalo-I20240806-105328-0545-97518050-p1m.pim",
+                                                          col_names = FALSE, comment = "#")
+dIdeseq <- data.frame(clustalo_I20240806_105328_0545_97518050_p1m[,-c(1,2)])
+colnames(dIdeseq) <- rownames(dIdeseq) <- clustalo_I20240806_105328_0545_97518050_p1m$X2
+dIdeseq <- dIdeseq/100
+dIdeseq <- 1 - dIdeseq
+dIdeseq <- dIdeseq[df$pdbID, df$pdbID]
+# --------------------------
+manhat <- function(X, Y){
+  x<-X; y<-Y
+  xy <- abs(x - y)
+  xy <- xy[xy != 0]
+  if(length(xy)==0){
+    d <- 0
+  }else{
+    d <- sum(xy)/length(xy)
+  }
+  return(d)
+}
+# -------------------
+
+x <- df[,-c(1:5)]/df$length
+x  <- as.matrix(x) 
+dis <- as.matrix(x %>% proxy::dist(method = manhat))
+#rms <- data.frame(readRDS('Data/covidPDB/RMSD_spike.rds'))
+#diag(rms)<-0
+#dis <- as.matrix(as.dist(rms))
+
+tm_vec <- read.csv('Data/covidPDB/disTM_vec_spike.csv')
+colnames(tm_vec) <- rownames(tm_vec) <- df$pdbID
+tm_vec <- 1 - tm_vec
+dis <- as.matrix(as.dist(tm_vec))
+dis <- as.matrix(as.dist(dIdeseq))
+
+data <- df[, -c(1,2,4,5)]
+colnames(data)[1]<-'group'
+data$group<-factor(data$group)
+
+# Function to calculate minimum pairwise distance between two groups
+calculate_min_distance <- function(group1_indices, group2_indices, distance_matrix) {
+  # Extract the submatrix for group1 and group2
+  submatrix <- distance_matrix[group1_indices, group2_indices]
+  return(min(submatrix))
+}
+# Extract groups
+group_indices <- split(seq_len(nrow(data)), data$group)
+# Calculate minimum distances between each pair of groups
+min_distances <- matrix(NA, nrow = 3, ncol = 3, 
+                        dimnames = list(levels(data$group), 
+                                        levels(data$group)))
+for (i in 1:3) {
+  for (j in 1:3) {
+    min_distances[i, j] <- calculate_min_distance(group_indices[[i]], 
+                                                  group_indices[[j]],
+                                                  dis)
+  }
+}
+diag(min_distances)<-0
+final_dis <- min_distances
+final_dis <- (final_dis - min(final_dis))/(max(final_dis) - min(final_dis))
+# Display the minimum distance matrix
+print(round(final_dis,2))
+# --------------------------------------------
+library(cluster)
+
+# Function to calculate medoid for a group
+calculate_medoid <- function(dist_matrix, group_indices) {
+  submatrix <- dist_matrix[group_indices, group_indices]
+  medoid_index <- pam(submatrix, 1)$id.med
+  return(grep(rownames(submatrix)[medoid_index], rownames(dist_matrix)))
+}
+
+distances_medoid <- matrix(NA, nrow = 3, ncol = 3, 
+                        dimnames = list(levels(data$group), 
+                                        levels(data$group)))
+for (i in 1:3) {
+  for (j in 1:3) {
+    x <- calculate_medoid(dis, group_indices[[i]])
+    y <- calculate_medoid(dis, group_indices[[j]])
+    distances_medoid[i, j] <- dis[x,y]
+  }
+}
+
+rownames(distances_medoid) <- colnames(distances_medoid) <- levels(data$group)
+
+final_dis <- distances_medoid
+final_dis <- (final_dis - min(final_dis))/(max(final_dis) - min(final_dis))
+# Display the distance matrix
+print(round(final_dis,2))
+# ------------------------------------
+my_sab <- matrix(0,3,3)
+for (i in 1:3) {
+  print(i)
+  for (j in 1:3) {
+    if(i>=j){
+      disi <- dis[group_indices[[i]], group_indices[[i]]]
+      dii <- mean(diag(as.matrix(disi[apply(disi,2,which.min),])))
+      disj <- dis[group_indices[[j]], group_indices[[j]]]
+      djj <- mean(diag(as.matrix(disj[apply(disj,2,which.min),])))
+      disij <- dis[group_indices[[i]], group_indices[[j]]]
+      disji <- dis[group_indices[[j]], group_indices[[i]]]
+      dij <- mean(c(diag(as.matrix(disij[apply(disij,2,which.min),])),
+                  diag(as.matrix(disji[apply(disji,2,which.min),]))))
+      my_sab[i,j] <- dij - ((dii + djj)/2)
+      my_sab[j,i] <- my_sab[i,j]
+    }
+  }
+}
+colnames(my_sab) <- rownames(my_sab) <- names(group_indices)
+
+final_dis <- my_sab
+final_dis <- (final_dis - min(final_dis))/(max(final_dis) - min(final_dis))
+# Display the distance matrix
+print(round(final_dis,2))
+
+# -------------------------------
+gt <- read.csv('~/Downloads/gt_training.CNN/train_df.csv')
+gt$seq <- gt$rawseq
+gt$seq <- gsub('-','', gt$seq)
+gt$seq <- toupper(gt$seq)
+gt$len <- nchar(gt$seq)
+gt <- gt[gt$len>100,]
+
+E210.seq_GT <- data.frame(gt[,c(2,3,10,11)],matrix(NA,nrow(gt),210))
+colnames(E210.seq_GT)[-c(1:4)] <- pair_inter
+
+hist(E210.seq_GT$len, 50)
+tictoc::tic()
+for (NP in 1:nrow(E210.seq_GT)) {
+  #if(NP%%10==0)
+  print(NP)
+  seq <- unlist(strsplit(unlist(E210.seq_GT$seq[NP]),''))
+  freq = c()
+  for (j in 1:20){
+    freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+  }
+  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+  en_fr <- aaenergy * freq_matrix
+  en_fr <- en_fr/length(seq)
+  pair_es <- diag(freq) %*% as.matrix(en_fr)
+  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+  E210.seq_GT[NP,-c(1:4)] <- aa210_p
+}
+df <- E210.seq_GT
+saveRDS(df, '~/Downloads/gt_training.CNN/E210.seq_GT.rds')
+tictoc::toc()
+df <- readRDS('~/Downloads/gt_training.CNN/E210.seq_GT.rds')
+df <- df[!df$fold%in%'u',]
+
+df <- df %>%
+  group_by(fold) %>%
+  slice_sample(n = 4500)
+
+# To remove the group_by structure, use ungroup
+df <- data.frame(ungroup(df))
+
+tictoc::tic()
+dis <- as.matrix(proxy::dist(df[,-c(1:4)], method = manhat))
+tictoc::toc()
+ump <- umap(d = dis,
+            n_neighbors = 20,
+            min_dist = 0.01,
+            input="dist")
+ump_df <- data.frame(df[,1:4],
+                         UMAP1 = ump$layout[, 1],
+                         UMAP2 = ump$layout[, 2])
+
+df2 <- cbind(df[,1:4], total=rowSums(df[,-c(1:4)]))
+p1 <- ggplot(ump_df, aes(UMAP1, UMAP2, color= fold)) +
+  geom_point(alpha=.7)
+
+# ------------------------------
+# ---- Nice data ------
+path <- '~/Desktop/new_data/'
+df <- readFASTA(paste0(path,'ARF-RowData/MSA_ARF.fasta'))
+df <- data.frame(pdbID=names(df), align=t(data.frame(df)))
+df$seq <- toupper(gsub('-','',df$align))
+df$length <- nchar(df$seq)
+arf <- df
+arf$family <- 'ARF'
+
+df <- readFASTA(paste0(path,'RAB-RowData/MSA_RAB.fasta'))
+df <- data.frame(pdbID=names(df), align=t(data.frame(df)))
+df$seq <- toupper(gsub('-','',df$align))
+df$length <- nchar(df$seq)
+rab <- df
+rab$family <- 'RAB'
+
+df <- readFASTA(paste0(path,'RAS-RowData/MSA_RAS.fasta'))
+df <- data.frame(pdbID=names(df), align=t(data.frame(df)))
+df$seq <- toupper(gsub('-','',df$align))
+df$length <- nchar(df$seq)
+ras <- df
+ras$family <- 'RAS'
+
+df <- readFASTA(paste0(path,'RHO-RowData/MSA_RHO.fasta'))
+df <- data.frame(pdbID=names(df), align=t(data.frame(df)))
+df$seq <- toupper(gsub('-','',df$align))
+df$length <- nchar(df$seq)
+rho <- df
+rho$family <- 'RHO'
+
+df <- rbind(arf, rab, ras, rho)
+
+df <- data.frame(df, matrix(NA, nrow(df), 210))
+colnames(df)[-c(1:5)] <- pair_inter
+
+hist(df$length, 50)
+
+for (NP in 1:nrow(df)) {
+  print(NP)
+  seq <- unlist(strsplit(unlist(df$seq[NP]),''))
+  freq = c()
+  for (j in 1:20){
+    freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+  }
+  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+  en_fr <- aaenergy * freq_matrix
+  en_fr <- en_fr/length(seq)
+  pair_es <- diag(freq) %*% as.matrix(en_fr)
+  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+  df[NP,-c(1:5)] <- aa210_p
+}
+
+dftot <- data.frame(family=df$family, total=rowSums(df[,-c(1:5)])/df$length)
+ggplot(dftot, aes(family, total))+
+  geom_boxplot()
+
+dis <- as.matrix(proxy::dist(df[,-c(1:5)], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 13,
+            min_dist = 0.001,
+            input="dist")
+ump_df <- data.frame(df[,1:5],
+                     UMAP1 = ump$layout[, 1],
+                     UMAP2 = ump$layout[, 2])
+
+ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
+  geom_point(alpha=.7)
+
+
+diag(dis) <- NA
+fourF <- toupper(c('arf', 'rab', 'ras', 'rho'))
+# ---------- 1NN --------------------
+im <- apply(dis,1, FUN = which.min)
+res <- data.frame(source=df$family, target=df$family[im])
+## ----------
+cm <- matrix(0,4,4)
+colnames(cm) <- rownames(cm) <- fourF
+for (sf in fourF) {
+  x <- res[res$source%in%sf,]
+  z <- table(x$target)
+  cm[sf, names(z)]<-z
+}
+ac <- round(sum(diag(cm))/sum(cm),2)*100
+pr <- round(diag(cm)/colSums(cm) , 2)*100
+re <- round(diag(cm)/rowSums(cm) , 2)*100
+f1 <- round((2*pr*re)/(pr+re))
+rbind(ac,pr,re,f1)
+# ------------ SPE ------------
+# ------------ ARF ------------
+arf2 <- data.frame(arf,
+                  matrix(NA, ncol = 210, 
+                         nrow = nrow(arf)))
+colnames(arf2)[-c(1:5)] <- pair_inter
+
+
+for (NP in 1:nrow(arf2)) {
+  print(NP)
+  pdbname <- arf2$pdbID[NP]
+  pdbfile <- paste0(path,'ARF-RowData/',pdbname,'.pdb')
+  tryCatch({
+    pdb0 <- read.pdb(pdbfile)
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM")
+    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+    sele4 <- atom.select(pdb0, "noh")
+    sele <- combine.select(sele1, sele2,sele4, operator="AND")
+    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    arf2[NP,-c(1:5)] <- energy210
+  }, error = function(e) {
+    cat("Error downloading file:", e$message, "\n")
+  })
+}
+# ------------ RAB ------------
+rab2 <- data.frame(rab,
+                  matrix(NA, ncol = 210, 
+                         nrow = nrow(rab)))
+colnames(rab2)[-c(1:5)] <- pair_inter
+
+
+for (NP in 1:nrow(rab2)) {
+  print(NP)
+  pdbname <- rab$pdbID[NP]
+  pdbfile <- paste0(path,'RAB-RowData/',pdbname,'.pdb')
+  tryCatch({
+    pdb0 <- read.pdb(pdbfile)
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM")
+    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+    sele4 <- atom.select(pdb0, "noh")
+    sele <- combine.select(sele1, sele2,sele4, operator="AND")
+    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    rab2[NP,-c(1:5)] <- energy210
+  }, error = function(e) {
+    cat("Error downloading file:", e$message, "\n")
+  })
+}
+
+# ------------ RAS ------------
+ras2 <- data.frame(ras,
+                   matrix(NA, ncol = 210, 
+                          nrow = nrow(ras)))
+colnames(ras2)[-c(1:5)] <- pair_inter
+
+
+for (NP in 1:nrow(ras2)) {
+  print(NP)
+  pdbname <- ras2$pdbID[NP]
+  pdbfile <- paste0(path,'RAS-RowData/',pdbname,'.pdb')
+  tryCatch({
+    pdb0 <- read.pdb(pdbfile)
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM")
+    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+    sele4 <- atom.select(pdb0, "noh")
+    sele <- combine.select(sele1, sele2,sele4, operator="AND")
+    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    ras2[NP,-c(1:5)] <- energy210
+  }, error = function(e) {
+    cat("Error downloading file:", e$message, "\n")
+  })
+}
+
+# ------------ RHO ------------
+rho2 <- data.frame(rho,
+                   matrix(NA, ncol = 210, 
+                          nrow = nrow(rho)))
+colnames(rho2)[-c(1:5)] <- pair_inter
+
+
+for (NP in 1:nrow(rho2)) {
+  print(NP)
+  pdbname <- rho2$pdbID[NP]
+  pdbfile <- paste0(path,'RHO-RowData/',pdbname,'.pdb')
+  tryCatch({
+    pdb0 <- read.pdb(pdbfile)
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM")
+    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+    sele4 <- atom.select(pdb0, "noh")
+    sele <- combine.select(sele1, sele2,sele4, operator="AND")
+    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    rho2[NP,-c(1:5)] <- energy210
+  }, error = function(e) {
+    cat("Error downloading file:", e$message, "\n")
+  })
+}
+
+
+df2 <- rbind(arf2, rab2, ras2, rho2)
+dftot <- data.frame(family=df2$family, total=rowSums(df2[,-c(1:5)])/df2$length)
+ggplot(dftot, aes(family, total))+
+  geom_boxplot()
+
+dis <- as.matrix(proxy::dist(df2[,-c(1:5)], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 13,
+            min_dist = 0.001,
+            input="dist")
+ump_df <- data.frame(df2[,1:5],
+                     UMAP1 = ump$layout[, 1],
+                     UMAP2 = ump$layout[, 2])
+
+ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
+  geom_point(alpha=.7)
+
+
+diag(dis) <- NA
+fourF <- toupper(c('arf', 'rab', 'ras', 'rho'))
+# ---------- 1NN --------------------
+im <- apply(dis,1, FUN = which.min)
+res <- data.frame(source=df2$family, target=df2$family[im])
+## ----------
+cm <- matrix(0,4,4)
+colnames(cm) <- rownames(cm) <- fourF
+for (sf in fourF) {
+  x <- res[res$source%in%sf,]
+  z <- table(x$target)
+  cm[sf, names(z)]<-z
+}
+ac <- round(sum(diag(cm))/sum(cm),2)*100
+pr <- round(diag(cm)/colSums(cm) , 2)*100
+re <- round(diag(cm)/rowSums(cm) , 2)*100
+f1 <- round((2*pr*re)/(pr+re))
+rbind(ac,pr,re,f1)
+# --------------------------------
+E210.seq <- function(seq){
+  seq <- unlist(strsplit(unlist(seq),''))
+  freq = c()
+  for (j in 1:20){
+    freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+  }
+  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+  en_fr <- aaenergy * freq_matrix
+  en_fr <- en_fr/length(seq)
+  pair_es <- diag(freq) %*% as.matrix(en_fr)
+  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+  return(aa210_p)
+}
+
+
+path <- '~/Desktop/new_data/'
+faFiles <- list.files(paste0(path,"Eukaryota"),full.names = TRUE)
+fas <- map(faFiles, readFASTA)
+
+nSeq <- unlist(lapply(fas, length))
+hist(nSeq,50)
+nID <- length(fas)
+
+df <- data.frame(annotID=faFiles, nProt=NA,
+                 matrix(NA, nrow = nID, ncol = 210))
+colnames(df)[-c(1:2)] <- pair_inter
+tictoc::tic()
+for (NP in 1:nrow(df)) {
+  x <- fas[[NP]]
+  print(paste0(NP, ': ', length(x)))
+  df$nProt[NP] <- length(x)
+  #tictoc::tic()
+  x <- lapply(x,E210.seq)
+  #tictoc::toc()
+  x <- do.call(rbind, x)
+  aa210_p <- colMeans(x)
+  df[NP,-c(1:2)] <- aa210_p
+}
+tictoc::toc()
+
+saveRDS(df, paste0(path,'Eukaryota.rds'))
+
+```
+
+# SARS_Proteom
+
+```{r}
+E210.CPE <- function(pdb){
+  #p <- pdb
+  #a <- p$atom
+  #a <- a[!duplicated(a$resno),]
+  #seq <- aa321(a$resid)
+  seq <- unlist(strsplit(pdb, ''))
+  freq = c()
+  for (j in 1:20){
+    freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+  }
+  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+  en_fr <- aaenergy * freq_matrix
+  en_fr <- en_fr/length(seq)
+  pair_es <- diag(freq) %*% as.matrix(en_fr)
+  aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
+  seq <- paste0(seq, collapse = '')
+  return(c(nchar(seq), seq, aa210_p))
+}
+
+E210.SPE <- function(pdb){
+  tryCatch({
+    pdb0 <- pdb
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM")
+    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+    sele4 <- atom.select(pdb0, "noh")
+    sele <- combine.select(sele1, sele2,sele4, operator="AND")
+    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    return(energy210)
+  }, error = function(e) {
+    cat("Error downloading file:", e$message, "\n")
+  })
+}
+# ------------------------------------------
+path <- '~/Desktop/new_data/'
+sars_proteom <-list.files(paste0(path,"SARS2_FrustraEvo_input_and_output"),full.names = TRUE)
+
+df <- c()
+tictoc::tic()
+for (i in 1:length(sars_proteom)) {
+  #gzs <- paste0(sars_proteom[i], '/input_FrustraEvo_', basename(sars_proteom[i]), '.tar.gz')
+  #untar(gzs, exdir = sars_proteom[i])
+  pdbFiles <- list.files(paste0(sars_proteom[i], '/RenamedModels'),full.names = TRUE)
+  pdbs <- purrr::map(pdbFiles, read.pdb)
+  print(paste0(i, ': ', length(pdbs)))
+  x <- lapply(pdbs, E210.CPE)
+  x <- do.call(rbind, x)
+  x <- data.frame(sars_proteom=basename(sars_proteom[i]),
+                  pdbID=basename(pdbFiles),
+                  x)
+  df <- rbind(df, x)
+}
+colnames(df)[-c(1,2)] <- c('length', 'seq', pair_inter)
+df <- cbind(df[,1:4], apply(df[,-c(1:4)],2, as.numeric))
+dis <- as.matrix(proxy::dist(df2[,-c(1:4)], method = manhat))
+tictoc::toc()
+
+df3 <- data.frame(family=df$sars_proteom, total=rowSums(df[,-c(1,2)]/df$length, na.rm = T))
+
+median_values <- aggregate(total ~ family, data = df3, median)
+df3$family <- factor(df3$family, 
+                     levels = median_values$family[order(median_values$total)])
+ggplot(df3, aes(family, total)) + 
+  geom_boxplot() +
+  xlab('')+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+ump <- umap(d = dis,
+            n_neighbors = 50,
+            min_dist = 0.1,
+            input="dist")
+
+ump_df <- data.frame(family=df$sars_proteom,
+                     UMAP1 = ump$layout[, 1],
+                     UMAP2 = ump$layout[, 2])
+
+ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
+  geom_point(alpha=.7, show.legend = F)
+
+tm <- read.csv(paste0(path,'SARS2_FrustraEvo_input_and_output/disTM_vec_sars_proteom.csv'))
+dim(tm)
+dis <- 1 - tm
+# ----------
+diag(dis) <- NA
+sprot <- basename(sars_proteom)
+# ---------- 1NN --------------------
+im <- apply(dis,1, FUN = which.min)
+res <- data.frame(source=df$sars_proteom, target=df$sars_proteom[im])
+## ----------
+cm <- matrix(0,28,28)
+colnames(cm) <- rownames(cm) <- sprot
+for (sf in sprot) {
+  x <- res[res$source%in%sf,]
+  z <- table(x$target)
+  cm[sf, names(z)]<-z
+}
+ac <- round(sum(diag(cm))/sum(cm), 4)*100
+pr <- round(diag(cm)/colSums(cm) , 4)*100
+re <- round(diag(cm)/rowSums(cm) , 4)*100
+f1 <- round((2*pr*re)/(pr+re))
+
+finalRes_SPE <- data.frame(t(rbind(ac,pr,re,f1)))
+
+fr <- data.frame(rbind(c('TM', colMeans(finalRes_tm)), 
+      c('CPE', colMeans(finalRes_CPE)),
+      c('SPE', colMeans(finalRes_SPE))))
+fr <- data.frame(method=fr[,1], apply(fr[,-c(1)],2, as.numeric))
+
+# ---------------
+df <- data.frame(df[,1:4],
+                 matrix(NA,ncol=210,nrow=nrow(df)))
+colnames(df)[-c(1:4)] <- pair_inter
+tictoc::tic()
+for (NP in 1:nrow(df)) {
+  print(NP)
+  seq <- unlist(strsplit(df$seq[NP],''))
+  freq <- c()
+  for (j in 1:20){
+    freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+  }
+  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+  en_fr <- aaenergy * freq_matrix
+  en_fr <- en_fr/length(seq)
+  pair_es <- diag(freq) %*% as.matrix(en_fr)
+  aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
+  df[NP,5:214] <- aa210_p
+}
+dis <- df[,-c(1:4)] %>% proxy::dist(method = manhat)
+tictoc::toc()
+```
+
+# MSA covid
+
+```{r}
+df <- readRDS("Data/rds/E210.seq_spike.rds")
+rownames(df) <- df$pdbID
+df <- df[with(df, order(df$virus,decreasing = T)), ]
+row.names(df) <- df$pdbID
+rn <- df$pdbID
+grp <- list(SARS_Cov2  = rn[1:80],
+            SARS_Cov  = rn[81:111],
+            MERS_Cov  = rn[112:143]
+)
+
+z <- read.tree('~/Desktop/Spike.fasta.tree')
+tree_data <- as.phylo(z)
+p_data <- ggtree(tree_data, layout = 'dendrogram',
+                 size = 1,branch.length = 'none')
+
+groupOTU(p_data, grp, "groups") + aes(color=groups) +
+  theme(legend.position="top",
+        legend.title=element_blank(),
+        legend.text=element_text(size=20),
+        plot.title = element_text(size = 50, face="bold",hjust = 0.5,vjust = 0))+
+  scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
+                       type =  c('black',"blue","green","red" ))+
+  ggtitle('MSA')
+
+```
+
+# superfamily greater than 300
+```{r}
+library(protr)
+library(readr)
+scope <- readFASTA('~/Desktop/cath_scope/astral-scopedom-seqres-all-2.08-stable.fa')
+annot <- read_table('~/Desktop/cath_scope/astral-scopedom-seqres-all-2.08-stable.fa', col_names = F)
+annot <- annot[grep("^>", annot$X1),1:3]
+colnames(annot) <- c("scopeID","ID_scope","Position")
+annot$scopeID <- gsub('>','',annot$scopeID)
+annot$pdbID <- substr(annot$scopeID, start = 2, stop = 5)
+#----------Split scopeID into class, fold, super and family---------
+split_values <- strsplit(annot$ID_scope, "\\.")
+matrix_values <- matrix("", nrow = nrow(annot), ncol = 4)
+for (i in 1:4) {
+  matrix_values[, i] <- sapply(split_values, function(x) paste(x[1:i], collapse = "."))
+}
+df_split <- as.data.frame(matrix_values)
+colnames(df_split) <- c("class", "fold", "superfamily", "family")
+annot$Position <- gsub("[()]", "", annot$Position)
+annot$position <- substr(annot$Position, start = regexpr(":", annot$Position) + 1, stop = nchar(annot$Position))
+annot$chainID <- substr(annot$Position,start = 1, stop = 1)
+annot$start <- NA
+annot$end <- NA
+split_values <- strsplit(annot$position, "-")
+for (i in seq_along(split_values)) {
+  if (length(split_values[[i]]) == 2) {
+    annot$start[i] <- as.numeric(split_values[[i]][1])
+    annot$end[i] <- as.numeric(split_values[[i]][2])
+  }
+}
+annot <- cbind(annot,df_split)
+colnames(annot)
+annot <- annot[,-c(2,3,5)]
+
+```
+
+# ferritin CPE & SPE
+
+```{r}
+cpe <- E210.seq_ferritin
+spe <- readRDS("Data/rds/E210_ferritin.rds")
+
+rownames(spe) <- spe$pdbID
+dis_spe <- proxy::dist(spe[,-c(1:3)]/spe$length, method = manhat)
+dis_cpe <- proxy::dist(cpe[,-c(1:4)], method = manhat)
+
+plot(dis_cpe, dis_spe)
+```
+
+# Atlas
+```{r}
+bac <- readRDS('~/Desktop/new_data/Bacteria.rds')
+euk <- readRDS('~/Desktop/new_data/Eukaryota.rds')
+arc <- readRDS('~/Desktop/new_data/Archaea.rds')
+
+df <- data.frame(group=rep(c('Archaea','Eukaryota','Bacteria'),
+                           c(nrow(arc), nrow(euk), nrow(bac))),
+                 rbind(arc, euk, bac))
+rownames(df)<-basename(df$annotID)
+
+df2 <- cbind(df[,1:3], total=rowSums(df[,-c(1:3)]))
+ggplot(df2, aes(group, total)) +geom_boxplot()
+
+dis <- as.matrix(df[,-c(1:3)] %>% proxy::dist(method = manhat))
+diag(dis) <- NA
+# ---------- 1NN --------------------
+im <- apply(dis,1, FUN = which.min)
+res <- data.frame(source=df$group, target=df$group[im])
+## ----------
+triGR <- unique(df$group)
+cm <- matrix(0,3,3)
+colnames(cm) <- rownames(cm) <- triGR
+for (sf in triGR) {
+  x <- res[res$source%in%sf,]
+  z <- table(x$target)
+  cm[sf,names(z)]<-z
+}
+round(sum(diag(cm))/sum(cm),3)*100
+# ------------------
+ump <- umap(d = dis,
+            input="dist",
+            min_dist = 0.01,
+            n_neighbors = 100) # n_components=3
+
+ump_df <- data.frame(df[,1:3],
+                     UMAP1 = ump$layout[, 1],
+                     UMAP2 = ump$layout[, 2])
+
+ggplot(ump_df, aes(UMAP1, UMAP2, color= group)) +
+  geom_point(alpha=.7)+
+  scale_color_manual(values = c('skyblue3', 'red', 'green'))
+
+
+plot_ly(x = ~ump_df$UMAP1,
+        y = ~ump_df$UMAP2,
+        z = ~ump_df$UMAP3,
+        color = ~factor(ump_df$group),colors = c("red", "green", "blue"),
+        type = 'scatter3d', mode = 'markers')
+
+
+data <- df[, -c(2,3)]
+library(cluster)
+colnames(data)[1]<-'group'
+data$group<-factor(data$group)
+group_indices <- split(seq_len(nrow(data)), data$group)
+# ------------------
+# Function to calculate medoid for a group
+calculate_medoid <- function(dist_matrix, group_indices) {
+  submatrix <- dist_matrix[group_indices, group_indices]
+  medoid_index <- pam(submatrix, 1)$id.med
+  return(grep(rownames(submatrix)[medoid_index], rownames(dist_matrix)))
+}
+distances_medoid <- matrix(NA, nrow = 3, ncol = 3,
+                           dimnames = list(levels(data$group),
+                                           levels(data$group)))
+for (i in 1:3) {
+  for (j in 1:3) {
+    print(paste0(i,': ',j))
+    x <- calculate_medoid(dis, group_indices[[i]])
+    y <- calculate_medoid(dis, group_indices[[j]])
+    distances_medoid[i, j] <- dis[x,y]
+  }
+}
+
+diag(distances_medoid) <- 0
+rownames(distances_medoid) <- colnames(distances_medoid) <- levels(data$group)
+
+final_dis <- distances_medoid
+final_dis <- (final_dis - min(final_dis))/(max(final_dis) - min(final_dis))
+round(final_dis,3)
+```
+
