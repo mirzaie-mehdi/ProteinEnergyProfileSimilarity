@@ -580,7 +580,7 @@ for (NP in 1:Nprotein) {
      cat("Error downloading file:", e$message, "\n")
     })
 }
-#saveRDS(E210_ferritin,file = "Data/rds/E210_ferritin.rds")
+saveRDS(E210_ferritin,file = "Data/rds/E210_ferritin.rds")
 
 ferritin <- read.csv("Data/csv/Ferritin_Like_seq.csv",sep = ",")
 Nprotein <- nrow(ferritin)
@@ -592,7 +592,6 @@ colnames(E210.seq_ferritin)[-c(1:4)] <- pair_inter
 for (NP in 1:Nprotein) {
   print(NP)
   seq <- unlist(strsplit(E210.seq_ferritin$seq[NP], ''))
-  #seq <- seq[11:(length(seq)-10)]
   freq <- c()
     for (j in 1:20){
       freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
@@ -605,6 +604,7 @@ for (NP in 1:Nprotein) {
     E210.seq_ferritin[NP,5:214] <- aa210_p
 }
 
+saveRDS(E210.seq_ferritin,file = "Data/rds/E210.seq_ferritin.rds")
 ```
 
 # Covid_Spike_Proteins

@@ -1124,15 +1124,22 @@ rownames(df) <- df$pdbID
 dis <- proxy::dist(df[,-c(1:3)], method = manhat)
 
 nnet <- neighborNet(dis)
-ggsplitnet(nnet) + geom_tiplab2(aes(label=label),
-                                hjust=-.1,size=5,
-                                color='blue')+
-  ggexpand(.1) + ggexpand(.1, direction=-1)
+#ggsplitnet(nnet) + geom_tiplab2(aes(label=label),
+#                                hjust=-.1,size=5,
+#                                color='blue')+
+#  ggexpand(.1) + ggexpand(.1, direction=-1)
 # write.nexus.networx(nnet,'Data/rds/E210_ferritin_manhat.nxs')
 # --------------------------------------------------------------------
 # ----   the 'E210_ferritin_manhat.nxs' file 
 # -----      was load on SplitsTree4(v 4.19.2) to visualize
 # --------------------------------------------------------------------
+E210.seq_ferritin <- readRDS("Data/rds/E210.seq_ferritin.rds")
+df <- E210.seq_ferritin
+rownames(df) <- df$pdbID
+dis <- proxy::dist(df[,-c(1:4)], method = manhat)
+
+nnet <- neighborNet(dis)
+write.nexus.networx(nnet,'Data/rds/E210.seq_ferritin.nxs')
 ```
 
 ## Fig 8 covid

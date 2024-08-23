@@ -302,6 +302,55 @@ final_dis <- (final_dis - min(final_dis))/(max(final_dis) - min(final_dis))
 final_dis <- round(final_dis,2)
 ```
 
+# ferritin NJ
+
+```{r}
+E210.seq_ferritin <- readRDS("Data/rds/E210.seq_ferritin.rds")
+df <- E210.seq_ferritin
+df$group[df$pdbID=='1otkA'] <- 'Pfam_1otkA'
+df <- df[with(df, order(df$group)), ]
+row.names(df) <- df$pdbID
+rn <- df$pdbID
+grp <- list(Bacteri     = rn[1:5],
+            BMM_alpha = rn[6:7],
+            BMM_beta  = rn[8:10],
+            Dps  = rn[11:25],
+            Fatty_acid  = rn[26:29],
+            Ferritins  = rn[30:40],
+            Pfam_1otkA = rn[41],
+            RNRR2  = rn[42:49],
+            Rubrerythrins = rn[50:53])
+
+dis <- proxy::dist(df[,-c(1:4)], method = manhat)
+tree_data <- ape::bionj(as.dist(dis))
+p_data <- ggtree(tree_data, layout = 'unrooted',
+                 branch.length='none',size = 1.5) 
+
+# myBoots <- boot.phylo(tree_data, tm, B = 100,
+#                       function(e) bionj(as.dist(dis)))
+# 
+# p_data$data$boots<-c(rep(NA,53),myBoots)
+
+t_CPE<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
+  theme(legend.position="right",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 15, colour = "black"))+
+  geom_tiplab(aes(label=label),
+              hjust=0,size=3.5,fontface="bold",align=F)+
+  #geom_text2(aes(subset=!isTip, label=boots),col='black', hjust=.3)+
+  scale_color_discrete(breaks=c('Bacteri', 'BMM_alpha', 'BMM_beta',
+                                'Dps','Fatty_acid','Ferritins','RNRR2',
+                                'Pfam_1otkA','Rubrerythrins'),
+                       type =  c('red',"orange2","yellow4","green3",
+                                 'skyblue3','blue','black','magenta','purple2'))
+
+nwik_SPE <- write.tree(tree_data)
+nwik_SPE <- gsub(":[^,)]*", "", nwik_SPE)
+
+
+```
+
+
 # Atlas
 ```{r}
 bac <- readRDS('~/Desktop/new_data/Bacteria.rds')
