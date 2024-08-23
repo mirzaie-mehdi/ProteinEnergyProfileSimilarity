@@ -94,11 +94,16 @@ annot <- annot[,-c(2,3,5)]
 ```{r}
 source('Functions.R')
 astral <- readRDS("Data/rds_old/E210.seq_astral_95.rds")
-df <- astral[!is.na(df$FF),]
+df <- astral[!is.na(astral$FF),]
 dis <- as.matrix(proxy::dist(df[,-c(1:8)], method = manhat))
 diag(dis) <- NA
 
-sf <- table(astral$fold)
+tm <- read.csv('Data/csv/disTM_vec_astral95.csv')
+tm <- tm[!is.na(astral$FF), !is.na(astral$FF)]
+tm <- 1 - tm
+diag(tm) <- NA
+
+sf <- table(df$fold)
 sf <- sf[sf>150]
 
 dis2 <- dis[astral$fold%in%names(sf), astral$fold%in%names(sf)]
