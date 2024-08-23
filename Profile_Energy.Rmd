@@ -172,7 +172,7 @@ E210.astral_95 <- data.frame(pdbID = astral$pdbID,
                             matrix(NA, ncol = num_columns, nrow = length(astral$pdbID)))
 colnames(E210.astral_95)[9:218] <- pair_inter
 E210.seq_astral_95 <- E210.astral_95 
-for (NP in 1:5) {
+for (NP in 1:nrow(E210.seq_astral_95)) {
   if (NP %% 50 == 0) {print(NP)}
   chain_resno <- split_position(astral$Position[NP])
   pdbname <- astral$pdbID[NP]
@@ -223,8 +223,8 @@ for (NP in 1:5) {
     })
 }
 # -----------------------------------------------------------
-#saveRDS(E210.astral_95, file = "Data/rds/E210.astral_95.rds")
-#saveRDS(E210.seq_astral_95, file = "Data/rds/E210.seq_astral_95.rds")
+saveRDS(E210.astral_95, file = "Data/rds/E210.astral_95.rds")
+saveRDS(E210.seq_astral_95, file = "Data/rds/E210.seq_astral_95.rds")
 # -----------------------------------------------------------
 # ----------- astral 40 ------
 astral <- readRDS("Data/rds/astral_40.rds") 
@@ -241,7 +241,7 @@ E210.astral_40 <- data.frame(pdbID = astral$pdbID,
                             matrix(NA, ncol = num_columns, nrow = length(astral$pdbID)))
 
 E210.seq_astral_40 <- E210.astral_40
-for (NP in 1:5) {
+for (NP in 1:nrow(E210.seq_astral_40)) {
   if (NP %% 50 == 0) {print(NP)}
   chain_resno <- split_position(astral$Position[NP])
   pdbname <- astral$pdbID[NP]

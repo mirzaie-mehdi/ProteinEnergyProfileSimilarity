@@ -1,5 +1,5 @@
 clear;clc
-load('zzi.mat');
+load('../Train_Energy/zzi_rm_Olaps.mat');
 Pij = zeros(20,20);
 for i=1:20
     disp(num2str(i))
@@ -12,4 +12,4 @@ for i=1:20
         Pij(i,j) = vpa(slv_cel2{j},10);
     end
 end
-writematrix(Pij,'Pij.csv')
+writematrix(Pij,'Pij_rm_Olaps.csv')

@@ -9,6 +9,14 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Load package
+
+```{r}
+library(protr)
+library(readr)
+```
+
+
 # Overlap PDBs
 
 ```{r}
@@ -29,6 +37,84 @@ idx_rm <- data.frame(V1=idx_rm)
 write.csv(idx_rm,'Train_Energy/idx_rm.csv',row.names = F)
 
 ```
+
+# Pij_old_new
+
+```{r}
+Pij <- read.csv("Data/csv/Pij.csv", header = F,sep = ";")
+Pij <- (Pij + t(Pij))/2
+
+Pij_rm_Olaps <- read.csv("Data/csv/Pij_rm_Olaps.csv", header = F,sep = ";")
+Pij_rm_Olaps <- (Pij_rm_Olaps + t(Pij_rm_Olaps))/2
+
+cor(Pij[upper.tri(Pij,diag = T)],
+    Pij_rm_Olaps[upper.tri(Pij_rm_Olaps,diag = T)])
+
+
+```
+
+# superfamily greater than 300
+
+```{r}
+scope <- readFASTA('~/Desktop/cath_scope/astral-scopedom-seqres-all-2.08-stable.fa')
+annot <- read_table('~/Desktop/cath_scope/astral-scopedom-seqres-all-2.08-stable.fa', col_names = F)
+annot <- annot[grep("^>", annot$X1),1:3]
+colnames(annot) <- c("scopeID","ID_scope","Position")
+annot$scopeID <- gsub('>','',annot$scopeID)
+annot$pdbID <- substr(annot$scopeID, start = 2, stop = 5)
+#----------Split scopeID into class, fold, super and family---------
+split_values <- strsplit(annot$ID_scope, "\\.")
+matrix_values <- matrix("", nrow = nrow(annot), ncol = 4)
+for (i in 1:4) {
+  matrix_values[, i] <- sapply(split_values, function(x) paste(x[1:i], collapse = "."))
+}
+df_split <- as.data.frame(matrix_values)
+colnames(df_split) <- c("class", "fold", "superfamily", "family")
+annot$Position <- gsub("[()]", "", annot$Position)
+annot$position <- substr(annot$Position, start = regexpr(":", annot$Position) + 1, stop = nchar(annot$Position))
+annot$chainID <- substr(annot$Position,start = 1, stop = 1)
+annot$start <- NA
+annot$end <- NA
+split_values <- strsplit(annot$position, "-")
+for (i in seq_along(split_values)) {
+  print(i)
+  if (length(split_values[[i]]) == 2) {
+    annot$start[i] <- as.numeric(split_values[[i]][1])
+    annot$end[i] <- as.numeric(split_values[[i]][2])
+  }
+}
+annot <- cbind(annot,df_split)
+colnames(annot)
+annot <- annot[,-c(2,3,5)]
+
+```
+
+# sf100
+
+```{r}
+source('Functions.R')
+astral <- readRDS("Data/rds_old/E210.seq_astral_95.rds")
+df <- astral[!is.na(df$FF),]
+dis <- as.matrix(proxy::dist(df[,-c(1:8)], method = manhat))
+diag(dis) <- NA
+
+sf <- table(astral$fold)
+sf <- sf[sf>150]
+
+dis2 <- dis[astral$fold%in%names(sf), astral$fold%in%names(sf)]
+
+
+dis2 <- dis[]
+
+
+im <- apply(dis,1, FUN = which.min)
+res <- data.frame(source=df$family, target=df$family[im])
+res$TP <- ifelse(res$source==res$target,1,0)
+# Accuracy
+round(sum(res$TP)/nrow(res),2)
+
+```
+
 
 # SARS_Proteom
 
@@ -195,41 +281,6 @@ groupOTU(p_data, grp, "groups") + aes(color=groups) +
 
 ```
 
-# superfamily greater than 300
-```{r}
-library(protr)
-library(readr)
-scope <- readFASTA('~/Desktop/cath_scope/astral-scopedom-seqres-all-2.08-stable.fa')
-annot <- read_table('~/Desktop/cath_scope/astral-scopedom-seqres-all-2.08-stable.fa', col_names = F)
-annot <- annot[grep("^>", annot$X1),1:3]
-colnames(annot) <- c("scopeID","ID_scope","Position")
-annot$scopeID <- gsub('>','',annot$scopeID)
-annot$pdbID <- substr(annot$scopeID, start = 2, stop = 5)
-#----------Split scopeID into class, fold, super and family---------
-split_values <- strsplit(annot$ID_scope, "\\.")
-matrix_values <- matrix("", nrow = nrow(annot), ncol = 4)
-for (i in 1:4) {
-  matrix_values[, i] <- sapply(split_values, function(x) paste(x[1:i], collapse = "."))
-}
-df_split <- as.data.frame(matrix_values)
-colnames(df_split) <- c("class", "fold", "superfamily", "family")
-annot$Position <- gsub("[()]", "", annot$Position)
-annot$position <- substr(annot$Position, start = regexpr(":", annot$Position) + 1, stop = nchar(annot$Position))
-annot$chainID <- substr(annot$Position,start = 1, stop = 1)
-annot$start <- NA
-annot$end <- NA
-split_values <- strsplit(annot$position, "-")
-for (i in seq_along(split_values)) {
-  if (length(split_values[[i]]) == 2) {
-    annot$start[i] <- as.numeric(split_values[[i]][1])
-    annot$end[i] <- as.numeric(split_values[[i]][2])
-  }
-}
-annot <- cbind(annot,df_split)
-colnames(annot)
-annot <- annot[,-c(2,3,5)]
-
-```
 
 # Ferritin
 ```{r}
