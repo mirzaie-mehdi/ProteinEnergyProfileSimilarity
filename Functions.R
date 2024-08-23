@@ -483,7 +483,7 @@ mytheme <- function(){
 # --------------------------------------------
 # --------------------------------------------------------
 # -------------------------------------------------------------------------------------
-energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="" )
+energy_dell_dunbrack <- read.csv("Data/csv/energy_rm_Olaps.csv",header = FALSE,sep ="," )
 energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
 # ------Pairwise Amino Acid names-------------
 AA <- c("PHE","LEU","ILE","VAL","TRP","TYR","MET","CYS","HIS","THR",

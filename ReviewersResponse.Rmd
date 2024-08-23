@@ -116,28 +116,10 @@ round(sum(res$TP)/nrow(res),2)
 ```
 
 
-# SARS_Proteom
+# SARS_Proteom Large Scale
 
 ```{r}
-E210.CPE <- function(pdb){
-  #p <- pdb
-  #a <- p$atom
-  #a <- a[!duplicated(a$resno),]
-  #seq <- aa321(a$resid)
-  seq <- unlist(strsplit(pdb, ''))
-  freq = c()
-  for (j in 1:20){
-    freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
-  }
-  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-  en_fr <- aaenergy * freq_matrix
-  en_fr <- en_fr/length(seq)
-  pair_es <- diag(freq) %*% as.matrix(en_fr)
-  aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
-  seq <- paste0(seq, collapse = '')
-  return(c(nchar(seq), seq, aa210_p))
-}
-
+source('Functions.R')
 E210.SPE <- function(pdb){
   tryCatch({
     pdb0 <- pdb
@@ -154,84 +136,31 @@ E210.SPE <- function(pdb){
   })
 }
 # ------------------------------------------
-path <- '~/Desktop/new_data/'
-sars_proteom <-list.files(paste0(path,"SARS2_FrustraEvo_input_and_output"),full.names = TRUE)
+sars_proteom <- list.dirs("Data/Large_Scale_SARS2",full.names = TRUE)
+sars_proteom <- sars_proteom[basename(sars_proteom)!='__pycache__']
+sars_proteom <- sars_proteom[basename(sars_proteom)=='RenamedModels']
 
 df <- c()
 tictoc::tic()
 for (i in 1:length(sars_proteom)) {
-  #gzs <- paste0(sars_proteom[i], '/input_FrustraEvo_', basename(sars_proteom[i]), '.tar.gz')
-  #untar(gzs, exdir = sars_proteom[i])
-  pdbFiles <- list.files(paste0(sars_proteom[i], '/RenamedModels'),full.names = TRUE)
+  pdbFiles <- list.files(sars_proteom[i],full.names = TRUE)
   pdbs <- purrr::map(pdbFiles, read.pdb)
   print(paste0(i, ': ', length(pdbs)))
-  x <- lapply(pdbs, E210.CPE)
+  x <- lapply(pdbs, E210.SPE)
   x <- do.call(rbind, x)
-  x <- data.frame(sars_proteom=basename(sars_proteom[i]),
+  x <- data.frame(sars_proteom=strsplit(sars_proteom[i],'/')[[1]][3],
                   pdbID=basename(pdbFiles),
                   x)
   df <- rbind(df, x)
 }
-colnames(df)[-c(1,2)] <- c('length', 'seq', pair_inter)
-df <- cbind(df[,1:4], apply(df[,-c(1:4)],2, as.numeric))
-dis <- as.matrix(proxy::dist(df2[,-c(1:4)], method = manhat))
-tictoc::toc()
-
-df3 <- data.frame(family=df$sars_proteom, total=rowSums(df[,-c(1,2)]/df$length, na.rm = T))
-
-median_values <- aggregate(total ~ family, data = df3, median)
-df3$family <- factor(df3$family, 
-                     levels = median_values$family[order(median_values$total)])
-ggplot(df3, aes(family, total)) + 
-  geom_boxplot() +
-  xlab('')+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-ump <- umap(d = dis,
-            n_neighbors = 50,
-            min_dist = 0.1,
-            input="dist")
-
-ump_df <- data.frame(family=df$sars_proteom,
-                     UMAP1 = ump$layout[, 1],
-                     UMAP2 = ump$layout[, 2])
-
-ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
-  geom_point(alpha=.7, show.legend = F)
-
-tm <- read.csv(paste0(path,'SARS2_FrustraEvo_input_and_output/disTM_vec_sars_proteom.csv'))
-dim(tm)
-dis <- 1 - tm
-# ----------
-diag(dis) <- NA
-sprot <- basename(sars_proteom)
-# ---------- 1NN --------------------
-im <- apply(dis,1, FUN = which.min)
-res <- data.frame(source=df$sars_proteom, target=df$sars_proteom[im])
-## ----------
-cm <- matrix(0,28,28)
-colnames(cm) <- rownames(cm) <- sprot
-for (sf in sprot) {
-  x <- res[res$source%in%sf,]
-  z <- table(x$target)
-  cm[sf, names(z)]<-z
-}
-ac <- round(sum(diag(cm))/sum(cm), 4)*100
-pr <- round(diag(cm)/colSums(cm) , 4)*100
-re <- round(diag(cm)/rowSums(cm) , 4)*100
-f1 <- round((2*pr*re)/(pr+re))
-
-finalRes_SPE <- data.frame(t(rbind(ac,pr,re,f1)))
-
-fr <- data.frame(rbind(c('TM', colMeans(finalRes_tm)), 
-      c('CPE', colMeans(finalRes_CPE)),
-      c('SPE', colMeans(finalRes_SPE))))
-fr <- data.frame(method=fr[,1], apply(fr[,-c(1)],2, as.numeric))
+colnames(df)[-c(1,2)] <- pair_inter
+dis_SPE <- as.matrix(proxy::dist(df[,-c(1:2)], method = manhat))
+t_SPE <- tictoc::toc()
 
 # ---------------
-df <- data.frame(df[,1:4],
-                 matrix(NA,ncol=210,nrow=nrow(df)))
+annot <- read.csv('Data/Large_Scale_SARS2/sars_proteom.csv')
+df <- data.frame(annot,
+                 matrix(NA,ncol=210,nrow=nrow(annot)))
 colnames(df)[-c(1:4)] <- pair_inter
 tictoc::tic()
 for (NP in 1:nrow(df)) {
@@ -248,8 +177,52 @@ for (NP in 1:nrow(df)) {
   aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
   df[NP,5:214] <- aa210_p
 }
-dis <- df[,-c(1:4)] %>% proxy::dist(method = manhat)
-tictoc::toc()
+dis_CPE <- as.matrix(df[,-c(1:4)] %>% proxy::dist(method = manhat))
+t_CPE <- tictoc::toc()
+
+# ----------- load from google drive ---------------
+drive_deauth()
+drive_user()
+public_file <- drive_get(as_id("1QUAqdkypCPHraNESF11arxg29tDUp521"))
+drive_download(public_file, overwrite = TRUE)
+tm<-read.csv('disTM_vec_sars_proteom.csv')
+file.remove('disTM_vec_sars_proteom.csv')
+tm <- 1 - tm
+t_tm <- 685
+# ----------
+summary_1NN <- function(dist, group){
+  diag(dist) <- NA
+  sprot <- unique(group)
+  # ---------- 1NN --------------------
+  im <- apply(dist,1, FUN = which.min)
+  res <- data.frame(source=group, target=group[im])
+  ## ----------
+  cm <- matrix(0,28,28)
+  colnames(cm) <- rownames(cm) <- sprot
+  for (sf in sprot) {
+    x <- res[res$source%in%sf,]
+    z <- table(x$target)
+    cm[sf, names(z)]<-z
+  }
+  ac <- round(sum(diag(cm))/sum(cm), 4)*100
+  pr <- round(diag(cm)/colSums(cm) , 4)*100
+  re <- round(diag(cm)/rowSums(cm) , 4)*100
+  f1 <- round((2*pr*re)/(pr+re))
+  summ <- data.frame(t(rbind(ac,pr,re,f1)))
+  summ <- rbind(colMeans(summ), summ)
+  rownames(summ)[1]<-'Average'
+  return(summ)
+}
+
+dis <- list(dis_CPE, dis_SPE, tm)
+summ <- lapply(dis, summary_1NN, df$sars_proteom)
+
+
+
+rbind(c('TM',  summ[['TM']][1,],  t_tm),
+      c('CPE', summ[['CPE']][1,], t_CPE),
+      c('SPE', summ[['SPE']][1,], t_SPE))
+
 ```
 
 # MSA covid
