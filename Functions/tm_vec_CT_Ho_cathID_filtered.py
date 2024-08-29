@@ -57,7 +57,7 @@ for i in range(0,n,1):
   embedded_seq = embed_tm_vec(protrans_seq, model_deep, device)
   emb.loc[i,:] = embedded_seq
 #emb.to_csv(path+'TM_vec_emb_CT_Ho.csv',index=False)
-)
+
 
 # Calculate cosine similarity for each pair of rows
 start = time.time()

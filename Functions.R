@@ -503,3 +503,4 @@ colnames(aaenergy) <- rownames(aaenergy) <- letters_list
 # -------------------------------------------------------------
 rm(i,j,AA)
 # -----------
+

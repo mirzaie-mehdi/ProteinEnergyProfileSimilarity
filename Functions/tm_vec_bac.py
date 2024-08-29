@@ -51,7 +51,7 @@ n=df.shape[0]
 emb=pd.DataFrame(np.zeros((n, 512)))
 for i in range(0,n,1):
   print(i)
-  seq = df.loc[i, 'seq']
+  seq = df.loc[i, 'Seq']
   seq = np.expand_dims(seq, axis=0)
   protrans_seq = featurize_prottrans(seq, model, tokenizer, device).detach()
   embedded_seq = embed_tm_vec(protrans_seq, model_deep, device)
@@ -70,7 +70,7 @@ for i in range(len(emb)):
 # Convert result to DataFrame
 cosine_similarity_df = pd.DataFrame(cosine_similarity.numpy(), index=emb.index, columns=emb.index)
 
-cosine_similarity_df.to_csv(path+'disTM_vec_bac.csv',index=False)
+cosine_similarity_df.to_csv(path+'disTM_vec_bac2.csv',index=False)
 elapsed = (time.time() - start)
 
 print(elapsed)

@@ -1152,7 +1152,7 @@ E210.seq_spike <- readRDS("Data/rds/E210.seq_spike.rds")
 df <- E210.seq_spike
 
 rownames(df) <- df$pdbID
-x <- df[,-c(1:5)]/df$length
+x <- df[,-c(1:4)]/df$lenth
 x  <- as.matrix(x) 
 dis <- x %>% proxy::dist(method = manhat)
 hc <- dis %>% hclust(method = "ward.D2")
@@ -1168,7 +1168,7 @@ grp <- list(MERS_Cov     = rn[1:32],
             SARS_Cov2  = rn[64:143])
 
 tree_data <- as.phylo(dend)
-p_data <- ggtree(p_data, layout = 'dendrogram',
+p_data <- ggtree(tree_data, layout = 'dendrogram',
                  size = 2)
 myBoots <- boot.phylo(tree_data, as.matrix(dis), B = 100,
                       function(e) bionj(dis))
@@ -1337,7 +1337,8 @@ p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
   scale_fill_manual(values = mycol)+
   ylim(0,100)
 
-p190s <- p12h+xlim(c('CPE','TM-Vec','SPE'))+ylim(0,.44)+ #4.4*12*3.6 = 190sec
+p190s <- p12h+xlim(c('CPE','TM-Vec','SPE'))+
+  ylim(0,.44)+ #4.4*12*3.6 = 190sec
     theme(legend.text = element_text(face = 'bold',size = 15))
 
 
