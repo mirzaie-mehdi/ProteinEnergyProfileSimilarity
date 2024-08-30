@@ -165,7 +165,7 @@ t_SPE <- tictoc::toc()
 write.csv(df[,1:4],'Data/Large_Scale_SARS2/sars_proteom.csv',
           row.names = F)
 # ---------------
-# annot <- read.csv('Data/Large_Scale_SARS2/sars_proteom.csv')
+annot <- read.csv('Data/Large_Scale_SARS2/sars_proteom.csv')
 annot <- df[,1:4]
 df <- data.frame(annot,
                  matrix(NA,ncol=210,nrow=nrow(annot)))
@@ -426,7 +426,7 @@ get_ranks <- function(order, reference_order) {
 # Define tree orders
 reference_order <- c("R", "F", "B", "D")
 SPE_order <- c("R", "F", "B", "D")
-CPE_order <- c("R", "D", "B", "F")
+CPE_order <- c("F", "R", "B", "D")
 TM_order <- c("R", "D", "B", "F")
 
 # Compute ranks
@@ -600,7 +600,7 @@ dists <- list(CPE=dis_CPE,
 pair_dis_minPair <- lapply(dists, FUN = min_pairwise_dis,
                            gr=group,gr_idx=group_indices)
 
-pair_dis_medoid <- lapply(dists, FUN = medoid,
+pair_dis_medoid <- lapply(dists, FUN = medoid_dis,
                           gr=group,gr_idx=group_indices)
 
 pair_dis_sAB <- lapply(dists, FUN = sAB_dis,
@@ -1078,3 +1078,11 @@ ggplot(ump_df, aes(UMAP1, UMAP2, color= subClass)) +
 
 ```
 
+edit  ferritin net in PP
+add SPE for fiveSF and CT_Ho
+
+CPU
+11th Gen Intel(R) Core(TM) i9-11950H @ 2.60GHz
+Thread(s) per core:   2
+Core(s) per socket:   8
+Memory:        32GB
