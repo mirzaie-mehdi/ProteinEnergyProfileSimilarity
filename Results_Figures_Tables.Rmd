@@ -1118,10 +1118,10 @@ p
 ```{r Fig 7 ferritin}
 source('Functions.R')
 # ----------------------------------------------------
-E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
+E210_ferritin <- readRDS("Data/rds/E210.seq_ferritin.rds")
 df <- E210_ferritin
 rownames(df) <- df$pdbID
-dis <- proxy::dist(df[,-c(1:3)], method = manhat)
+dis <- proxy::dist(df[,-c(1:4)], method = manhat)
 
 nnet <- neighborNet(dis)
 #ggsplitnet(nnet) + geom_tiplab2(aes(label=label),

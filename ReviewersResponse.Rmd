@@ -20,6 +20,7 @@ library(tidyverse)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+library(ggpmisc)
 library(ggrepel)
 library(ggpubr)
 library(ggpointdensity)
@@ -352,7 +353,7 @@ t_SPE<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
                                  'magenta','purple2'
                                  ))
 # ----------------------------
-E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
+E210_ferritin <- readRDS("Data/rds/E210.seq_ferritin.rds")
 df <- E210_ferritin
 df$group[df$pdbID=='1otkA'] <- 'Pfam_1otkA'
 df <- df[with(df, order(df$group)), ]
@@ -805,8 +806,6 @@ rbind(ac,pr,re,f1)
 ```
 
 
-
-
 # scalability
 
 ```{r}
@@ -855,6 +854,7 @@ write.csv(df, 'Data/csv/CPE_prfc_astral95.csv', row.names = F)
 
 ## --- Visual 
 ```{r}
+source('Functions.R')
 cpe <- read.csv('Data/csv/CPE_prfc_astral95.csv')
 tm <- read.csv('Data/csv/TM_prfc_astral95.csv')
 cpe$method <- 'CPE'
@@ -862,8 +862,16 @@ tm$method <- 'TM'
 
 df <- rbind(cpe, tm)
 
-ggplot(df, aes(n_protein, time/sumAA, col=method))+
-  geom_point(size=2,alpha=.5)
+p<-ggplot(df, aes(n_protein, time/sumAA, col=method)) +
+  geom_point(size=3, alpha=.5) +
+  geom_smooth(method = "lm", se = FALSE, alpha=.3,linewidth = .3) +  
+  stat_poly_eq(aes(label = paste(..eq.label..)),
+               formula = y ~ x, parse = TRUE, label.x.npc = "right",
+               label.y.npc = "top", size = 5)+
+  xlab('N Protein')+
+  ylab('Time/AminoAcid (Sec/AA)')+
+  mytheme()
+
 ```
 
 # Globin Alpha_Beta
