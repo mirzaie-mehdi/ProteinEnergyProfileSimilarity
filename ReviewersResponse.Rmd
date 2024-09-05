@@ -247,6 +247,30 @@ cbind(Method=c('TM', 'CPE', 'SPE'),
       Time=c(t_tm, t_CPE, t_SPE))
 ```
 
+## UMAP
+
+```{r}
+load('Data/Large_Scale_SARS2/SPE_CPE_time.RData')
+library(RColorBrewer)
+#---------------------UMAP-------------------------------
+dis_SPE <- as.matrix(proxy::dist(df_SPE[,-c(1:4)], method = manhat))
+ump <- umap(d = dis_SPE,
+            n_neighbors = 150,
+            min_dist = 0.1,
+            input="dist")
+ump <- ump$layout
+ump_df <- data.frame(family=df_SPE$sars_proteom, 
+                  UMAP1=ump[,1],
+                  UMAP2=ump[,2])
+palette_Dark2 <- colorRampPalette(brewer.pal(28, "Dark2"))
+h = ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
+  geom_point(size = 3,alpha=.7) +
+  mytheme() +
+  scale_fill_manual(values = palette_Dark2(14)) +
+  theme(legend.position = "bottom")
+
+```
+
 # MSA covid
 ## --- Visual
 
