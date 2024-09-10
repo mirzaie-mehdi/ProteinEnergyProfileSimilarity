@@ -1102,6 +1102,65 @@ ggplot(ump_df, aes(UMAP1, UMAP2, color= subClass)) +
 
 ```
 
+
+# regenerat Fig 6
+add SPE 
+```{r}
+source('Functions.R')
+# ----------------------------------------------------
+df <- read.csv('Data/csv/CT_Ho_cathID_filtered.csv')
+
+E210_CT_Ho <- data.frame(df,
+                         matrix(NA, ncol = 210, nrow = nrow(df)))
+
+colnames(E210_CT_Ho)[-c(1:9)] <- pair_inter
+
+E210_CT_Ho <- data.frame(spike,
+                            matrix(NA,ncol=210,nrow=Nprotein))
+
+colnames(E210_CT_Ho)[-c(1:4)] <- pair_inter
+
+tictoc::tic()
+for (NP in 1:nrow(E210.seq_astral_95)) {
+  if (NP %% 50 == 0) {print(NP)}
+  chain_resno <- split_position(astral$Position[NP])
+  pdbname <- astral$pdbID[NP]
+  tryCatch({
+    pdb0 <- read.pdb(pdbname,verbose = FALSE)
+    pdblist = list()
+    for (ind in 1:dim(chain_resno)[1]){
+      sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=chain_resno$chain[ind])
+      sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+      sele4 <- atom.select(pdb0, "noh")
+      sele <- combine.select(sele1, sele2,sele4, operator="AND")
+      if (!(chain_resno$start[ind]=="NA") & !(chain_resno$end[ind])=="NA"){
+         st <- chain_resno$start[ind]
+         en <- chain_resno$end[ind]
+         sele3 <- atom.select(pdb0,  resno=st:en, verbose=FALSE)
+         sele <- combine.select(sele1, sele2,sele3,sele4, operator="AND")
+      }
+      pdblist[[ind]] <- trim.pdb(pdb0, sele,verbose = FALSE)
+    }
+    new_pdb = pdblist[[1]]
+    if (dim(chain_resno)[1] > 1) {
+      for (ind in 2:dim(chain_resno)[1]){
+      new_pdb <- cat.pdb(new_pdb, pdblist[[ind]], rechain=FALSE)
+      }
+    }
+    pdbX <- new_pdb$atom
+    E210.astral_95$length[NP] = length(unique(pdbX$resno))
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    E210.astral_95[NP,-c(1:8)] <- energy210
+    }, error = function(e) {
+     cat("Error downloading file:", e$message, "\n")
+    })
+}
+dis <- E210_spike[,-c(1:4)] %>% proxy::dist(method = manhat)
+tictoc::toc()
+
+```
+
 edit  ferritin net in PP
 add SPE for fiveSF and CT_Ho
 
