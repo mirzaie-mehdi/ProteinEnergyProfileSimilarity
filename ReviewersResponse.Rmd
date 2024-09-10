@@ -59,6 +59,8 @@ library(readxl)
 library(ggh4x)
 library(mclust)
 library(googledrive)
+library(Biostrings)
+library(msa)
 ```
 
 # Overlap PDBs
@@ -271,235 +273,60 @@ h = ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
 
 ```
 
-# MSA covid
-## --- Visual
+# Covid-SequenceBased-Phylogenetic tree
 
 ```{r}
 df <- read.csv("Data/covidPDB/spike_seq.csv")
 rownames(df) <- df$pdbID
 df <- df[with(df, order(df$virus,decreasing = T)), ]
 row.names(df) <- df$pdbID
+## ---Make a fasta file including spike protein sequences
+#ampir::df_to_faa(df[,c(1,3)],'Data/covidPDB/Spike.fasta')
 rn <- df$pdbID
 grp <- list(SARS_Cov2  = rn[1:80],
             SARS_Cov  = rn[81:111],
-            MERS_Cov  = rn[112:143]
-)
-# ----------------------------------- 
-#    write sequences in FASTA format 
-#      to run MSA by Clustal Omega method as online on
-#      https://www.ebi.ac.uk/jdispatcher/msa/clustalo
-#   default parameters were empolyed.
-# ---------
-ampir::df_to_faa(df[,c(1,3)],'Data/covidPDB/Spike.fasta')
-#  the output save 'Data/covidPDB/Spike.fasta.tree'
-# -------------------
-msa <- read.tree('Data/covidPDB/Spike.fasta.tree')
-tree_data <- as.phylo(msa)
+            MERS_Cov  = rn[112:143])
+#--- Read fasta sequences-------------
+sequences <- readAAStringSet("Data/covidPDB/Spike.fasta")
+# ---- Multiple sequence alignment using ClustalW---------
+alignment <- msa(sequences, method = "ClustalW")
+alignment2 <- msaConvert(alignment,type="seqinr::alignment")
+d <- seqinr::dist.alignment(alignment2, "identity")
+upgma <- phangorn::upgma(d)
+dend <- upgma %>% as.dendrogram
+tree_data <- as.phylo(dend)
 p_data <- ggtree(tree_data, layout = 'dendrogram',
+                 size = 2)
+t_Sequence_upgma <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
+  theme(legend.position="none",
+        plot.title = element_text(size = 50, face="bold",hjust = 0.5,vjust = 2))+
+#  geom_tiplab2(aes(label=label,angle=angle),
+#               hjust=-.1,size=1.5,fontface="bold",align=F)+
+#  geom_tiplab(aes(label=label),
+#               hjust=1,size=1.5,fontface="bold",align=F)+
+#  geom_text2(aes(subset=!isTip, label=boots),col='black', hjust=.3)+
+  scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
+                      type =  c('black',"blue","green","red" ))+
+  ggtitle('Sequence')
+#----------Neighbor joining---------
+spikeTree_nj <- nj(d)
+p_data <- ggtree(spikeTree_nj, layout = 'dendrogram',
                  size = 1,branch.length = 'none')
-
-t_msa<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
+t_nj<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
   theme(legend.position="top",
         legend.title=element_blank(),
         legend.text=element_text(size=20),
         plot.title = element_text(size = 50, face="bold",hjust = 0.5,vjust = 0))+
   scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
                        type =  c('black',"blue","green","red" ))+
-  ggtitle('MSA')
+  ggtitle('Neighbor Joinig')
 
 ```
 
-# Ferritin
-```{r}
-source('Functions.R')
-ferritin <- read.csv("Data/csv/Ferritin_Like_seq.csv",sep = ",")
-Nprotein <- nrow(ferritin)
-E210.seq_ferritin <- data.frame(ferritin,
-                            matrix(NA, ncol = 210, 
-                                   nrow = Nprotein))
-colnames(E210.seq_ferritin)[-c(1:4)] <- pair_inter
+## Spike Inter-Similarity
 
-for (NP in 1:Nprotein) {
-  print(NP)
-  seq <- unlist(strsplit(E210.seq_ferritin$seq[NP], ''))
-  freq <- c()
-    for (j in 1:20){
-      freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
-      }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
-    E210.seq_ferritin[NP,5:214] <- aa210_p
-}
+This chunk calculates the minimum pairwise distance among the SARS2, SARS, and MERS groups to assess their inter-similarity
 
-saveRDS(E210.seq_ferritin,file = "Data/rds/E210.seq_ferritin.rds")
-```
-
-
-## --- Visual NJ
-
-```{r}
-E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
-df <- E210_ferritin
-df$group[df$pdbID=='1otkA'] <- 'Pfam_1otkA'
-df <- df[with(df, order(df$group)), ]
-row.names(df) <- df$pdbID
-rn <- df$pdbID
-grp <- list(Bacteri     = rn[1:5],
-            BMM_alpha = rn[6:7],
-            BMM_beta  = rn[8:10],
-            Dps  = rn[11:25],
-            Fatty_acid  = rn[26:29],
-            Ferritins  = rn[30:40],
-            Pfam_1otkA = rn[41],
-            RNRR2  = rn[42:49],
-            Rubrerythrins = rn[50:53])
-
-dis <- proxy::dist(df[,-c(1:3)], method = manhat)
-
-tree_data <- ape::bionj(dis)
-
-
-p_data <- ggtree(tree_data, layout = 'unrooted',
-                 branch.length='none',size = 1.5) 
-
-
-t_SPE<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
-  theme(legend.position="right",
-        legend.title = element_blank(),
-        legend.text = element_text(size = 15, colour = "black"))+
-  geom_tiplab(aes(label=label),
-              hjust=0,size=3.5,fontface="bold",align=F)+
-  scale_color_discrete(type =  c('red',"orange2","yellow4","green3",
-                                 'skyblue3','blue','black',
-                                 'magenta','purple2'
-                                 ))
-# ----------------------------
-E210_ferritin <- readRDS("Data/rds/E210.seq_ferritin.rds")
-df <- E210_ferritin
-df$group[df$pdbID=='1otkA'] <- 'Pfam_1otkA'
-df <- df[with(df, order(df$group)), ]
-row.names(df) <- df$pdbID
-rn <- df$pdbID
-grp <- list(Bacteri     = rn[1:5],
-            BMM_alpha = rn[6:7],
-            BMM_beta  = rn[8:10],
-            Dps  = rn[11:25],
-            Fatty_acid  = rn[26:29],
-            Ferritins  = rn[30:40],
-            Pfam_1otkA = rn[41],
-            RNRR2  = rn[42:49],
-            Rubrerythrins = rn[50:53])
-
-dis <- proxy::dist(df[,-c(1:4)], method = manhat)
-
-tree_data <- ape::bionj(dis)
-
-
-p_data <- ggtree(tree_data, layout = 'unrooted',
-                 branch.length='none',size = 1.5) 
-
-
-t_CPE<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
-  theme(legend.position="right",
-        legend.title = element_blank(),
-        legend.text = element_text(size = 15, colour = "black"))+
-  geom_tiplab(aes(label=label),
-              hjust=0,size=3.5,fontface="bold",align=F)+
-  scale_color_discrete(type =  c('red',"orange2","yellow4","green3",
-                                 'skyblue3','blue','black',
-                                 'magenta','purple2'
-                                 ))
-# ----------------------------------------
-ferritin <- read.csv('Data/csv/Ferritin_Like_seq.csv')
-tm <- read.csv("Data/csv/disTM_vec_Ferritin_Like_seq.csv")
-tm <- 1 - tm
-colnames(tm) <- rownames(tm) <- ferritin$pdbID
-
-tree_data <- ape::bionj(as.dist(tm))
-
-
-p_data <- ggtree(tree_data, layout = 'unrooted',
-                 branch.length='none',size = 1.5) 
-
-
-t_tm<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
-  theme(legend.position="right",
-        legend.title = element_blank(),
-        legend.text = element_text(size = 15, colour = "black"))+
-  geom_tiplab(aes(label=label),
-              hjust=0,size=3.5,fontface="bold",align=F)+
-  scale_color_discrete(type =  c('gray','red',"orange2","yellow4","green3",
-                                 'skyblue3','blue','black',
-                                 'magenta','purple2'
-                                 ))
-```
-
-## --- Rho Spearman Rank
-
-```{r}
-get_ranks <- function(order, reference_order) {
-  ranks <- match(order, reference_order)
-  ranks[is.na(ranks)] <- NA 
-  return(ranks)
-}
-# ----------------------------
-# ----  a.25.1.1 family
-# Define tree orders
-reference_order <- c("R", "F", "B", "D")
-SPE_order <- c("R", "F", "B", "D")
-CPE_order <- c("F", "R", "B", "D")
-TM_order <- c("R", "D", "B", "F")
-
-# Compute ranks
-reference_ranks <- get_ranks(reference_order, reference_order)
-SPE_ranks <- get_ranks(SPE_order, reference_order)
-CPE_ranks <- get_ranks(CPE_order, reference_order)
-TM_ranks <- get_ranks(TM_order, reference_order)
-
-# Calculate Spearman's rank correlation coefficient
-SPE <- cor(reference_ranks, SPE_ranks, 
-           method = "spearman", use = "complete.obs")
-CPE <- cor(reference_ranks, CPE_ranks, 
-           method = "spearman", use = "complete.obs")
-TM <- cor(reference_ranks, TM_ranks, 
-          method = "spearman", use = "complete.obs")
-a.25.1.1 <- c(SPE, CPE, TM)
-# -------------------------------
-# ----  a.25.1.2 family
-# Define tree orders
-reference_order <- c("F", "R", "A", "B")
-SPE_order <- c("R", "F", "B", "A")
-CPE_order <- c("R", "F", "B", "A")
-TM_order <- c("B", "R", "F", "A")
-
-reference_ranks <- get_ranks(reference_order, reference_order)
-SPE_ranks <- get_ranks(SPE_order, reference_order)
-CPE_ranks <- get_ranks(CPE_order, reference_order)
-TM_ranks <- get_ranks(TM_order, reference_order)
-
-# Calculate Spearman's rank correlation coefficient
-SPE <- cor(reference_ranks, SPE_ranks, 
-           method = "spearman", use = "complete.obs")
-CPE <- cor(reference_ranks, CPE_ranks, 
-           method = "spearman", use = "complete.obs")
-TM <- cor(reference_ranks, TM_ranks, 
-          method = "spearman", use = "complete.obs")
-a.25.1.2 <- c(SPE, CPE, TM)
-
-cbind(Method=c('SPE', 'CPE', 'TM'),
-      a.25.1.1, a.25.1.2)
-```
-
-
-# Spike Similarity
-This chunk computes the pairwise distance
-   between SARS2, SARS, and Mers by three methods.
-   - minimum pairwise distance
-   - mediod
-   - sAB
 ```{r}
 source('Functions.R')
 # --------------------SPE-----------
@@ -515,14 +342,20 @@ x <- as.matrix(df[,-c(1:4)]/df$length)
 dis_CPE <- as.matrix(x %>% proxy::dist(method = manhat))
 # ------------------------------------------------
 # -------------------Seq identity from MSA------------------------
-clustalo <- read_table("Data/covidPDB/clustalo.pim",
-                       col_names = FALSE, comment = "#")
-dis_seqid <- data.frame(clustalo[,-c(1,2)])
-colnames(dis_seqid) <- rownames(dis_seqid) <- clustalo$X2
-dis_seqid <- dis_seqid/100
-dis_seqid <- 1 - dis_seqid
+sequences <- readAAStringSet("Data/covidPDB/Spike.fasta")
+# ---- Multiple sequence alignment using ClustalW---------
+alignment <- msa(sequences, method = "ClustalW")
+alignment2 <- msaConvert(alignment,type="seqinr::alignment")
+d <- seqinr::dist.alignment(alignment2, "identity")
+#clustalo <- read_table("Data/covidPDB/clustalo.pim",
+#                       col_names = FALSE, comment = "#")
+#dis_seqid <- data.frame(clustalo[,-c(1,2)])
+#colnames(dis_seqid) <- rownames(dis_seqid) <- clustalo$X2
+#dis_seqid <- dis_seqid/100
+#dis_seqid <- 1 - dis_seqid
+#dis_seqid <- dis_seqid[df$pdbID, df$pdbID]
+dis_seqid <- as.matrix(d)
 dis_seqid <- dis_seqid[df$pdbID, df$pdbID]
-dis_seqid <- as.matrix(dis_seqid)
 # -------------------------------------
 # -------------RMSD---------------------
 rms <- data.frame(readRDS('Data/covidPDB/RMSD_spike.rds'))
@@ -535,101 +368,64 @@ tm <- read.csv('Data/covidPDB/disTM_vec_spike.csv')
 colnames(tm) <- rownames(tm) <- df$pdbID
 tm <- 1 - tm
 tm <- as.matrix(tm)
-# -----------------------------
+# -------------Groups----------
 group <- factor(df$virus)
 group_indices <- split(seq_len(length(group)), group)
-# --------------------------------------------------
-# ---------minimum pairwise distance-------------
-min_pairwise_dis <- function(dis, gr, gr_idx){
-  # Function to calculate minimum pairwise distance between two groups
-  calculate_min_distance <- function(group1_indices,
-                                     group2_indices,
+# -----------Function to calculate mean of pairwise distance between two groups
+mean_pairwise_dis <- function(dis, gr, gr_idx){
+  calculate_mean_distance <- function(group1_indices,group2_indices,
                                      distance_matrix) {
-    submatrix <- distance_matrix[group1_indices, group2_indices]
-    return(min(submatrix))
-    }
-  min_dis <- matrix(NA, nrow = 3, ncol = 3,
-                          dimnames = list(levels(gr), 
-                                          levels(gr)))
-  for (i in 1:3) {
+  submatrix <- distance_matrix[group1_indices, group2_indices]
+  return(mean(submatrix))
+  }
+mean_dis <- matrix(NA, nrow = 3, ncol = 3,
+                   dimnames = list(levels(gr),levels(gr)))
+for (i in 1:3) {
     for (j in 1:3) {
-      min_dis[i, j] <- calculate_min_distance(gr_idx[[i]],
-                                              gr_idx[[j]],
-                                              dis)
+      mean_dis[i, j] <- calculate_mean_distance(gr_idx[[i]],gr_idx[[j]],dis)
     }
   }
-  diag(min_dis)<-0
-  final_dis <- min_dis
-  final_dis <- (final_dis - min(final_dis))/
-    (max(final_dis) - min(final_dis))
-  final_dis <- round(final_dis,2)
-  return(final_dis)
-}
-# ----------------------------------------------------
-# -----------------------Medoid---------------------
-medoid_dis <- function(dis, gr, gr_idx){
-  # Function to calculate medoid for a group
-  calculate_medoid <- function(dist_matrix, group_indices) {
-    submatrix <- dist_matrix[group_indices, group_indices]
-    medoid_index <- cluster::pam(submatrix, 1)$id.med
-    return(grep(rownames(submatrix)[medoid_index],
-                rownames(dist_matrix)))
-    }
-  dis_medoid <- matrix(NA, nrow = 3, ncol = 3,
-                       dimnames = list(levels(gr),
-                                       levels(gr)))
-  for (i in 1:3) {
-    for (j in 1:3) {
-      x <- calculate_medoid(dis, gr_idx[[i]])
-      y <- calculate_medoid(dis, gr_idx[[j]])
-      dis_medoid[i, j] <- dis[x,y]
-    }
-  }
-  final_dis <- dis_medoid
-  final_dis <- (final_dis - min(final_dis))/
-    (max(final_dis) - min(final_dis))
-  final_dis <- round(final_dis,2)
-  return(final_dis)
-}
-# -----------------------------------------------
-# ----------SAB like drug similarity measure---------------
-sAB_dis <- function(dis, gr, gr_idx){
-  my_sab <- matrix(0,3,3)
-  for (i in 1:3) {
-    for (j in 1:3) {
-      disi <- dis[gr_idx[[i]], gr_idx[[i]]]
-      dii <- mean(diag(as.matrix(disi[apply(disi,2,which.min),])))
-      disj <- dis[gr_idx[[j]], gr_idx[[j]]]
-      djj <- mean(diag(as.matrix(disj[apply(disj,2,which.min),])))
-      disij <- dis[gr_idx[[i]], gr_idx[[j]]]
-      disji <- dis[gr_idx[[j]], gr_idx[[i]]]
-      dij <- mean(c(diag(as.matrix(disij[apply(disij,2,which.min),])),
-                  diag(as.matrix(disji[apply(disji,2,which.min),]))))
-      my_sab[i,j] <- dij - ((dii + djj)/2)
-    }
-  }
-  final_dis <- my_sab
-  final_dis <- (final_dis - min(final_dis))/
-    (max(final_dis) - min(final_dis))
-  final_dis <- round(final_dis,2)
-  return(final_dis)
-}
-# -------------------
-dists <- list(CPE=dis_CPE,
-              SPE=dis_SPE,
-              seqid=dis_seqid,
-              TM_vec=tm,
-              RMSD=rms)
+diag(mean_dis)<-0
+minmax_dis <- mean_dis
+minmax_dis <- (minmax_dis - min(minmax_dis))/(max(minmax_dis) - min(minmax_dis))
 
-pair_dis_minPair <- lapply(dists, FUN = min_pairwise_dis,
+minmax_dis <- round(minmax_dis,2)
+return(minmax_dis)
+}
+# ------------------------------------------------------------------------------
+dists <- list(CPE=dis_CPE,SPE=dis_SPE,seqid=dis_seqid,TM_vec=tm,RMSD=rms)
+pair_dis_minPair <- lapply(dists, FUN = mean_pairwise_dis,
                            gr=group,gr_idx=group_indices)
+lower_triangles <- lapply(pair_dis_minPair, function(x) x[lower.tri(x)])
+mean_pair_dist <- do.call(rbind, lower_triangles)
+colnames(mean_pair_dist) = c("MERS-CoV vs SARS-CoV", "MERS-CoV vs SARS-CoV-2", "SARS-CoV vs SARS-CoV-2")
+library(reshape2)
+group_dis <- melt(mean_pair_dist)
+colnames(group_dis) = c("Method","Comparison","Distance")
+```
 
-pair_dis_medoid <- lapply(dists, FUN = medoid_dis,
-                          gr=group,gr_idx=group_indices)
+## Visualization
 
-pair_dis_sAB <- lapply(dists, FUN = sAB_dis,
-                       gr=group,gr_idx=group_indices)
+```{r}
 
+# Plot the bar plot
+ggplot(group_dis, aes(x = Comparison, y = Distance, fill = Method)) +
+  geom_bar(stat = "identity", position = "dodge", width = 0.7) +
+  labs(title = "Comparison of Different Distance Metrics Between Virus Pairs", 
+       x = "Virus Comparison", y = "Distance") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        plot.title = element_text(hjust = 0.5, size = 16))
+
+
+ ggplot(group_dis, aes(x = "", y = Distance, fill = Comparison)) +
+     geom_bar(stat = "identity", width = 1) +
+     coord_polar("y") +
+     facet_wrap(~Method) +
+     labs(title = "Pie Chart of Distance by Metric",
+          x = NULL, y = NULL) +
+     theme_void() +
+     theme(legend.position = "right")
 
 ```
 
@@ -828,6 +624,196 @@ re <- round(diag(cm)/rowSums(cm) , 2)*100
 f1 <- round((2*pr*re)/(pr+re))
 rbind(ac,pr,re,f1)
 ```
+
+
+
+
+# Ferritin
+```{r}
+source('Functions.R')
+ferritin <- read.csv("Data/csv/Ferritin_Like_seq.csv",sep = ",")
+Nprotein <- nrow(ferritin)
+E210.seq_ferritin <- data.frame(ferritin,
+                            matrix(NA, ncol = 210, 
+                                   nrow = Nprotein))
+colnames(E210.seq_ferritin)[-c(1:4)] <- pair_inter
+
+for (NP in 1:Nprotein) {
+  print(NP)
+  seq <- unlist(strsplit(E210.seq_ferritin$seq[NP], ''))
+  freq <- c()
+    for (j in 1:20){
+      freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
+      }
+    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+    en_fr <- aaenergy * freq_matrix
+    en_fr <- en_fr/length(seq)
+    pair_es <- diag(freq) %*% as.matrix(en_fr)
+    aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
+    E210.seq_ferritin[NP,5:214] <- aa210_p
+}
+
+saveRDS(E210.seq_ferritin,file = "Data/rds/E210.seq_ferritin.rds")
+```
+
+
+## --- Visual NJ
+
+```{r}
+E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
+df <- E210_ferritin
+df$group[df$pdbID=='1otkA'] <- 'Pfam_1otkA'
+df <- df[with(df, order(df$group)), ]
+row.names(df) <- df$pdbID
+rn <- df$pdbID
+grp <- list(Bacteri     = rn[1:5],
+            BMM_alpha = rn[6:7],
+            BMM_beta  = rn[8:10],
+            Dps  = rn[11:25],
+            Fatty_acid  = rn[26:29],
+            Ferritins  = rn[30:40],
+            Pfam_1otkA = rn[41],
+            RNRR2  = rn[42:49],
+            Rubrerythrins = rn[50:53])
+
+dis <- proxy::dist(df[,-c(1:3)], method = manhat)
+
+tree_data <- ape::bionj(dis)
+
+
+p_data <- ggtree(tree_data, layout = 'unrooted',
+                 branch.length='none',size = 1.5) 
+
+
+t_SPE<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
+  theme(legend.position="right",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 15, colour = "black"))+
+  geom_tiplab(aes(label=label),
+              hjust=0,size=3.5,fontface="bold",align=F)+
+  scale_color_discrete(type =  c('red',"orange2","yellow4","green3",
+                                 'skyblue3','blue','black',
+                                 'magenta','purple2'
+                                 ))
+# ----------------------------
+E210_ferritin <- readRDS("Data/rds/E210.seq_ferritin.rds")
+df <- E210_ferritin
+df$group[df$pdbID=='1otkA'] <- 'Pfam_1otkA'
+df <- df[with(df, order(df$group)), ]
+row.names(df) <- df$pdbID
+rn <- df$pdbID
+grp <- list(Bacteri     = rn[1:5],
+            BMM_alpha = rn[6:7],
+            BMM_beta  = rn[8:10],
+            Dps  = rn[11:25],
+            Fatty_acid  = rn[26:29],
+            Ferritins  = rn[30:40],
+            Pfam_1otkA = rn[41],
+            RNRR2  = rn[42:49],
+            Rubrerythrins = rn[50:53])
+
+dis <- proxy::dist(df[,-c(1:4)], method = manhat)
+
+tree_data <- ape::bionj(dis)
+
+
+p_data <- ggtree(tree_data, layout = 'unrooted',
+                 branch.length='none',size = 1.5) 
+
+
+t_CPE<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
+  theme(legend.position="right",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 15, colour = "black"))+
+  geom_tiplab(aes(label=label),
+              hjust=0,size=3.5,fontface="bold",align=F)+
+  scale_color_discrete(type =  c('red',"orange2","yellow4","green3",
+                                 'skyblue3','blue','black',
+                                 'magenta','purple2'
+                                 ))
+# ----------------------------------------
+ferritin <- read.csv('Data/csv/Ferritin_Like_seq.csv')
+tm <- read.csv("Data/csv/disTM_vec_Ferritin_Like_seq.csv")
+tm <- 1 - tm
+colnames(tm) <- rownames(tm) <- ferritin$pdbID
+
+tree_data <- ape::bionj(as.dist(tm))
+
+
+p_data <- ggtree(tree_data, layout = 'unrooted',
+                 branch.length='none',size = 1.5) 
+
+
+t_tm<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
+  theme(legend.position="right",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 15, colour = "black"))+
+  geom_tiplab(aes(label=label),
+              hjust=0,size=3.5,fontface="bold",align=F)+
+  scale_color_discrete(type =  c('gray','red',"orange2","yellow4","green3",
+                                 'skyblue3','blue','black',
+                                 'magenta','purple2'
+                                 ))
+```
+
+## --- Rho Spearman Rank
+
+```{r}
+get_ranks <- function(order, reference_order) {
+  ranks <- match(order, reference_order)
+  ranks[is.na(ranks)] <- NA 
+  return(ranks)
+}
+# ----------------------------
+# ----  a.25.1.1 family
+# Define tree orders
+reference_order <- c("R", "F", "B", "D")
+SPE_order <- c("R", "F", "B", "D")
+CPE_order <- c("F", "R", "B", "D")
+TM_order <- c("R", "D", "B", "F")
+
+# Compute ranks
+reference_ranks <- get_ranks(reference_order, reference_order)
+SPE_ranks <- get_ranks(SPE_order, reference_order)
+CPE_ranks <- get_ranks(CPE_order, reference_order)
+TM_ranks <- get_ranks(TM_order, reference_order)
+
+# Calculate Spearman's rank correlation coefficient
+SPE <- cor(reference_ranks, SPE_ranks, 
+           method = "spearman", use = "complete.obs")
+CPE <- cor(reference_ranks, CPE_ranks, 
+           method = "spearman", use = "complete.obs")
+TM <- cor(reference_ranks, TM_ranks, 
+          method = "spearman", use = "complete.obs")
+a.25.1.1 <- c(SPE, CPE, TM)
+# -------------------------------
+# ----  a.25.1.2 family
+# Define tree orders
+reference_order <- c("F", "R", "A", "B")
+SPE_order <- c("R", "F", "B", "A")
+CPE_order <- c("R", "F", "B", "A")
+TM_order <- c("B", "R", "F", "A")
+
+reference_ranks <- get_ranks(reference_order, reference_order)
+SPE_ranks <- get_ranks(SPE_order, reference_order)
+CPE_ranks <- get_ranks(CPE_order, reference_order)
+TM_ranks <- get_ranks(TM_order, reference_order)
+
+# Calculate Spearman's rank correlation coefficient
+SPE <- cor(reference_ranks, SPE_ranks, 
+           method = "spearman", use = "complete.obs")
+CPE <- cor(reference_ranks, CPE_ranks, 
+           method = "spearman", use = "complete.obs")
+TM <- cor(reference_ranks, TM_ranks, 
+          method = "spearman", use = "complete.obs")
+a.25.1.2 <- c(SPE, CPE, TM)
+
+cbind(Method=c('SPE', 'CPE', 'TM'),
+      a.25.1.1, a.25.1.2)
+```
+
+
+
 
 
 # scalability
@@ -1169,3 +1155,141 @@ CPU
 Thread(s) per core:   2
 Core(s) per socket:   8
 Memory:        32GB
+
+
+# MSA covid
+## --- Visual
+
+```{r}
+df <- read.csv("Data/covidPDB/spike_seq.csv")
+rownames(df) <- df$pdbID
+df <- df[with(df, order(df$virus,decreasing = T)), ]
+row.names(df) <- df$pdbID
+rn <- df$pdbID
+grp <- list(SARS_Cov2  = rn[1:80],
+            SARS_Cov  = rn[81:111],
+            MERS_Cov  = rn[112:143]
+)
+# ----------------------------------- 
+#    write sequences in FASTA format 
+#      to run MSA by Clustal Omega method as online on
+#      https://www.ebi.ac.uk/jdispatcher/msa/clustalo
+#   default parameters were employed.
+# -----------------------------------
+ampir::df_to_faa(df[,c(1,3)],'Data/covidPDB/Spike.fasta')
+#  the output saved at 'Data/covidPDB/Spike.fasta.tree'
+# -------------------
+msa <- read.tree('Data/covidPDB/Spike.fasta.tree')
+tree_data <- as.phylo(msa)
+p_data <- ggtree(tree_data, layout = 'dendrogram',
+                 size = 1,branch.length = 'none')
+
+t_msa<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
+  theme(legend.position="top",
+        legend.title=element_blank(),
+        legend.text=element_text(size=20),
+        plot.title = element_text(size = 50, face="bold",hjust = 0.5,vjust = 0))+
+  scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
+                       type =  c('black',"blue","green","red" ))+
+  ggtitle('MSA')
+```
+
+
+```{r}
+# -----------------------------
+group <- factor(df$virus)
+group_indices <- split(seq_len(length(group)), group)
+# --------------------------------------------------
+# ---------minimum pairwise distance-------------
+min_pairwise_dis <- function(dis, gr, gr_idx){
+  # Function to calculate minimum pairwise distance between two groups
+  calculate_min_distance <- function(group1_indices,
+                                     group2_indices,
+                                     distance_matrix) {
+    submatrix <- distance_matrix[group1_indices, group2_indices]
+    return(min(submatrix))
+    }
+  min_dis <- matrix(NA, nrow = 3, ncol = 3,
+                          dimnames = list(levels(gr), 
+                                          levels(gr)))
+  for (i in 1:3) {
+    for (j in 1:3) {
+      min_dis[i, j] <- calculate_min_distance(gr_idx[[i]],
+                                              gr_idx[[j]],
+                                              dis)
+    }
+  }
+  diag(min_dis)<-0
+  final_dis <- min_dis
+  final_dis <- (final_dis - min(final_dis))/
+    (max(final_dis) - min(final_dis))
+  final_dis <- round(final_dis,2)
+  return(final_dis)
+}
+# ----------------------------------------------------
+# -----------------------Medoid---------------------
+medoid_dis <- function(dis, gr, gr_idx){
+  # Function to calculate medoid for a group
+  calculate_medoid <- function(dist_matrix, group_indices) {
+    submatrix <- dist_matrix[group_indices, group_indices]
+    medoid_index <- cluster::pam(submatrix, 1)$id.med
+    return(grep(rownames(submatrix)[medoid_index],
+                rownames(dist_matrix)))
+    }
+  dis_medoid <- matrix(NA, nrow = 3, ncol = 3,
+                       dimnames = list(levels(gr),
+                                       levels(gr)))
+  for (i in 1:3) {
+    for (j in 1:3) {
+      x <- calculate_medoid(dis, gr_idx[[i]])
+      y <- calculate_medoid(dis, gr_idx[[j]])
+      dis_medoid[i, j] <- dis[x,y]
+    }
+  }
+  final_dis <- dis_medoid
+  final_dis <- (final_dis - min(final_dis))/
+    (max(final_dis) - min(final_dis))
+  final_dis <- round(final_dis,2)
+  return(final_dis)
+}
+# -----------------------------------------------
+# ----------SAB like drug similarity measure---------------
+sAB_dis <- function(dis, gr, gr_idx){
+  my_sab <- matrix(0,3,3)
+  for (i in 1:3) {
+    for (j in 1:3) {
+      disi <- dis[gr_idx[[i]], gr_idx[[i]]]
+      dii <- mean(diag(as.matrix(disi[apply(disi,2,which.min),])))
+      disj <- dis[gr_idx[[j]], gr_idx[[j]]]
+      djj <- mean(diag(as.matrix(disj[apply(disj,2,which.min),])))
+      disij <- dis[gr_idx[[i]], gr_idx[[j]]]
+      disji <- dis[gr_idx[[j]], gr_idx[[i]]]
+      dij <- mean(c(diag(as.matrix(disij[apply(disij,2,which.min),])),
+                  diag(as.matrix(disji[apply(disji,2,which.min),]))))
+      my_sab[i,j] <- dij - ((dii + djj)/2)
+    }
+  }
+  final_dis <- my_sab
+  final_dis <- (final_dis - min(final_dis))/
+    (max(final_dis) - min(final_dis))
+  final_dis <- round(final_dis,2)
+  return(final_dis)
+}
+# -------------------
+dists <- list(CPE=dis_CPE,
+              SPE=dis_SPE,
+              seqid=dis_seqid,
+              TM_vec=tm,
+              RMSD=rms)
+
+pair_dis_minPair <- lapply(dists, FUN = min_pairwise_dis,
+                           gr=group,gr_idx=group_indices)
+
+pair_dis_medoid <- lapply(dists, FUN = medoid_dis,
+                          gr=group,gr_idx=group_indices)
+
+pair_dis_sAB <- lapply(dists, FUN = sAB_dis,
+                       gr=group,gr_idx=group_indices)
+
+```
+
