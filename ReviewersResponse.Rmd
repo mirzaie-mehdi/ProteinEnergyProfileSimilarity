@@ -1091,6 +1091,7 @@ ggplot(ump_df, aes(UMAP1, UMAP2, color= subClass)) +
 
 # regenerat Fig 6
 add SPE 
+this chunk has run on win 10 with 2.4 GHz cpu and 8 GB RAM.
 ```{r}
 source('Functions.R')
 # ----------------------------------------------------
@@ -1101,50 +1102,52 @@ E210_CT_Ho <- data.frame(df,
 
 colnames(E210_CT_Ho)[-c(1:9)] <- pair_inter
 
-E210_CT_Ho <- data.frame(spike,
-                            matrix(NA,ncol=210,nrow=Nprotein))
-
-colnames(E210_CT_Ho)[-c(1:4)] <- pair_inter
-
 tictoc::tic()
-for (NP in 1:nrow(E210.seq_astral_95)) {
-  if (NP %% 50 == 0) {print(NP)}
-  chain_resno <- split_position(astral$Position[NP])
-  pdbname <- astral$pdbID[NP]
+for (NP in 1:nrow(E210_CT_Ho)) {
+  print(NP)
+  pdbname <- substr(E210_CT_Ho$pdbID[NP],1,4)
   tryCatch({
     pdb0 <- read.pdb(pdbname,verbose = FALSE)
-    pdblist = list()
-    for (ind in 1:dim(chain_resno)[1]){
-      sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=chain_resno$chain[ind])
-      sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
-      sele4 <- atom.select(pdb0, "noh")
-      sele <- combine.select(sele1, sele2,sele4, operator="AND")
-      if (!(chain_resno$start[ind]=="NA") & !(chain_resno$end[ind])=="NA"){
-         st <- chain_resno$start[ind]
-         en <- chain_resno$end[ind]
-         sele3 <- atom.select(pdb0,  resno=st:en, verbose=FALSE)
-         sele <- combine.select(sele1, sele2,sele3,sele4, operator="AND")
-      }
-      pdblist[[ind]] <- trim.pdb(pdb0, sele,verbose = FALSE)
-    }
-    new_pdb = pdblist[[1]]
-    if (dim(chain_resno)[1] > 1) {
-      for (ind in 2:dim(chain_resno)[1]){
-      new_pdb <- cat.pdb(new_pdb, pdblist[[ind]], rechain=FALSE)
-      }
-    }
-    pdbX <- new_pdb$atom
-    E210.astral_95$length[NP] = length(unique(pdbX$resno))
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=substr(E210_CT_Ho$pdbID[NP],5,5))
+    pdb0 <- trim.pdb(pdb0, sele1, verbose = FALSE)
+    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+    sele4 <- atom.select(pdb0, "noh")
+    # ------------
+    #r <- unique(pdb0$atom$resno)
+    #pos <- as.numeric(unlist(strsplit(E210_CT_Ho$position[NP],'-')))
+    #st <- pos[1]
+    #en <- pos[2]
+    #sele3 <- atom.select(pdb0,  resno=r[st]:r[en], verbose=FALSE)
+    sele <- combine.select(sele2, sele4, operator="AND")
+    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
     Net_Frame <- NetworkFrame(PDB = new_pdb)
     energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
-    E210.astral_95[NP,-c(1:8)] <- energy210
+    E210_CT_Ho[NP,-c(1:9)] <- energy210
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
     })
 }
-dis <- E210_spike[,-c(1:4)] %>% proxy::dist(method = manhat)
-tictoc::toc()
+dis <- as.matrix(E210_CT_Ho[,-c(1:9)] %>% proxy::dist(method = manhat))
+rt <- tictoc::toc()
+# time  = 187 Sec
 
+saveRDS(E210_CT_Ho,'Data/rds/E210_CT_Ho.rds')
+
+diag(dis) <- NA
+im <- apply(dis,1, FUN = which.min)
+res <- data.frame(source=df$cathID, target=df$cathID[im])
+## ----------
+twoSF <- unique(E210_CT_Ho$cathID)
+cm <- matrix(0,2,2)
+colnames(cm) <- rownames(cm) <- twoSF
+for (sf in twoSF) {
+  x <- res[res$source%in%sf,]
+  z <- table(x$target)
+  cm[sf,names(z)]<-z
+}
+ac <- round(sum(diag(cm))/sum(cm),2)*100
+
+print(paste0('Accuracy = ', ac, '; RunningTime = ', rt$toc - rt$tic))
 ```
 
 edit  ferritin net in PP
