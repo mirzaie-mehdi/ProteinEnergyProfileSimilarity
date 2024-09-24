@@ -219,8 +219,8 @@ df <- readRDS("Data/rds/E210.astral_40.rds")
 df <- df[df$fold%in%c('a.100','a.104'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(6,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
@@ -235,8 +235,8 @@ df <- readRDS("Data/rds/E210.seq_astral_40.rds")
 df <- df[df$fold%in%c('a.100','a.104'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(6,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
@@ -265,8 +265,8 @@ df <- readRDS("Data/rds/E210.astral_95.rds")
 df <- df[df$fold%in%c('a.100','a.104'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(6,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
@@ -281,8 +281,8 @@ df <- readRDS("Data/rds/E210.seq_astral_95.rds")
 df <- df[df$fold%in%c('a.100','a.104'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(6,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
@@ -329,8 +329,8 @@ df <- readRDS("Data/rds/E210.astral_40.rds")
 df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(7,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
@@ -345,8 +345,8 @@ df <- readRDS("Data/rds/E210.seq_astral_40.rds")
 df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(7,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
@@ -375,8 +375,8 @@ df <- readRDS("Data/rds/E210.astral_95.rds")
 df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(7,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
@@ -391,8 +391,8 @@ df <- readRDS("Data/rds/E210.seq_astral_95.rds")
 df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(7,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
@@ -438,7 +438,7 @@ df <- readRDS("Data/rds/E210.astral_40.rds")
 df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(8,3,9:218)]
-df$length <- as.numeric(df$length)
+
 dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 10,
@@ -454,8 +454,8 @@ df <- readRDS("Data/rds/E210.seq_astral_40.rds")
 df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(8,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 10,
             min_dist = 0.1,
@@ -483,8 +483,8 @@ df <- readRDS("Data/rds/E210.astral_95.rds")
 df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(8,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 10,
             min_dist = 0.1,
@@ -499,8 +499,8 @@ df <- readRDS("Data/rds/E210.seq_astral_95.rds")
 df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(8,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 10,
             min_dist = 0.1,
@@ -630,7 +630,7 @@ saveRDS(mylegend,'manuscript/Fig5mylegend.rds')
 df <- readRDS("Data/rds/E210.astral_95.rds") 
 df = df[!is.na(df$FL),] 
 idx<- df$superfamily%in% 'a.29.3'
-dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- as.matrix(dist(df[idx,-c(1:8)], method = manhat))
 dis <- data.frame(gr=df$family[idx], dis)
 fa<-unique(dis$gr)
 
@@ -1457,7 +1457,7 @@ sab <- sab[-2081,-6]
 colnames(sab)[1:2]<-c('d1','d2')
 
 df <- left_join(sab,my_sab,c('d1','d2'))
-ggplot(df,aes(sAB,my_sAB))+
+p1 <- ggplot(df,aes(sAB,my_sAB))+
   geom_point(alpha=.5)+geom_smooth(method = 'lm')+
   stat_cor(col='red',size=8)+mytheme()+
     theme(axis.title = element_text(size=20),
@@ -1538,10 +1538,10 @@ df5 <- readRDS('Data/rds/E210.seq_fiveSF.rds')
 # ----------------------------------------
 # ---------- 1NN ----------------
 # ---------------------------------------
-dis <- as.matrix(dist(df5[,-c(1:9)],method = manhat))
+dis <- as.matrix(dist(df5[,-c(1:9)], method = manhat))
 diag(dis) <- NA
 
-im <- apply(dis,1, FUN = which.min)
+im <- apply(dis, 1, FUN = which.min)
 res <- data.frame(source=df5$superfamily, target=df5$superfamily[im])
 cm <- matrix(0,5,5)
 colnames(cm) <- rownames(cm) <- fiveSF
@@ -1560,6 +1560,7 @@ res1NN_CPE<-data.frame(t(round(c(Accuracy,F1),2)))
 # ---------- 10 fold cross validation Random forest ----------------
 # ---------------------------------------
 set.seed(12345)
+df5[,-c(1:9)] <- df5[,-c(1:9)]/df5$length
 df5$superfamily <- factor(df5$superfamily)
 kfolds <- createFolds(df5$superfamily, k = 10)
 res<-c()

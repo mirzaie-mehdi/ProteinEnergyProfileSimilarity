@@ -1089,8 +1089,7 @@ ggplot(ump_df, aes(UMAP1, UMAP2, color= subClass)) +
 ```
 
 
-# regenerat Fig 6
-add SPE 
+# SPE for Ct_Ho
 this chunk has run on win 10 with 2.4 GHz cpu and 8 GB RAM.
 ```{r}
 source('Functions.R')
@@ -1107,17 +1106,18 @@ for (NP in 1:nrow(E210_CT_Ho)) {
   print(NP)
   pdbname <- substr(E210_CT_Ho$pdbID[NP],1,4)
   tryCatch({
-    pdb0 <- read.pdb(pdbname,verbose = FALSE)
-    sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=substr(E210_CT_Ho$pdbID[NP],5,5))
+    pdb0 <- read.pdb(pdbname, verbose = FALSE)
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM",
+                         chain=substr(E210_CT_Ho$pdbID[NP],5,5))
     pdb0 <- trim.pdb(pdb0, sele1, verbose = FALSE)
     sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
     sele4 <- atom.select(pdb0, "noh")
     # ------------
-    #r <- unique(pdb0$atom$resno)
-    #pos <- as.numeric(unlist(strsplit(E210_CT_Ho$position[NP],'-')))
-    #st <- pos[1]
-    #en <- pos[2]
-    #sele3 <- atom.select(pdb0,  resno=r[st]:r[en], verbose=FALSE)
+    r <- unique(pdb0$atom$resno)
+    pos <- as.numeric(unlist(strsplit(E210_CT_Ho$position[NP],'-')))
+    st <- pos[1]
+    en <- ifelse(pos[2]>length(r), length(r), pos[2])
+    sele3 <- atom.select(pdb0,  resno=r[st]:r[en], verbose=FALSE)
     sele <- combine.select(sele2, sele4, operator="AND")
     new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
     Net_Frame <- NetworkFrame(PDB = new_pdb)
@@ -1129,7 +1129,7 @@ for (NP in 1:nrow(E210_CT_Ho)) {
 }
 dis <- as.matrix(E210_CT_Ho[,-c(1:9)] %>% proxy::dist(method = manhat))
 rt <- tictoc::toc()
-# time  = 187 Sec
+
 
 saveRDS(E210_CT_Ho,'Data/rds/E210_CT_Ho.rds')
 
@@ -1148,6 +1148,69 @@ for (sf in twoSF) {
 ac <- round(sum(diag(cm))/sum(cm),2)*100
 
 print(paste0('Accuracy = ', ac, '; RunningTime = ', rt$toc - rt$tic))
+# time  = 187 Sec
+```
+
+# regenerat Fig 6
+
+```{r}
+source('Functions.R')
+# -----------------------------------
+# time_for_SPE  = 187 Sec
+# accuracy_for_SPE = 99
+# Extracted from 'SPE for Ct_Ho' chunk
+# ----------------------------------------------------
+df <- data.frame(method=c('GR-Align','RMSD','TM-Score',
+                          'YH(10Rotation)','YH(2500Rotation)','TM-Vec','CPE',
+                          'SPE'),
+                 Accuracy=c(62.3, 59.2, 61.5, 70.8, 81.5, 100, 100,
+                            99),
+                 TimeS=c(120, 3600, 33600, 600, 18600, 67, 1,
+                         187))
+# ------------------------------------------------------------------------
+# ---------   the values for  `GR-Align`, `RMSD`, `TM-Score`, `YH(10Rotation)`, `YH(2500Rotation)` 
+# ----------      were previously reported in the `Yau.S et.al. Journal of Biomolecular Structure and Dynamics (2018)`.
+# --------------------------------------------------------------------------
+df$Time <- round((df$TimeS*100)/(12*3600),5)
+df$ratio<-log10(df$Accuracy/df$Time+1)
+
+df <- df[order(df$ratio, decreasing = T),]
+df$method <- factor(df$method, 
+                    levels = df$method)
+mycol <-c('magenta','orange','cyan','skyblue3','purple','red','yellow4','green')
+
+
+p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
+  geom_bar(stat="identity")+
+  coord_polar(theta="y") +
+  theme_light(base_rect_size = 0,base_line_size = 1)+
+  theme(axis.text = element_blank(),
+        axis.ticks=element_blank(),
+        axis.title = element_blank(),
+        legend.title = element_blank(),
+        #legend.position = 'none'
+        )+
+  scale_fill_manual(values = mycol)+
+  ylim(0,100)
+
+p200s <- p12h+xlim(c('CPE','TM-Vec','GR-Align','SPE'))+
+  ylim(0,.465)+ #3.0*12*3.6 = 200sec
+  theme(legend.text = element_text(face = 'bold',size = 15))
+
+df2 <- df
+df2$Time <- df2$TimeS+1
+p <- ggplot(df2,aes(Accuracy,Time,col=method,label=method))+
+  geom_point(size=7,show.legend = F)+    
+  geom_text(show.legend = F,vjust=.7,hjust=1.2,col='black',size=6, fontface='bold')+
+  mytheme()+ylab('Time (s)')+
+  scale_color_manual(values = mycol)+
+  scale_y_log10()+xlim(50,103)+
+  theme(axis.text.x = element_text(face = 'bold',color = 'black',size = 20),
+        axis.text.y = element_text(face = 'bold',color = 'black',size = 20))
+# --------------------------------------------------------------------------
+p12h
+p130s
+p
 ```
 
 edit  ferritin net in PP
