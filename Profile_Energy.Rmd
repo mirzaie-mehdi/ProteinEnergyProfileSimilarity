@@ -240,7 +240,7 @@ E210.astral_40 <- data.frame(pdbID = astral$pdbID,
                             superfamily = astral$superfamily,
                             family = astral$family,
                             matrix(NA, ncol = num_columns, nrow = length(astral$pdbID)))
-
+colnames(E210.astral_40)[9:218] <- pair_inter
 E210.seq_astral_40 <- E210.astral_40
 for (NP in 1:nrow(E210.seq_astral_40)) {
   if (NP %% 50 == 0) {print(NP)}
@@ -293,8 +293,8 @@ for (NP in 1:nrow(E210.seq_astral_40)) {
     })
 }
 
-saveRDS(E210.astral,file = "Data/rds/E210.astral_40.rds")
-saveRDS(E210.seq_astral,file = "Data/rds/E210.seq_astral_40.rds")
+saveRDS(E210.astral_40,file = "Data/rds/E210.astral_40.rds")
+saveRDS(E210.seq_astral_40,file = "Data/rds/E210.seq_astral_40.rds")
 ```
 
 
@@ -305,10 +305,10 @@ source('Functions.R')
 # ----------------------------------------------------
 # astral 95
 df_seq <- readRDS("Data/rds/E210.seq_astral_95.rds") 
-df_seq = df_seq[!is.na(df_seq$FL),] 
+df_seq <- df_seq[!is.na(df_seq$FL),] 
 
 df_str <- readRDS("Data/rds/E210.astral_95.rds") 
-df_str = df_str[!is.na(df_str$FL),] 
+df_str <- df_str[!is.na(df_str$FL),] 
 m<-match(df_str$scopeID,df_seq$scopeID)
 df_str <- df_str[-which(is.na(m)),]
 # **** total energy 95
