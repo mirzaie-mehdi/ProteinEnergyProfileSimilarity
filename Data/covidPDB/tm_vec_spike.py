@@ -56,7 +56,7 @@ for i in range(0,n,1):
   protrans_seq = featurize_prottrans(seq, model, tokenizer, device).detach()
   embedded_seq = embed_tm_vec(protrans_seq, model_deep, device)
   emb.loc[i,:] = embedded_seq
-#emb.to_csv(path+'/TM_vec_emb_spike.csv',index=False)
+emb.to_csv(path+'/TM_vec_emb_spike.csv',index=False)
 
 disTM = np.ones((n,n))
 for i in range(0,n,1):
