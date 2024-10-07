@@ -67,7 +67,7 @@ library(googledrive)
 source('Functions.R')
 # ----------------------------------------------------
 # ************** total energy 40 and 95
-df_tot <- readRDS('manuscript/fig_data/df_total_energy.rds')
+df_tot <- readRDS('manuscript/Revised/fig_data/df_total_energy.rds')
 df_tot$data <- ifelse(df_tot$data=='Astral 40','ASTRAL40','ASTRAL95')
 AB <- ggplot(df_tot, aes(seq/2000,str/1000))+
        geom_pointdensity(adjust = .1,alpha=.3,show.legend = T)+
@@ -78,8 +78,8 @@ AB <- ggplot(df_tot, aes(seq/2000,str/1000))+
        xlab('Total energy (sequence)')+ylab('Total energy (structure)')+
   mytheme()
 # ************** distance 40 and 95
-df_dis40<-readRDS('manuscript/fig_data/dis_40_manhat.rds')
-df_dis95<-readRDS('manuscript/fig_data/dis_95_manhat.rds')
+df_dis40<-readRDS('manuscript/Revised/fig_data/dis_40_manhat.rds')
+df_dis95<-readRDS('manuscript/Revised/fig_data/dis_95_manhat.rds')
 df_dis <- rbind(df_dis40, df_dis95)
 df_dis$data <- ifelse(df_dis$data=='Astral 40','ASTRAL40','ASTRAL95')
 
@@ -92,13 +92,13 @@ CD <- ggplot(df_dis, aes(dis_seq,dis_str))+
        xlab('Distance (CPE)')+ylab('Distance (SPE)')+
        mytheme()
 
-ggarrange(NULL,
-    AB, NULL,CD, ncol = 1,
-    heights = c(0.09, 1, 0.17, 1),
-    labels = c('',"A", "", "B"),
-    font.label = list(size = 30),    # color = "red"
-    hjust = -.5,vjust = 0
-    )
+p<-ggarrange(NULL,
+             AB, NULL,CD, ncol = 1,
+             heights = c(0.09, 1, 0.17, 1),
+             labels = c('',"A", "", "B"),
+             font.label = list(size = 30),    # color = "red"
+             hjust = -.5,vjust = 0
+             )
 
 # save FIG1.pdf 10x9
 ```
@@ -108,7 +108,7 @@ ggarrange(NULL,
 ```{r Fig 2}
 source('Functions.R')
 # ----------------------------------------------------
-df_tot <- readRDS('manuscript/fig_data/df_total_energy.rds')
+df_tot <- readRDS('manuscript/Revised/fig_data/df_total_energy.rds')
 df_tot <- df_tot[df_tot$class%in%c('a','b','c','d'),]
 df_tot$class[df_tot$class=='a']<-'All_alpha'
 df_tot$class[df_tot$class=='b']<-'All_beta'
@@ -133,14 +133,14 @@ CD <- ggplot(df_tot,aes(class,seq/(2*length),fill=class))+
                axis.text.x = element_blank())
 
 
-ggarrange(NULL,
-    AB, NULL,CD, ncol = 1,
-    heights = c(0.09, 1, 0.17, 1),
-    labels = c('',"A", "", "B"),
-    common.legend = T, legend = 'bottom',
-    font.label = list(size = 30),    # color = "red"
-    hjust = -.5,vjust = 0
-    )
+p<- ggarrange(NULL,
+              AB, NULL,CD, ncol = 1,
+              heights = c(0.09, 1, 0.17, 1),
+              labels = c('',"A", "", "B"),
+              common.legend = T, legend = 'bottom',
+              font.label = list(size = 30),    # color = "red"
+              hjust = -.5,vjust = 0
+              )
 # save FIG2.pdf 10x9
 ```
 
@@ -149,7 +149,7 @@ ggarrange(NULL,
 ```{r Fig 3}
 source('Functions.R')
 # ----------------------------------------------------
-load('manuscript/fig_data/UMPs.RData')
+load('manuscript/Revised/fig_data/UMPs.RData')
 ump_df_str40$type <- ifelse(ump_df_str40$type=='Structure','SPE','CPE')
 ump_df_seq40$type <- ifelse(ump_df_seq40$type=='Structure','SPE','CPE')
 ump_df_str95$type <- ifelse(ump_df_str95$type=='Structure','SPE','CPE')
@@ -192,7 +192,7 @@ p4<-ggplot(ump_df_seq95,aes(UMAP1, UMAP2, color= class)) +
   guides(color = guide_legend(override.aes = list(size = 5)))
 
 # ********
-ggarrange(NULL,NULL,NULL,
+p<- ggarrange(NULL,NULL,NULL,
           p2,NULL,p1,
           NULL,NULL,NULL,
           p4,NULL,p3,ncol = 3,nrow = 4,
@@ -219,8 +219,8 @@ df <- readRDS("Data/rds/E210.astral_40.rds")
 df <- df[df$fold%in%c('a.100','a.104'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(6,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
@@ -235,8 +235,8 @@ df <- readRDS("Data/rds/E210.seq_astral_40.rds")
 df <- df[df$fold%in%c('a.100','a.104'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(6,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
@@ -265,8 +265,8 @@ df <- readRDS("Data/rds/E210.astral_95.rds")
 df <- df[df$fold%in%c('a.100','a.104'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(6,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
@@ -281,8 +281,8 @@ df <- readRDS("Data/rds/E210.seq_astral_95.rds")
 df <- df[df$fold%in%c('a.100','a.104'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(6,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
@@ -316,7 +316,8 @@ A<-ggarrange(NULL,NULL,NULL,NULL,
                      '',"A", "", ""),
   font.label = list(size = 30),
   hjust = .2,vjust = 0)
-saveRDS(A,'manuscript/Fig4A.rds')
+#saveRDS(A,'manuscript/fig_data/Fig4A.rds')
+saveRDS(A,'manuscript/Revised/fig_data/Fig4A.rds')
 ```
 
 ## Fig 4 B
@@ -329,8 +330,8 @@ df <- readRDS("Data/rds/E210.astral_40.rds")
 df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(7,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
@@ -345,8 +346,8 @@ df <- readRDS("Data/rds/E210.seq_astral_40.rds")
 df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(7,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
@@ -375,8 +376,8 @@ df <- readRDS("Data/rds/E210.astral_95.rds")
 df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(7,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
@@ -391,8 +392,8 @@ df <- readRDS("Data/rds/E210.seq_astral_95.rds")
 df <- df[df$superfamily%in%c('a.29.2','a.29.3'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(7,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
@@ -425,7 +426,7 @@ B <- ggarrange(NULL,NULL,NULL,NULL,
                      '',"B", "", ""),
   font.label = list(size = 30),
   hjust = .2,vjust = 0)
-saveRDS(B,'manuscript/Fig4B.rds')
+saveRDS(B,'manuscript/Revised/fig_data/Fig4B.rds')
 ```
 
 ## Fig 4 C
@@ -438,7 +439,7 @@ df <- readRDS("Data/rds/E210.astral_40.rds")
 df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(8,3,9:218)]
-df$length <- as.numeric(df$length)
+
 dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 10,
@@ -454,8 +455,8 @@ df <- readRDS("Data/rds/E210.seq_astral_40.rds")
 df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(8,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 10,
             min_dist = 0.1,
@@ -483,8 +484,8 @@ df <- readRDS("Data/rds/E210.astral_95.rds")
 df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(8,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 10,
             min_dist = 0.1,
@@ -499,8 +500,8 @@ df <- readRDS("Data/rds/E210.seq_astral_95.rds")
 df <- df[df$family%in%c('a.25.1.0','a.25.1.2'),]
 df <- df[!is.na(df$FF),]
 df <- df[,c(8,3,9:218)]
-df$length <- as.numeric(df$length)
-dis <- as.matrix(proxy::dist(df[,-1], method = manhat))
+
+dis <- as.matrix(proxy::dist(df[,-c(1,2)], method = manhat))
 ump <- umap(d = dis,
             n_neighbors = 10,
             min_dist = 0.1,
@@ -532,17 +533,18 @@ C <- ggarrange(NULL,NULL,NULL,NULL,
                      '',"C", "", ""),
   font.label = list(size = 30),
   hjust = .2,vjust = 0)
-saveRDS(C,'manuscript/Fig4C.rds')
+saveRDS(C,'manuscript/Revised/fig_data/Fig4C.rds')
 ```
 
 ##Fig 4 ABC
 
 ```{r Fig 4 ABC}
-A <- readRDS('manuscript/Fig4A.rds')
-B <- readRDS('manuscript/Fig4B.rds')
-C <- readRDS('manuscript/Fig4C.rds')
+rm(list = ls())
+A <- readRDS('manuscript/Revised/fig_data/Fig4A.rds')
+B <- readRDS('manuscript/Revised/fig_data/Fig4B.rds')
+C <- readRDS('manuscript/Revised/fig_data/Fig4C.rds')
 # ------------------------
-ggarrange(NULL,A,B,C,ncol = 1,
+p<-ggarrange(NULL,A,B,C,ncol = 1,
           heights = c(0.07,1,1,1))
 # save FIG4.pdf 10x10
 ```
@@ -624,13 +626,13 @@ mylegend <- get_legend(E+
                            theme(legend.position = 'bottom',
                                  legend.title = element_blank(),
                                  legend.text = element_text(size = 20)))
-saveRDS(mylegend,'manuscript/Fig5mylegend.rds')
+saveRDS(mylegend,'manuscript/Revised/fig_data/Fig5mylegend.rds')
 # ******************************************
 # ****** structure95
 df <- readRDS("Data/rds/E210.astral_95.rds") 
 df = df[!is.na(df$FL),] 
 idx<- df$superfamily%in% 'a.29.3'
-dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- as.matrix(dist(df[idx,-c(1:8)], method = manhat))
 dis <- data.frame(gr=df$family[idx], dis)
 fa<-unique(dis$gr)
 
@@ -714,7 +716,7 @@ EF<-ggarrange(
     labels = c("", "", "")
     )
 
-saveRDS(EF,'manuscript/Fig5EF.rds')
+saveRDS(EF,'manuscript/Revised/fig_data/Fig5EF.rds')
 ```
 
 ## Fig 5 CD
@@ -876,7 +878,7 @@ CD<-ggarrange(
     widths = c(1, 0.3, 1),
     labels = c("", "", "")
     )
-saveRDS(CD,'manuscript/Fig5CD.rds')
+saveRDS(CD,'manuscript/Revised/fig_data/Fig5CD.rds')
 ```
 
 ## Fig 5 AB
@@ -1041,20 +1043,21 @@ AB<-ggarrange(
     widths = c(1, 0.3, 1),
     labels = c("", "", "")
     )
-saveRDS(AB,'manuscript/Fig5AB.rds')
+saveRDS(AB,'manuscript/Revised/fig_data/Fig5AB.rds')
 ```
 
 ##Fig 5 All
 
 ```{r Fig 5 All}
-EF <- readRDS('manuscript/Fig5EF.rds')
-CD <- readRDS('manuscript/Fig5CD.rds')
-AB <- readRDS('manuscript/Fig5AB.rds')
-mylegend <-readRDS('manuscript/Fig5mylegend.rds')
+rm(list = ls())
+EF <- readRDS('manuscript/Revised/fig_data/Fig5EF.rds')
+CD <- readRDS('manuscript/Revised/fig_data/Fig5CD.rds')
+AB <- readRDS('manuscript/Revised/fig_data/Fig5AB.rds')
+mylegend <-readRDS('manuscript/fig_data/Fig5mylegend.rds')
 # ---------------------------------------------
 f5all <- ggarrange(NULL,AB,CD,EF,ncol = 1,
           heights = c(0.1,1,1,1))
-cowplot::plot_grid(f5all, mylegend, ncol = 1, rel_heights = c(1,.03))
+p<-cowplot::plot_grid(f5all, mylegend, ncol = 1, rel_heights = c(1,.03))
 # save pdf 10x9
 ```
 
@@ -1146,18 +1149,23 @@ write.nexus.networx(nnet,'Data/rds/E210.seq_ferritin.nxs')
 
 ```{r Fig 8 covid}
 source('Functions.R')
+bootFun <- function(e){
+  as.phylo(hclust(proxy::dist(e,
+                              method = manhat),
+                  method = 'ward.D2'))
+  }
 # ----------------------------------------------------
 # --------------- CPE -----------------
 E210.seq_spike <- readRDS("Data/rds/E210.seq_spike.rds")
 df <- E210.seq_spike
 
 rownames(df) <- df$pdbID
-x <- df[,-c(1:4)]/df$lenth
+x <- df[,-c(1:4)]/df$length
 x  <- as.matrix(x) 
 dis <- x %>% proxy::dist(method = manhat)
 hc <- dis %>% hclust(method = "ward.D2")
 adjustedRandIndex(cutree(hc, 5), df$virus)
-classError(cutree(hc, 4), df$virus)
+#classError(cutree(hc, 4), df$virus)
 dend <- hc %>% as.dendrogram
 
 df <- df[with(df, order(df$virus)), ]
@@ -1170,10 +1178,9 @@ grp <- list(MERS_Cov     = rn[1:32],
 tree_data <- as.phylo(dend)
 p_data <- ggtree(tree_data, layout = 'dendrogram',
                  size = 2)
-myBoots <- boot.phylo(tree_data, as.matrix(dis), B = 100,
-                      function(e) bionj(dis))
+myBoots <- boot.phylo(tree_data, x, bootFun, B = 100)
 
-p_data$data$boots<-c(rep(NA,143),myBoots)
+p_data$data$boots <- c(rep(NA,143),myBoots)
 
 t_CPE <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
   theme(legend.position="none",
@@ -1182,9 +1189,10 @@ t_CPE <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
 #               hjust=-.1,size=1.5,fontface="bold",align=F)+
 #  geom_tiplab(aes(label=label),
 #               hjust=1,size=1.5,fontface="bold",align=F)+
-#  geom_text2(aes(subset=!isTip, label=boots),col='black', hjust=.3)+
+  geom_text2(aes(subset=!isTip, label=boots),
+             col='black', hjust=-.2, vjust=-.5)+
   scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
-                      type =  c('black',"blue","green","red" ))+
+                      type =  c('gray45',"blue","green","red" ))+
   ggtitle('CPE')
 # -----------------------------------------------------
 # ------------ SPE ----------------
@@ -1192,7 +1200,7 @@ E210_spike <- readRDS("Data/rds/E210_spike.rds")
 df <- E210_spike
 
 rownames(df) <- df$pdbID
-x <- df[,-c(1:5)]/df$length
+x <- df[,-c(1:4)]/df$length
 x  <- as.matrix(x) 
 dis <- x %>% proxy::dist(method = manhat)
 hc <- dis %>% hclust(method = "ward.D2")
@@ -1211,12 +1219,17 @@ tree_data <- as.phylo(dend)
 p_data <- ggtree(tree_data, layout = 'dendrogram',
                  #branch.length='none',
                  size = 2) 
+myBoots <- boot.phylo(tree_data, x, bootFun, B = 100)
+
+p_data$data$boots <- c(rep(NA,143),myBoots)
 
 t_SPE <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
   theme(legend.position="none",
         plot.title = element_text(size = 50, face="bold",hjust = 0.5,vjust = 2))+
+  geom_text2(aes(subset=!isTip, label=boots),
+             col='black', hjust=-.2, vjust=-.5)+
   scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
-                      type =  c('black',"blue","green","red"  ))+
+                      type =  c('gray45',"blue","green","red"  ))+
   ggtitle('SPE')
 # -----------------------------------------------
 # ------------- RMSD --------------
@@ -1241,15 +1254,25 @@ tree_data <- as.phylo(hc)
 p_data <- ggtree(tree_data, layout = 'dendrogram',
                  size = 2) 
 
+#   myBoots <- boot.phylo(tree_data, as.matrix(rms),
+#                       FUN = function(d){
+#                         as.phylo(hclust(rms,method = 'ward.D2'))},
+#                       B = 100)
+#   p_data$data$boots <- c(rep(NA,143),myBoots)
+
 t_RMSS <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
        theme(legend.position="none",
              plot.title = element_text(size = 50, face="bold",hjust = 0.5,vjust = 2))+
+#  geom_text2(aes(subset=!isTip, label=boots),
+#             col='black', hjust=-.2, vjust=-.5)+
        scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
                             type =  c("blue","green","red" ))+
   ggtitle('RMSD')
 # --------------------------------------------
 # ----------- TM-Vec -----------------
 df <- E210.seq_spike
+tm_ebm <- read.csv('Data/covidPDB/TM_vec_emb_spike.csv')
+rownames(tm_ebm) <- df$pdbID
 tm_vec <- read.csv('Data/covidPDB/disTM_vec_spike.csv')
 colnames(tm_vec) <- rownames(tm_vec) <- df$pdbID
 tm_vec <- 1 - tm_vec
@@ -1274,9 +1297,17 @@ p_data <- ggtree(tree_data, layout = 'dendrogram',
 # ggtree(tr) + geom_text(aes(label=node))
 p_data <- flip(p_data, 152, 151)
 
+myBoots <- boot.phylo(tree_data, tm_ebm, FUN = function(e){
+  d <- 1 - (proxy::dist(e,method = cosine))
+  as.phylo(hclust(d, method = 'ward.D2'))},
+  B = 100)
+p_data$data$boots <- c(rep(NA,143),myBoots)
+
 t_tmVec <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
        theme(legend.position="none",
              plot.title = element_text(size = 50, face = 'bold',hjust = 0.5,vjust = 2))+
+  geom_text2(aes(subset=!isTip, label=boots),
+             col='black', hjust=-.2, vjust=-.5)+
        scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
                             type =  c("blue","green","red" ))+
   ggtitle('TM-Vec')
@@ -1291,22 +1322,28 @@ AB<-ggarrange(NULL,NULL,
     t_CPE,t_SPE, NULL,NULL,
     t_RMSS,t_tmVec,
     ncol = 2,nrow = 5,
-    heights = c(.55, 1, .3, 1),
+    heights = c(.15, 1.3, .2, 1.3),
     widths = c(1,1),
     labels = c('',"", "A", "B",'','','C','D'),
     font.label = list(size = 55), # color = "red"
     hjust = 0,vjust = .5
     )
-title_grob <- grobTree(
-  textGrob("Evolution of Spike protein", x = 0.5, y = -3, just = "center", gp = gpar(col = "black", fontsize = 45, fontface = "bold")),
-  textGrob("MERS_Cov",           x = 0.34, y = -9,   just = "center", gp = gpar(col = "blue",  fontsize = 30, fontface = "bold")),
-  textGrob(expression('\u2192'), x = 0.42, y = -9.5, just = "center", gp = gpar(col = "black", fontsize = 40, fontface = "bold")),
-  textGrob("SARS_Cov",           x = 0.50, y = -9,   just = "center", gp = gpar(col = "green", fontsize = 30, fontface = "bold")),
-  textGrob(expression('\u2192'), x = 0.58, y = -9.5, just = "center", gp = gpar(col = "black", fontsize = 40, fontface = "bold")),
-  textGrob("SARS_Cov2",          x = 0.67, y = -9,   just = "center", gp = gpar(col = "red"  , fontsize = 30, fontface = "bold"))
-)
-#cowplot::plot_grid(AB, mylegend, ncol = 1, rel_heights = c(1,.1))
-annotate_figure(AB, top = title_grob)
+#   title_grob <- grobTree(
+#     textGrob("Evolution of Spike protein", x = 0.5, y = -3, just = "center", 
+#              gp = gpar(col = "black", fontsize = 45, fontface = "bold")),
+#     textGrob("MERS_Cov",           x = 0.34, y = -9,   just = "center", 
+#              gp = gpar(col = "blue",  fontsize = 30, fontface = "bold")),
+#     textGrob(expression('\u2192'), x = 0.42, y = -9.5, just = "center", 
+#              gp = gpar(col = "black", fontsize = 40, fontface = "bold")),
+#     textGrob("SARS_Cov",           x = 0.50, y = -9,   just = "center", 
+#              gp = gpar(col = "green", fontsize = 30, fontface = "bold")),
+#     textGrob(expression('\u2192'), x = 0.58, y = -9.5, just = "center", 
+#              gp = gpar(col = "black", fontsize = 40, fontface = "bold")),
+#     textGrob("SARS_Cov2",          x = 0.67, y = -9,   just = "center", 
+#              gp = gpar(col = "red"  , fontsize = 30, fontface = "bold"))
+#   )
+p0 <- cowplot::plot_grid(AB, mylegend, ncol = 1, rel_heights = c(1,.05))
+#annotate_figure(AB, top = title_grob)
 # save FIG6.pdf 20x10
 # ----------------------------------------------------------
 # ----------------------------------------------------
@@ -1457,7 +1494,7 @@ sab <- sab[-2081,-6]
 colnames(sab)[1:2]<-c('d1','d2')
 
 df <- left_join(sab,my_sab,c('d1','d2'))
-ggplot(df,aes(sAB,my_sAB))+
+p1 <- ggplot(df,aes(sAB,my_sAB))+
   geom_point(alpha=.5)+geom_smooth(method = 'lm')+
   stat_cor(col='red',size=8)+mytheme()+
     theme(axis.title = element_text(size=20),
@@ -1538,10 +1575,10 @@ df5 <- readRDS('Data/rds/E210.seq_fiveSF.rds')
 # ----------------------------------------
 # ---------- 1NN ----------------
 # ---------------------------------------
-dis <- as.matrix(dist(df5[,-c(1:9)],method = manhat))
+dis <- as.matrix(dist(df5[,-c(1:9)], method = manhat))
 diag(dis) <- NA
 
-im <- apply(dis,1, FUN = which.min)
+im <- apply(dis, 1, FUN = which.min)
 res <- data.frame(source=df5$superfamily, target=df5$superfamily[im])
 cm <- matrix(0,5,5)
 colnames(cm) <- rownames(cm) <- fiveSF
@@ -1560,6 +1597,7 @@ res1NN_CPE<-data.frame(t(round(c(Accuracy,F1),2)))
 # ---------- 10 fold cross validation Random forest ----------------
 # ---------------------------------------
 set.seed(12345)
+df5[,-c(1:9)] <- df5[,-c(1:9)]/df5$length
 df5$superfamily <- factor(df5$superfamily)
 kfolds <- createFolds(df5$superfamily, k = 10)
 res<-c()

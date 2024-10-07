@@ -61,6 +61,8 @@ library(mclust)
 library(googledrive)
 library(Biostrings)
 library(msa)
+library(lsa)
+library(TreeDist)
 ```
 
 # Overlap PDBs
@@ -722,6 +724,7 @@ saveRDS(E210.seq_ferritin,file = "Data/rds/E210.seq_ferritin.rds")
 ## --- Visual NJ
 
 ```{r}
+source('Functions.R')
 E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
 df <- E210_ferritin
 df$group[df$pdbID=='1otkA'] <- 'Pfam_1otkA'
@@ -741,7 +744,8 @@ grp <- list(Bacteri     = rn[1:5],
 dis <- proxy::dist(df[,-c(1:3)], method = manhat)
 
 tree_data <- ape::bionj(dis)
-
+#newick_format <- ape::write.tree(tree_data)
+#newick_no_values <- gsub(":[0-9\\.eE\\+-]+", "", newick_format)
 
 p_data <- ggtree(tree_data, layout = 'unrooted',
                  branch.length='none',size = 1.5) 
@@ -873,6 +877,193 @@ a.25.1.2 <- c(SPE, CPE, TM)
 cbind(Method=c('SPE', 'CPE', 'TM'),
       a.25.1.1, a.25.1.2)
 ```
+
+## --- compair
+
+```{r}
+library(TreeDist)
+library(Quartet)
+source('Functions.R')
+set.seed(12345)
+# -------------------------
+# --------Schematic tree---------------------
+tree_Ref <- read.tree(file = 'Data/Newick_Schematice.txt')
+#-----------------------------------
+E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
+df <- E210_ferritin
+rownames(df) <- df$pdbID
+dis <- proxy::dist(df[,-c(1:3)], method = manhat)
+tree_data <- ape::bionj(dis)
+newick_SPE <- ape::write.tree(tree_data)
+newick_SPE <- gsub(":[0-9\\.eE\\+-]+", "", newick_SPE)
+# ----------------------CPE---------------------------
+E210_ferritin <- readRDS("Data/rds/E210.seq_ferritin.rds")
+df <- E210_ferritin
+rownames(df) <- df$pdbID
+dis <- proxy::dist(df[,-c(1:4)], method = manhat)
+tree_data <- ape::bionj(dis)
+newick_CPE <- ape::write.tree(tree_data)
+newick_CPE <- gsub(":[0-9\\.eE\\+-]+", "", newick_CPE)
+# -----------------------TM-------------------
+ferritin <- read.csv('Data/csv/Ferritin_Like_seq.csv')
+tm <- read.csv("Data/csv/disTM_vec_Ferritin_Like_seq.csv")
+tm <- 1 - tm
+rownames(tm) <- colnames(tm) <- df$pdbID
+tree_data <- ape::bionj(as.dist(tm))
+newick_TM <- ape::write.tree(tree_data)
+newick_TM <- gsub(":[0-9\\.eE\\+-]+", "", newick_TM)
+# ----------------------------
+# --- read trees---------------------
+tree_SPE <- read.tree(text = newick_SPE)
+tree_CPE <- read.tree(text = newick_CPE)
+tree_TM <- read.tree(text = newick_TM)
+# ----------------------------------------
+RF_CPE <- treedist(tree_Ref, tree_CPE)
+RF_SPE <- treedist(tree_Ref, tree_SPE)
+RF_TM <- treedist(tree_Ref, tree_TM)
+
+QD_CPE <- QuartetDivergence(QuartetStatus(tree_Ref, tree_CPE))
+QD_SPE <- QuartetDivergence(QuartetStatus(tree_Ref, tree_SPE))
+QD_TM <- QuartetDivergence(QuartetStatus(tree_Ref, tree_TM))
+
+KC_CPE <- KendallColijn(tree_Ref, tree_CPE)
+KC_SPE <- KendallColijn(tree_Ref, tree_SPE)
+KC_TM <- KendallColijn(tree_Ref, tree_TM)
+
+MS_CPE <- MatchingSplitDistance(tree_Ref, tree_CPE)
+MS_SPE <- MatchingSplitDistance(tree_Ref, tree_SPE)
+MS_TM <- MatchingSplitDistance(tree_Ref, tree_TM)
+# -------------------------------------
+# ------- generate random tree
+resRtree <- data.frame(rQD_CPE=rep(NA,1000), rQD_SPE=NA, rQD_TM=NA,
+                       rRF_CPE=NA, rRF_SPE=NA, rRF_TM=NA,
+                       rPD_CPE=NA, rPD_SPE=NA, rPD_TM=NA,
+                       rMS_CPE=NA, rMS_SPE=NA, rMS_TM=NA,
+                       rKC_CPE=NA, rKC_SPE=NA, rKC_TM=NA,
+                       maxPD_CPE=NA, maxPD_SPE=NA, maxPD_TM=NA,
+                       maxMS_CPE=NA, maxMS_SPE=NA, maxMS_TM=NA)
+# Generate a fully pectinate (caterpillar) tree
+pectinate_tree <- stree(53, type = "left")
+for (i in 1:1000) {
+  print(i)
+  # -------------CPE
+  random_tree <- rcoal(length(tree_CPE$tip.label))
+  random_tree$tip.label <- tree_CPE$tip.label
+  # ---QD
+  resRtree$rQD_CPE[i] <- QuartetDivergence(QuartetStatus(tree_Ref,random_tree))
+  # ---RF_PD
+  resRtree$rRF_CPE[i] <- treedist(tree_Ref, random_tree)[1]
+  resRtree$rPD_CPE[i] <- treedist(tree_Ref, random_tree)[2]
+  # ---MS
+  resRtree$rMS_CPE[i] <- MatchingSplitDistance(tree_Ref, random_tree)
+  # ---KC
+  resRtree$rKC_CPE[i] <- KendallColijn(tree_Ref, random_tree)
+  # ---Max PD_MS
+  balanced_tree <- rtree(53) # Generate a fully balanced tree
+  resRtree$maxPD_CPE[i] <- treedist(pectinate_tree, balanced_tree)[2]
+  resRtree$maxMS_CPE[i] <- MatchingSplitDistance(pectinate_tree, balanced_tree)
+  # -------------SPE
+  random_tree <- rcoal(length(tree_SPE$tip.label))
+  random_tree$tip.label <- tree_SPE$tip.label
+  # ---QD
+  resRtree$rQD_SPE[i] <- QuartetDivergence(QuartetStatus(tree_Ref,random_tree))
+  # ---RF_PD
+  resRtree$rRF_SPE[i] <- treedist(tree_Ref, random_tree)[1]
+  resRtree$rPD_SPE[i] <- treedist(tree_Ref, random_tree)[2]
+  # ---MS
+  resRtree$rMS_SPE[i] <- MatchingSplitDistance(tree_Ref, random_tree)
+  # ---KC
+  resRtree$rKC_SPE[i] <- KendallColijn(tree_Ref, random_tree)
+  # ---Max PD_MS
+  balanced_tree <- rtree(53) # Generate a fully balanced tree
+  resRtree$maxPD_SPE[i] <- treedist(pectinate_tree, balanced_tree)[2]
+  resRtree$maxMS_SPE[i] <- MatchingSplitDistance(pectinate_tree, balanced_tree)
+  # -------------TM
+  random_tree <- rcoal(length(tree_TM$tip.label))
+  random_tree$tip.label <- tree_TM$tip.label
+  # ---QD
+  resRtree$rQD_TM[i] <- QuartetDivergence(QuartetStatus(tree_Ref,random_tree))
+  # ---RF_PD
+  resRtree$rRF_TM[i] <- treedist(tree_Ref, random_tree)[1]
+  resRtree$rPD_TM[i] <- treedist(tree_Ref, random_tree)[2]
+  # ---MS
+  resRtree$rMS_TM[i] <- MatchingSplitDistance(tree_Ref, random_tree)
+  # ---KC
+  resRtree$rKC_TM[i] <- KendallColijn(tree_Ref, random_tree)
+  # ---Max PD_MS
+  balanced_tree <- rtree(53) # Generate a fully balanced tree
+  resRtree$maxPD_TM[i] <- treedist(pectinate_tree, balanced_tree)[2]
+  resRtree$maxMS_TM[i] <- MatchingSplitDistance(pectinate_tree, balanced_tree)
+}
+
+# --- Pvalue Quartet Divergence-------------
+pvl_QD_CPE <- mean(resRtree$rQD_CPE >= QD_CPE)
+pvl_QD_SPE <- mean(resRtree$rQD_SPE >= QD_SPE)
+pvl_QD_TM <- mean(resRtree$rQD_TM >= QD_TM)
+# --- Pvalue Robinson Foulds-------------
+pvl_RF_CPE <- mean(resRtree$rRF_CPE <= RF_CPE[1])
+pvl_RF_SPE <- mean(resRtree$rRF_SPE <= RF_SPE[1])
+pvl_RF_TM <- mean(resRtree$rRF_TM <= RF_TM[1])
+# --- Pvalue path.difference-------------
+pvl_PD_CPE <- mean(resRtree$rPD_CPE <= RF_CPE[2])
+pvl_PD_SPE <- mean(resRtree$rPD_SPE <= RF_SPE[2])
+pvl_PD_TM <- mean(resRtree$rPD_TM <= RF_TM[2])
+# --- Pvalue KendallColijn-------------
+pvl_KC_CPE <- mean(resRtree$rKC_CPE >= KC_CPE)
+pvl_KC_SPE <- mean(resRtree$rKC_SPE >= KC_SPE)
+pvl_KC_TM <- mean(resRtree$rKC_TM >= KC_TM)
+# --- Pvalue MatchingSplitDistance-------------
+pvl_MS_CPE <- mean(resRtree$rMS_CPE <= MS_CPE)
+pvl_MS_SPE <- mean(resRtree$rMS_SPE <= MS_SPE)
+pvl_MS_TM <- mean(resRtree$rMS_TM <= MS_TM)
+# ----------------------------
+RFs <- 1 - (c(RF_SPE[1], RF_CPE[1], RF_TM[1])/100)
+KCs <- 1 - (c(KC_SPE, KC_CPE, KC_TM)/100)
+
+PDs <- c(mean(resRtree$maxPD_SPE)-RF_SPE[2],
+         mean(resRtree$maxPD_CPE)-RF_CPE[2],
+         mean(resRtree$maxPD_TM)-RF_TM[2])
+MaxPDs <- max(mean(resRtree$maxPD_SPE),mean(resRtree$maxPD_CPE),mean(resRtree$maxPD_TM))
+pd <- c(0, MaxPDs, PDs)
+pd01 <- (pd - min(pd))/(max(pd) - min(pd))
+
+MSs <- c(mean(resRtree$maxMS_SPE)-MS_SPE,
+         mean(resRtree$maxMS_CPE)-MS_CPE,
+         mean(resRtree$maxMS_TM)-MS_TM)
+MaxMSs <- max(mean(resRtree$maxMS_SPE),mean(resRtree$maxMS_CPE),mean(resRtree$maxMS_TM))
+ms <- c(0, MaxMSs, MSs)
+ms01 <- (ms - min(ms))/(max(ms) - min(ms))
+
+
+df <- data.frame(metric = rep(c('Quartet.Divergence',
+                                'Robinson.Foulds','Path.Difference',
+                                'KendallColijn','MatchingSplit'),each=3),
+                 method = c('SPE', 'CPE', 'TM'),
+                 value = c(QD_SPE, QD_CPE, QD_TM,
+                           RFs, pd01[3:5],
+                           KCs, ms01[3:5]),
+                 pvl = c(pvl_QD_SPE, pvl_QD_CPE, pvl_QD_TM,
+                         pvl_RF_SPE, pvl_RF_CPE, pvl_RF_TM,
+                         pvl_PD_SPE, pvl_PD_CPE, pvl_PD_TM,
+                         pvl_KC_SPE, pvl_KC_CPE, pvl_KC_TM,
+                         pvl_MS_SPE, pvl_MS_CPE, pvl_MS_TM))
+
+p<-ggplot(df, aes(x = method, y = value, fill=method)) +
+  geom_bar(stat = "identity", width = .2, alpha=.9) +
+  facet_wrap(~ metric,nrow = 1)+
+  mytheme()+
+#  geom_text(aes(label = paste("p =", pvl), y = value + 0.05),
+#            vjust = 0, size=5) +
+  geom_text(aes(label = ifelse(pvl<0.05,'*',NA), y = value-0.01),
+            vjust = 0, size=10) +
+  scale_fill_manual(values = c('magenta','cyan','orange'))+
+  xlab('')+ylab('')+
+  theme(strip.text.x = element_text(size = 20),
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(size = 20),
+        legend.position = 'bottom')
+```
+
 
 # Human RAS superfamily
 Nice data :/
@@ -1071,20 +1262,13 @@ f1 <- round((2*pr*re)/(pr+re))
 rbind(ac,pr,re,f1)
 ```
 
-# ASTRAL95/40_SPE_CPE
-This chunk calculate the profile of energy for protein domains in ASTRAL95/40 based on sequence and structure.
+# Length Vs Energy
 
 ```{r Astrals_CPE_SPE}
-library(seqinr)
-library(entropy)
 source('Functions.R')
 # ----------------------------------------------------
-# ************** total energy 40 and 95
-df_tot <- readRDS('manuscript/fig_data/df_total_energy.rds')
-df_tot_40 = df_tot[df_tot$data %in% "Astral 40",]
-df_tot_40$dist = (df_tot_40$seq/2000 - df_tot_40$str/1000)
-df_seq <- readRDS("Data/rds/E210.seq_astral_95.rds") 
-df_str <- readRDS("Data/rds/E210.astral_95.rds") 
+df_seq <- readRDS("Data/rds/E210.seq_astral_40.rds") 
+df_str <- readRDS("Data/rds/E210.astral_40.rds") 
 
 result <- mapply(function(x, y) manhat(x, y),
                  split(df_seq[,-c(1:8)]/df_seq$length, 1:nrow(df_seq)), 
@@ -1096,174 +1280,128 @@ cor(res_60$length,res_60$dist, use = "complete.obs")
 res_100_200 = res[res$length < 100 & res$length > 60 ,]
 cor(res_100_200$length,res_100_200$dist, use = "complete.obs")
 
+result <- mapply(function(x, y) manhat(x,y),
+                 split(df_seq[,-c(1:8)]/2, 1:nrow(df_seq)), 
+                 split(df_str[,-c(1:8)], 1:nrow(df_str)))
 
+res <- data.frame(scopeID=df_seq$scopeID,
+                 length = df_seq$length,
+                 disManhat = result
+                 )
+result <- mapply(function(x, y) cor(as.numeric(x), as.numeric(y)),
+                 split(df_seq[,-c(1:8)]/2, 1:nrow(df_seq)), 
+                 split(df_str[,-c(1:8)], 1:nrow(df_str)))
+res$corr <- result
+result <- mapply(function(x, y) cosine(as.numeric(x), as.numeric(y)),
+                 split(df_seq[,-c(1:8)]/2, 1:nrow(df_seq)), 
+                 split(df_str[,-c(1:8)], 1:nrow(df_str)))
 
+res$cosine <- result
+df_tot <- data.frame(scopeID=df_seq$scopeID,
+                     CPE=rowSums(df_seq[,-c(1:8)]),
+                     SPE=rowSums(df_str[,-c(1:8)]))
 
-cor(df_tot_40$length,df_tot_40$dist, use = "complete.obs")
-plot(df_tot_40$length,df_tot_40$dist)
-df_tot_40_60 = df_tot_40[df_tot_40$length < 60 , ]
-cor(df_tot_40_60$seq,df_tot_40_60$str)
-df_tot_40_100_200 = df_tot_40[df_tot_40$length < 200 & df_tot_40$length > 100 ,]
-cor(df_tot_40_100_200$seq,df_tot_40_100_200$str)
-df_tot_40_200_300 = df_tot_40[df_tot_40$length < 300 & df_tot_40$length > 200 ,]
-cor(df_tot_40_200_300$seq,df_tot_40_200_300$str)
-df_tot_40_300_500 = df_tot_40[df_tot_40$length < 400 & df_tot_40$length > 300 ,]
-cor(df_tot_40_300_500$seq,df_tot_40_300_500$str)
-df_tot_40_500 = df_tot_40[ df_tot_40$length > 400 ,]
-cor(df_tot_40_500$seq,df_tot_40_500$str)
-df_tot_40$dist = df_tot_40$seq - df_tot_40$str
-plot(df_tot_40$length,df_tot_40$dist)
+df_tot$disTot <- (df_tot$CPE/2000 - df_tot$SPE/1000)
+bins <- c(seq(0, 500, by = 100), 1700)
+res$length_bins <- cut(res$length, breaks = bins,
+                       include.lowest = TRUE)
 # ----------------------------------------------------
-astral95 <- readRDS("Data/rds/astral_95.rds")
 astral40 <- readRDS("Data/rds/astral_40.rds")
-#-----------------------------------------------------
+#-----
 calculate_entropy <- function(protein_sequence) {
   aa_vector <- s2c(protein_sequence)
   aa_counts <- table(aa_vector)
-  entropy_value <- entropy(aa_counts)
+  l <- sum(aa_counts) # length(aa_vector); nchar(protein_sequence)
+  probs <- aa_counts / l
+  p2 <- probs^2
+  e1 <- 1 - (sum(p2)) # simpson diversity 
+  e11 <- ((l * (sum(p2))) - 1)/(l - 1) # unbiased simpson
+  e2 <- -sum(probs * log2(probs)) # shannon
+  e22 <- e2 + ((length(aa_counts) - 1) / (2*l)) # unbiased shannon
+  entropy_value <- c(e1, e2, e11, e22)
+  names(entropy_value) <- c('simpson', 'shannon',
+                            'simpsonAdjusted', 'shannonAhjusted')
   return(entropy_value)
 }
-astral40$complexity <- sapply(astral40$seq, calculate_entropy)
 
-Nprotein <- nrow(astral)
-num_columns <- 210
-E210.astral_95 <- data.frame(pdbID = astral$pdbID,
-                            scopeID= astral$scopeID,
-                            length = rep(NA,Nprotein),
-                            position = astral$Position,
-                            class = astral$class,
-                            fold = astral$fold,
-                            superfamily = astral$superfamily,
-                            family = astral$family,
-                            matrix(NA, ncol = num_columns, nrow = length(astral$pdbID)))
-colnames(E210.astral_95)[9:218] <- pair_inter
-E210.seq_astral_95 <- E210.astral_95 
-for (NP in 1:nrow(E210.seq_astral_95)) {
-  if (NP %% 50 == 0) {print(NP)}
-  chain_resno <- split_position(astral$Position[NP])
-  pdbname <- astral$pdbID[NP]
-  tryCatch({
-    pdb0 <- read.pdb(pdbname,verbose = FALSE)
-    pdblist = list()
-    for (ind in 1:dim(chain_resno)[1]){
-      sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=chain_resno$chain[ind])
-      sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
-      sele4 <- atom.select(pdb0, "noh")
-      sele <- combine.select(sele1, sele2,sele4, operator="AND")
-      if (!(chain_resno$start[ind]=="NA") & !(chain_resno$end[ind])=="NA"){
-         st <- chain_resno$start[ind]
-         en <- chain_resno$end[ind]
-         sele3 <- atom.select(pdb0,  resno=st:en, verbose=FALSE)
-         sele <- combine.select(sele1, sele2,sele3,sele4, operator="AND")
-      }
-      pdblist[[ind]] <- trim.pdb(pdb0, sele,verbose = FALSE)
-    }
-    new_pdb = pdblist[[1]]
-    if (dim(chain_resno)[1] > 1) {
-      for (ind in 2:dim(chain_resno)[1]){
-      new_pdb <- cat.pdb(new_pdb, pdblist[[ind]], rechain=FALSE)
-      }
-    }
-    pdbX <- new_pdb$atom
-    E210.astral_95$length[NP] = length(unique(pdbX$resno))
-    Net_Frame <- NetworkFrame(PDB = new_pdb)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
-    E210.astral_95[NP,-c(1:8)] <- energy210
-# ----------- sequence enregy based on astral --------
-    seq = astral$seq[NP]
-    seq = gsub("X", "", seq)
-    E210.seq_astral_95$length[NP] = nchar(seq)
-    seq = unlist(strsplit(seq,""))
-    freq = c()
-    for (j in 1:20){
-        freq[j] <-  length(grep(tolower(letters_list[j]), tolower(seq)))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-    E210.seq_astral_95[NP,9:218] <- aa210_p
-    }, error = function(e) {
-     cat("Error downloading file:", e$message, "\n")
-    })
+entropyScore <- data.frame(scopeID=astral40$scopeID,
+                        t(sapply(astral40$seq, calculate_entropy)),
+                        row.names = NULL)
+
+res <- left_join(res, df_tot, 'scopeID')
+res <- left_join(res, entropyScore, 'scopeID')
+# ------------------------------------
+CPE_SPE_20 <- c()
+for (i in 1:nrow(df_seq)) {
+  print(i)
+  x <- as.numeric(df_seq[i,-c(1:8)])
+  m <- matrix(0, 20, 20)
+  m[lower.tri(m, diag = T)] <- x
+  m <- t(m)
+  m[lower.tri(m, diag = T)] <- x
+  cpe <- colSums(m)
+  # --------
+  x <- as.numeric(df_str[i,-c(1:8)])
+  m <- matrix(0, 20, 20)
+  m[lower.tri(m, diag = T)] <- x
+  m <- t(m)
+  m[lower.tri(m, diag = T)] <- x
+  spe <- colSums(m)
+  d <- c(cpe/2 , spe)
+  CPE_SPE_20 <- rbind(CPE_SPE_20, d)
 }
-# -----------------------------------------------------------
-saveRDS(E210.astral_95, file = "Data/rds/E210.astral_95.rds")
-saveRDS(E210.seq_astral_95, file = "Data/rds/E210.seq_astral_95.rds")
-# -----------------------------------------------------------
-# ----------- astral 40 ------
-astral <- readRDS("Data/rds/astral_40.rds") 
-Nprotein <- nrow(astral)
-num_columns <- 210
-E210.astral_40 <- data.frame(pdbID = astral$pdbID,
-                            scopeID= astral$scopeID,
-                            length = rep(NA,Nprotein),
-                            position = astral$Position,
-                            class = astral$class,
-                            fold = astral$fold,
-                            superfamily = astral$superfamily,
-                            family = astral$family,
-                            matrix(NA, ncol = num_columns, nrow = length(astral$pdbID)))
-
-E210.seq_astral_40 <- E210.astral_40
-for (NP in 1:nrow(E210.seq_astral_40)) {
-  if (NP %% 50 == 0) {print(NP)}
-  chain_resno <- split_position(astral$Position[NP])
-  pdbname <- astral$pdbID[NP]
-  tryCatch({
-    pdb0 <- read.pdb(pdbname,verbose = FALSE)
-    pdblist = list()
-    for (ind in 1:dim(chain_resno)[1]){
-      sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=chain_resno$chain[ind])
-      sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
-      sele4 <- atom.select(pdb0, "noh")
-      sele <- combine.select(sele1, sele2,sele4, operator="AND")
-      if (!(chain_resno$start[ind]=="NA") & !(chain_resno$end[ind])=="NA"){
-         st <- chain_resno$start[ind]
-         en <- chain_resno$end[ind]
-         sele3 <- atom.select(pdb0,  resno=st:en, verbose=FALSE)
-         sele <- combine.select(sele1, sele2,sele3,sele4, operator="AND")
-      }
-      pdblist[[ind]] <- trim.pdb(pdb0, sele,verbose = FALSE)
-    }
-    new_pdb = pdblist[[1]]
-    if (dim(chain_resno)[1] > 1) {
-      for (ind in 2:dim(chain_resno)[1]){
-      new_pdb <- cat.pdb(new_pdb, pdblist[[ind]], rechain=FALSE)
-      }
-    }
-    pdbX <- new_pdb$atom
-    E210.astral_40$length[NP] = length(unique(pdbX$resno))
-    Net_Frame <- NetworkFrame(PDB = new_pdb)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
-    E210.astral_40[NP,-c(1:8)] <- energy210
-    # ----------- sequence enregy based on astral --------
-    seq = astral$seq[NP]
-    seq = gsub("X", "", seq)
-    E210.seq_astral_40$length[NP] = nchar(seq)
-    seq = unlist(strsplit(seq,""))
-    freq = c()
-    for (j in 1:20){
-        freq[j] <-  length(grep(tolower(letters_list[j]), tolower(seq)))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-    E210.seq_astral_40[NP,9:218] <- aa210_p
-    }, error = function(e) {
-     cat("Error downloading file:", e$message, "\n")
-    })
-}
-
-#saveRDS(E210.astral,file = "Data/rds/E210.astral_40.rds")
-#saveRDS(E210.seq_astral,file = "Data/rds/E210.seq_astral_40.rds")
+CPE_SPE_20 <- data.frame(CPE_SPE_20)
+colnames(CPE_SPE_20) <- paste0(substr(colnames(df_seq[,-c(1:8)])[1:20], 2,2),
+                             rep(c('_CPE', '_SPE'), each=20))
+res <- data.frame(res, CPE_SPE_20)
+# ---------------------------------
+disDim <- df_seq[,-c(1:8)]/2 - df_str[,-c(1:8)]
+colnames(disDim) <- colnames(df_seq)[-c(1:8)]
+res <- data.frame(res, disDim)
+saveRDS(res, 'Data/rds/Length_Vs_Energy.rds')
 ```
 
+## --- Visual
 
+```{r}
+source('Functions.R')
+# ---------------
+res <- readRDS('Data/rds/Length_Vs_Energy.rds')
+p1 <- ggplot(res, aes(length, disTot))+
+  geom_pointdensity(adjust = .1,alpha=.3,show.legend = T
+                    )+
+  scale_color_viridis()+
+  geom_smooth(method = 'glm',col='red')+
+  stat_cor(method = "pearson", size=5,
+           color = "red", geom = "label") +
+  theme_bw(base_line_size = .3)+
+  mytheme()+
+  #xlim(0,1000)+
+  ylim(-.5,.5)+
+  theme(strip.text.x = element_text(size = 30),
+  axis.text.x = element_text(size = 15),
+  axis.text.y = element_text(size = 15),
+  axis.title.x = element_text(size = 20),
+  axis.title.y = element_text(size = 20))
+# -------------------------
+p2 <- ggplot(res, aes(length, cosine))+
+  geom_pointdensity(adjust = .1,alpha=.3,show.legend = T
+                    )+
+  scale_color_viridis()+
+  geom_smooth(method = 'glm',col='red')+
+  stat_cor(method = "pearson", size=5,
+           color = "red", geom = "label") +
+  theme_bw(base_line_size = .3)+
+  mytheme()+
+#  xlim(0,500)+
+#  ylim(.8,1)+
+  theme(strip.text.x = element_text(size = 30),
+  axis.text.x = element_text(size = 15),
+  axis.text.y = element_text(size = 15),
+  axis.title.x = element_text(size = 20),
+  axis.title.y = element_text(size = 20))
 
+```
 
 # scalability
 
@@ -1314,6 +1452,7 @@ write.csv(df, 'Data/csv/CPE_prfc_astral95.csv', row.names = F)
 ## --- Visual 
 ```{r}
 source('Functions.R')
+# ---------------
 cpe <- read.csv('Data/csv/CPE_prfc_astral95.csv')
 tm <- read.csv('Data/csv/TM_prfc_astral95.csv')
 cpe$method <- 'CPE'
@@ -1335,8 +1474,7 @@ p<-ggplot(df, aes(n_protein, time/sumAA, col=method)) +
 
 
 
-# regenerat Fig 6
-add SPE 
+# SPE for Ct_Ho
 this chunk has run on win 10 with 2.4 GHz cpu and 8 GB RAM.
 ```{r}
 source('Functions.R')
@@ -1353,17 +1491,18 @@ for (NP in 1:nrow(E210_CT_Ho)) {
   print(NP)
   pdbname <- substr(E210_CT_Ho$pdbID[NP],1,4)
   tryCatch({
-    pdb0 <- read.pdb(pdbname,verbose = FALSE)
-    sele1 <- atom.select(pdb0,"protein",type = "ATOM", chain=substr(E210_CT_Ho$pdbID[NP],5,5))
+    pdb0 <- read.pdb(pdbname, verbose = FALSE)
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM",
+                         chain=substr(E210_CT_Ho$pdbID[NP],5,5))
     pdb0 <- trim.pdb(pdb0, sele1, verbose = FALSE)
     sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
     sele4 <- atom.select(pdb0, "noh")
     # ------------
-    #r <- unique(pdb0$atom$resno)
-    #pos <- as.numeric(unlist(strsplit(E210_CT_Ho$position[NP],'-')))
-    #st <- pos[1]
-    #en <- pos[2]
-    #sele3 <- atom.select(pdb0,  resno=r[st]:r[en], verbose=FALSE)
+    r <- unique(pdb0$atom$resno)
+    pos <- as.numeric(unlist(strsplit(E210_CT_Ho$position[NP],'-')))
+    st <- pos[1]
+    en <- ifelse(pos[2]>length(r), length(r), pos[2])
+    sele3 <- atom.select(pdb0,  resno=r[st]:r[en], verbose=FALSE)
     sele <- combine.select(sele2, sele4, operator="AND")
     new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
     Net_Frame <- NetworkFrame(PDB = new_pdb)
@@ -1375,7 +1514,7 @@ for (NP in 1:nrow(E210_CT_Ho)) {
 }
 dis <- as.matrix(E210_CT_Ho[,-c(1:9)] %>% proxy::dist(method = manhat))
 rt <- tictoc::toc()
-# time  = 187 Sec
+
 
 saveRDS(E210_CT_Ho,'Data/rds/E210_CT_Ho.rds')
 
@@ -1394,11 +1533,126 @@ for (sf in twoSF) {
 ac <- round(sum(diag(cm))/sum(cm),2)*100
 
 print(paste0('Accuracy = ', ac, '; RunningTime = ', rt$toc - rt$tic))
+# time  = 187 Sec
 ```
 
-edit  ferritin net in PP
-add SPE for fiveSF and CT_Ho
+# regenerat Fig 6
 
+```{r}
+source('Functions.R')
+# -----------------------------------
+# time_for_SPE  = 187 Sec
+# accuracy_for_SPE = 99
+# Extracted from 'SPE for Ct_Ho' chunk
+# ----------------------------------------------------
+df <- data.frame(method=c('GR-Align','RMSD','TM-Score',
+                          'YH(10Rotation)','YH(2500Rotation)','TM-Vec','CPE',
+                          'SPE'),
+                 Accuracy=c(62.3, 59.2, 61.5, 70.8, 81.5, 100, 100,
+                            99),
+                 TimeS=c(120, 3600, 33600, 600, 18600, 67, 1,
+                         187))
+# ------------------------------------------------------------------------
+# ---------   the values for  `GR-Align`, `RMSD`, `TM-Score`, `YH(10Rotation)`, `YH(2500Rotation)` 
+# ----------      were previously reported in the `Yau.S et.al. Journal of Biomolecular Structure and Dynamics (2018)`.
+# --------------------------------------------------------------------------
+df$Time <- round((df$TimeS*100)/(12*3600),5)
+df$ratio<-log10(df$Accuracy/df$Time+1)
+
+df <- df[order(df$ratio, decreasing = T),]
+df$method <- factor(df$method, 
+                    levels = df$method)
+mycol <-c('magenta','orange','cyan','skyblue3','purple','red','yellow4','green')
+
+
+p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
+  geom_bar(stat="identity")+
+  coord_polar(theta="y") +
+  theme_light(base_rect_size = 0,base_line_size = 1)+
+  theme(axis.text = element_blank(),
+        axis.ticks=element_blank(),
+        axis.title = element_blank(),
+        legend.title = element_blank(),
+        #legend.position = 'none'
+        )+
+  scale_fill_manual(values = mycol)+
+  ylim(0,100)
+
+p200s <- p12h+xlim(c('CPE','TM-Vec','GR-Align','SPE'))+
+  ylim(0,.465)+ #3.0*12*3.6 = 200sec
+  theme(legend.text = element_text(face = 'bold',size = 15))
+
+df2 <- df
+df2$Time <- df2$TimeS+1
+p <- ggplot(df2,aes(Accuracy,Time,col=method,label=method))+
+  geom_point(size=7,show.legend = F)+    
+  geom_text(show.legend = F,vjust=.7,hjust=1.2,col='black',size=6, fontface='bold')+
+  mytheme()+ylab('Time (s)')+
+  scale_color_manual(values = mycol)+
+  scale_y_log10()+xlim(50,103)+
+  theme(axis.text.x = element_text(face = 'bold',color = 'black',size = 20),
+        axis.text.y = element_text(face = 'bold',color = 'black',size = 20))
+# --------------------------------------------------------------------------
+```
+
+
+# SPE for 5SF
+
+```{r Five superfamily_CPE}
+source('Functions.R')
+# ----------------------------------------------------
+df5 <- read.csv('Data/csv/fiveSF.csv')
+Nprotein <- nrow(df5)
+#----------------------------------------------
+num_columns <- 210
+E210_df5 <- data.frame(df5,
+                       matrix(NA,ncol=num_columns,nrow=Nprotein))
+
+colnames(E210_df5)[-c(1:9)] <- pair_inter
+tictoc::tic()
+for (NP in 1:Nprotein) {
+  print(NP)
+  chain_resno <- split_position(E210_df5$position[NP])
+  pdbname <- E210_df5$pdbID[NP]
+  tryCatch({
+    pdb0 <- read.pdb(pdbname,verbose = FALSE)
+    pdblist = list()
+    for (ind in 1:dim(chain_resno)[1]){
+      sele1 <- atom.select(pdb0,"protein",type = "ATOM",
+                           chain=chain_resno$chain[ind])
+      sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+      sele4 <- atom.select(pdb0, "noh")
+      sele <- combine.select(sele1, sele2,sele4, operator="AND",verbose = FALSE)
+      if (!(chain_resno$start[ind]=="NA") & !(chain_resno$end[ind])=="NA"){
+         st <- chain_resno$start[ind]
+         en <- chain_resno$end[ind]
+         sele3 <- atom.select(pdb0,  resno=st:en, verbose=FALSE)
+         sele <- combine.select(sele1,sele2,sele3,sele4,operator="AND",verbose = FALSE)
+      }
+      pdblist[[ind]] <- trim.pdb(pdb0, sele,verbose = FALSE)
+    }
+    new_pdb = pdblist[[1]]
+    if (dim(chain_resno)[1] > 1) {
+      for (ind in 2:dim(chain_resno)[1]){
+      new_pdb <- cat.pdb(new_pdb, pdblist[[ind]], rechain=FALSE)
+      }
+    }
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    E210_df5[NP,-c(1:9)] <- energy210
+    }, error = function(e) {
+     cat("Error downloading file:", e$message, "\n")
+    })
+}
+df2 <- E210_df5
+df2 <- df2[!is.na(df2$FF),]
+dis <- as.matrix(proxy::dist(df2[,-c(1:9)], method = manhat))
+tictoc::toc()
+saveRDS(E210_df5, file = "Data/rds/E210_fiveSF.rds")
+```
+
+
+add SPE for fiveSF and CT_Ho
 CPU
 11th Gen Intel(R) Core(TM) i9-11950H @ 2.60GHz
 Thread(s) per core:   2
@@ -1443,6 +1697,7 @@ t_msa<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
   ggtitle('MSA')
 ```
 
+## --- PWdisGroup
 
 ```{r}
 # -----------------------------
@@ -1541,4 +1796,129 @@ pair_dis_sAB <- lapply(dists, FUN = sAB_dis,
                        gr=group,gr_idx=group_indices)
 
 ```
+
+# Corplot210
+
+```{r}
+res <- readRDS('Data/rds/Length_Vs_Energy.rds')
+# ----------
+df <- res[,-c(1,3)]
+length_var <- df[, 1]
+other_vars <- df[, -1]
+
+cor_values <- numeric(ncol(other_vars))
+p_values <- numeric(ncol(other_vars))
+
+for (i in 1:ncol(other_vars)) {
+  test <- cor.test(length_var, other_vars[, i])
+  cor_values[i] <- test$estimate
+  p_values[i] <- test$p.value
+}
+
+# Create a data frame with the results
+cor_results <- data.frame(Variable = names(other_vars), Correlation = cor_values, P_Value = p_values)
+
+# Plotting the absolute correlation values
+library(ggplot2)
+
+# Plotting the p-values
+p1<-ggplot(zzz[-1,], aes(x = Estimate, y = reorder(Variable, Estimate))) +
+  geom_segment(aes(xend = 0, yend = Variable), color = "gray") +
+  geom_point(aes(#size = ifelse(P_Value<0.05, -log10(P_Value)/100,NA),
+                 color = ifelse(P_Value<0.05, P_Value,NA))) +  # Point size by p-value and color by p-value
+  scale_color_gradient(low = "red", high = "blue") +  # Gradient color to indicate p-values
+  labs(title = "Correlation of Length Variable with Other Variables",
+       x = "Correlation Coefficient", 
+       y = "Variable", 
+       size = "-log10(p-value)", 
+       color = "P-Value") +
+  theme_minimal()
+
+
+p2<-ggplot(zzz[-1,], aes(x = Estimate, fill = P_Value < 0.05)) +
+  geom_histogram(binwidth = 0.01, color = "black", alpha = 0.3) +
+  scale_fill_manual(values = c("red", "blue"),
+                    labels = c("p >= 0.05", "p < 0.05")) +
+  labs(title = "Histogram of Correlation Values",
+       x = "Correlation Coefficient",
+       y = "Count",
+       fill = "Significance (p-value)") +
+  theme_minimal()
+# ------------------------
+# -- save plots
+for (i in 1:210) {
+  print(i)
+  df <- res[,c(2,i+53)]#,i+33
+  aa <- colnames(df)[2]
+  colnames(df)[2] <- 'dis'
+  #df$dis <- df[,2]/2 - df[,3]
+  p<- ggplot(df, aes(length, dis))+
+    geom_point()
+  file_name <- paste0('~/Desktop/20AA/', aa, ".pdf")
+  ggsave(file_name, p, width = 9,height = 7)
+}
+```
+
+# UmapDis
+
+```{r}
+df1 <- readRDS("Data/rds/E210.seq_astral_40.rds")
+df1 <- df1[!is.na(df1$FF),]
+df1[,-c(1:8)] <- df1[,-c(1:8)]/2
+df3 <- readRDS("Data/rds/E210.astral_40.rds")
+df3 <- df3[!is.na(df3$FF),]
+
+df1$type <- 'CPE'
+df3$type <- 'SPE'
+
+m <- match(df3$scopeID, df1$scopeID)
+df3 <- df3[!is.na(m),]
+df <- rbind(df1[df1$scopeID%in%df3$scopeID,], df3)
+
+dis <- as.matrix(proxy::dist(df[,-c(1:8, 219)], method = manhat))
+
+ump <- umap(d = dis,
+            n_neighbors = 30,
+            min_dist = 0.1,
+            input="dist")
+ump_df <- data.frame(type=df$type,
+                     length=df$length,
+                     scopeID=df$scopeID,
+                     UMAP1 = ump$layout[, 1],
+                     UMAP2 = ump$layout[, 2])
+
+ggplot(ump_df,aes(UMAP1, UMAP2, color= type)) +
+  geom_point(alpha=.5, size=.7) + 
+  mytheme()+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 18))+
+  guides(color = guide_legend(override.aes = list(size = 5)))
+
+
+scopeID <- unique(ump_df$scopeID)
+df2 <- data.frame(scopeID=scopeID,length=NA,disUMAP=NA)
+for (i in 1:length(scopeID)) {
+  print(i)
+  x <- ump_df[ump_df$scopeID%in%scopeID[i],]
+  d <- dist(x[,c(4:5)])
+  df2$disUMAP[i] <- as.numeric(d)
+  df2$length[i] <- x$length[x$type=='CPE']
+}
+bins <- c(0,seq(150, 600, by = 100), 1700)
+df2$length_bins <- cut(df2$length, breaks = bins,
+                       include.lowest = TRUE)
+
+ggplot(df2, aes(length_bins, disUMAP))+
+  geom_boxplot()
+
+ggplot(df2, aes(length, disUMAP))+
+  geom_point()+
+  ylim(0,7)+
+  xlim(0,600)+
+  stat_cor(method = "pearson", size=5,
+           color = "red", geom = "label")
+
+```
+
+
 
