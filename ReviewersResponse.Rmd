@@ -199,8 +199,10 @@ save(df_SPE, df_CPE, t_SPE, t_CPE,
 
 ```{r}
 load('Data/Large_Scale_SARS2/SPE_CPE_time.RData')
-dis_CPE <- as.matrix(df_CPE[,-c(1:4)] %>% proxy::dist(method = manhat))
-dis_SPE <- as.matrix(df_SPE[,-c(1:4)] %>% proxy::dist(method = manhat))
+dff = df_CPE[,-c(1:4)]/as.numeric(df_CPE$length)
+dis_CPE <- as.matrix(dff %>% proxy::dist(method = manhat))
+dff = df_SPE[,-c(1:4)]/as.numeric(df_SPE$length)
+dis_SPE <- as.matrix(dff %>% proxy::dist(method = manhat))
 # ----------- load from google drive ---------------
 drive_deauth()
 drive_user()
@@ -238,6 +240,8 @@ summary_1NN <- function(dist, group){
 }
 
 dis <- list(tm, dis_CPE, dis_SPE)
+dis <- list(dis_CPE, dis_SPE)
+
 summ <- lapply(dis, summary_1NN, df_CPE$sars_proteom)
 names(summ) <- c('TM', 'CPE', 'SPE')
 
@@ -322,10 +326,11 @@ df_SPE$subClass[df_SPE$pdbID%in%c2$V1] <- 'Nob'
 df_SPE$subClass[df_SPE$pdbID%in%c3$V1] <- 'Merb'
 df_SPE$subClass[df_SPE$pdbID%in%c4$V1] <- 'Emb'
 
-
-dis_CPE <- as.matrix(proxy::dist(df_CPE[,-c(1:5)],
+dff = df_CPE[,-c(1:5)]/as.numeric(df_CPE$length)
+dis_CPE <- as.matrix(proxy::dist(dff,
                                  method = manhat))
-dis_SPE <- as.matrix(proxy::dist(df_SPE[,-c(1:5)],
+dff = df_SPE[,-c(1:5)]/as.numeric(df_SPE$length)
+dis_SPE <- as.matrix(proxy::dist(dff,
                                  method = manhat))
 
 ump_tm <- umap(d = tm,n_neighbors = 13,input='dist',min_dist = 0.5)
@@ -1082,7 +1087,7 @@ df_seq <- readRDS("Data/rds/E210.seq_astral_95.rds")
 df_str <- readRDS("Data/rds/E210.astral_95.rds") 
 
 result <- mapply(function(x, y) manhat(x, y),
-                 split(df_seq[,-c(1:8)], 1:nrow(df_seq)), 
+                 split(df_seq[,-c(1:8)]/df_seq$length, 1:nrow(df_seq)), 
                  split(df_str[,-c(1:8)]/df_str$length, 1:nrow(df_str)))
 res = data.frame(length = df_seq$length,dist = result)
 cor(res$length,res$dist,use = "complete.obs")
