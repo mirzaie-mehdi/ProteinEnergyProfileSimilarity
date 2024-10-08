@@ -1368,6 +1368,7 @@ source('Functions.R')
 # ---------------
 res <- readRDS('Data/rds/Length_Vs_Energy.rds')
 p1 <- ggplot(res, aes(length, disTot))+
+  #geom_point(alpha=.3)+
   geom_pointdensity(adjust = .1,alpha=.3,show.legend = T
                     )+
   scale_color_viridis()+
@@ -1384,23 +1385,44 @@ p1 <- ggplot(res, aes(length, disTot))+
   axis.title.x = element_text(size = 20),
   axis.title.y = element_text(size = 20))
 # -------------------------
-p2 <- ggplot(res, aes(length, cosine))+
-  geom_pointdensity(adjust = .1,alpha=.3,show.legend = T
-                    )+
-  scale_color_viridis()+
-  geom_smooth(method = 'glm',col='red')+
-  stat_cor(method = "pearson", size=5,
-           color = "red", geom = "label") +
-  theme_bw(base_line_size = .3)+
+length_var <- res$length
+other_vars <- res[, 54:263]
+
+cor_values <- numeric(ncol(other_vars))
+
+for (i in 1:ncol(other_vars)) {
+  test <- cor.test(length_var, other_vars[, i],
+                   method = 'spearman')
+  cor_values[i] <- test$estimate
+}
+
+cor_results <- data.frame(Correlation = cor_values)
+
+p2 <- ggplot(cor_results, aes(x = Correlation)) +
+  geom_histogram(binwidth = 0.03, color = "black", alpha = 0.7) +
+  labs(#title = "Histogram of Correlation Values",
+       x = "Correlation Coefficient",
+       y = "Count") +
   mytheme()+
-#  xlim(0,500)+
-#  ylim(.8,1)+
   theme(strip.text.x = element_text(size = 30),
   axis.text.x = element_text(size = 15),
   axis.text.y = element_text(size = 15),
   axis.title.x = element_text(size = 20),
   axis.title.y = element_text(size = 20))
-
+# --------------------------------------
+# ------------ save 210 cor plot
+for (i in 1:210) {
+  print(i)
+  df <- res[,c(2,i+53)]
+  aa <- colnames(df)[2]
+  colnames(df)[2] <- 'dis'
+  p <- ggplot(df, aes(length, dis))+
+    geom_point()+
+    ylab('CPE - SPE')
+  file_name <- paste0('manuscript/Revised/sup_Fig/210cor/',
+                      aa, ".pdf")
+  ggsave(file_name, p, width = 9,height = 7)
+}
 ```
 
 # scalability
