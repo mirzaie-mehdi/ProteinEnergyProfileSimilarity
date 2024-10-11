@@ -1121,7 +1121,7 @@ p
 ```{r Fig 7 ferritin}
 source('Functions.R')
 # ----------------------------------------------------
-E210_ferritin <- readRDS("Data/rds/E210.seq_ferritin.rds")
+E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
 df <- E210_ferritin
 rownames(df) <- df$pdbID
 dis <- proxy::dist(df[,-c(1:4)], method = manhat)
@@ -1136,13 +1136,20 @@ nnet <- neighborNet(dis)
 # ----   the 'E210_ferritin_manhat.nxs' file 
 # -----      was load on SplitsTree4(v 4.19.2) to visualize
 # --------------------------------------------------------------------
+df <- read.csv('Data/csv/Ferritin_Like_seq.csv')
+dis <- read.csv('Data/csv/disTM_vec_Ferritin_Like_seq.csv')
+dis <- 1 - dis
+colnames(dis) <- rownames(dis) <- df$pdbID
+nnet <- neighborNet(dis)
+# write.nexus.networx(nnet,'Data/rds/ferritin_TMvec.nxs')
+# -----------------------------------------
 E210.seq_ferritin <- readRDS("Data/rds/E210.seq_ferritin.rds")
 df <- E210.seq_ferritin
 rownames(df) <- df$pdbID
 dis <- proxy::dist(df[,-c(1:4)], method = manhat)
 
 nnet <- neighborNet(dis)
-write.nexus.networx(nnet,'Data/rds/E210.seq_ferritin.nxs')
+#write.nexus.networx(nnet,'Data/rds/E210.seq_ferritin.nxs')
 ```
 
 ## Fig 8 covid
@@ -1176,11 +1183,23 @@ grp <- list(MERS_Cov     = rn[1:32],
             SARS_Cov2  = rn[64:143])
 
 tree_data <- as.phylo(dend)
-p_data <- ggtree(tree_data, layout = 'dendrogram',
-                 size = 2)
+
 myBoots <- boot.phylo(tree_data, x, bootFun, B = 100)
 
-p_data$data$boots <- c(rep(NA,143),myBoots)
+boot_ci <- data.frame(bootValues=myBoots, ci=NA)
+for (i in 1:nrow(boot_ci)) {
+  if(!is.na(boot_ci$bootValues[i])){
+    ci <- binom.confint(boot_ci$bootValues[i],
+                        100, methods="exact")
+    boot_ci$ci[i] <- paste0('(',round(ci$lower * 100, 1), " , ", round(ci$upper * 100, 1), ')')
+  }
+}
+
+p_data <- ggtree(tree_data, layout = 'dend',
+                 size = 2)
+
+p_data$data$boots <- c(rep(NA,143),boot_ci$bootValues)
+p_data$data$ci <- c(rep(NA,143),boot_ci$ci)
 
 t_CPE <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
   theme(legend.position="none",
@@ -1191,6 +1210,8 @@ t_CPE <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
 #               hjust=1,size=1.5,fontface="bold",align=F)+
   geom_text2(aes(subset=!isTip, label=boots),
              col='black', hjust=-.2, vjust=-.5)+
+  geom_text2(aes(subset=!isTip, label=ci),
+             col='black', hjust=-.3, vjust=-.5)+
   scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
                       type =  c('gray45',"blue","green","red" ))+
   ggtitle('CPE')
@@ -1301,13 +1322,29 @@ myBoots <- boot.phylo(tree_data, tm_ebm, FUN = function(e){
   d <- 1 - (proxy::dist(e,method = cosine))
   as.phylo(hclust(d, method = 'ward.D2'))},
   B = 100)
-p_data$data$boots <- c(rep(NA,143),myBoots)
+
+boot_ci <- data.frame(bootValues=myBoots, ci=NA)
+for (i in 1:nrow(boot_ci)) {
+  if(!is.na(boot_ci$bootValues[i])){
+    ci <- binom.confint(boot_ci$bootValues[i],
+                        100, methods="exact")
+    boot_ci$ci[i] <- paste0('(',round(ci$lower * 100, 1), " , ", round(ci$upper * 100, 1), ')')
+  }
+}
+
+p_data <- ggtree(tree_data, layout = 'dend',
+                 size = 2)
+
+p_data$data$boots <- c(rep(NA,143),boot_ci$bootValues)
+p_data$data$ci <- c(rep(NA,143),boot_ci$ci)
 
 t_tmVec <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
        theme(legend.position="none",
              plot.title = element_text(size = 50, face = 'bold',hjust = 0.5,vjust = 2))+
   geom_text2(aes(subset=!isTip, label=boots),
-             col='black', hjust=-.2, vjust=-.5)+
+             col='black', hjust=-.2, vjust=-.5, size=8)+
+  geom_text2(aes(subset=!isTip, label=ci),
+             col='black', hjust=-.2, vjust=.5)+
        scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
                             type =  c("blue","green","red" ))+
   ggtitle('TM-Vec')
