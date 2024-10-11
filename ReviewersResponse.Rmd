@@ -632,15 +632,16 @@ group <- factor(df$virus)
 group_indices <- split(seq_len(length(group)), group)
 # -----------Function to calculate mean of pairwise distance between two groups
 mean_pairwise_dis <- function(dis, gr, gr_idx){
+  n <- length(unique(gr))
   calculate_mean_distance <- function(group1_indices,group2_indices,
                                      distance_matrix) {
   submatrix <- distance_matrix[group1_indices, group2_indices]
   return(mean(submatrix))
   }
-mean_dis <- matrix(NA, nrow = 3, ncol = 3,
+mean_dis <- matrix(NA, nrow = n, ncol = n,
                    dimnames = list(levels(gr),levels(gr)))
-for (i in 1:3) {
-    for (j in 1:3) {
+for (i in 1:n) {
+    for (j in 1:n) {
       mean_dis[i, j] <- calculate_mean_distance(gr_idx[[i]],gr_idx[[j]],dis)
     }
   }
@@ -668,23 +669,13 @@ colnames(group_dis) = c("Method","Comparison","Distance")
 ```{r}
 
 # Plot the bar plot
-ggplot(group_dis, aes(x = Comparison, y = Distance, fill = Method)) +
+p0<-ggplot(group_dis, aes(x = Comparison, y = Distance, fill = Method)) +
   geom_bar(stat = "identity", position = "dodge", width = 0.7) +
   labs(title = "Comparison of Different Distance Metrics Between Virus Pairs", 
        x = "Virus Comparison", y = "Distance") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
         plot.title = element_text(hjust = 0.5, size = 16))
-
-
- ggplot(group_dis, aes(x = "", y = Distance, fill = Comparison)) +
-     geom_bar(stat = "identity", width = 1) +
-     coord_polar("y") +
-     facet_wrap(~Method) +
-     labs(title = "Pie Chart of Distance by Metric",
-          x = NULL, y = NULL) +
-     theme_void() +
-     theme(legend.position = "right")
 
 ```
 
@@ -822,6 +813,51 @@ t_tm<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
                                  ))
 ```
 
+## --- mean distance
+```{r}
+mean_pairwise_dis <- function(dis, gr, gr_idx){
+  n <- length(unique(gr))
+  calculate_mean_distance <- function(group1_indices,group2_indices,
+                                      distance_matrix) {
+    submatrix <- distance_matrix[group1_indices, group2_indices]
+    return(mean(submatrix))
+  }
+  mean_dis <- matrix(NA, nrow = n, ncol = n,
+                     dimnames = list(levels(gr),levels(gr)))
+  for (i in 1:n) {
+    for (j in 1:n) {
+      mean_dis[i, j] <- calculate_mean_distance(gr_idx[[i]],gr_idx[[j]],dis)
+    }
+  }
+  diag(mean_dis) <- 0
+  minmax_dis <- mean_dis
+  minmax_dis <- (minmax_dis - min(minmax_dis))/(max(minmax_dis) - min(minmax_dis))
+  minmax_dis <- round(minmax_dis, 2)
+  return(minmax_dis)
+}
+
+dis <- as.matrix(dis)
+group <-as.factor(df$group)
+group_indices <-  split(seq_len(length(group)), group)
+
+
+z<-mean_pairwise_dis(as.matrix(dis), gr = group, gr_idx = group_indices)
+
+d <- as.dist(z)
+tree_data <- ape::bionj(d)
+
+ggtree(tree_data, layout = 'unrooted',size=5,aes(color = label)) +
+  geom_tiplab(aes(label=label, col=label),
+              hjust=.5,vjust=-.9,size=4,fontface="bold",align=F)+
+  scale_color_discrete(type =  c('red',"orange2","yellow4","green3",
+                                 'skyblue3','blue',
+                                 'magenta','purple2'
+  ))+
+  theme(legend.position = 'none')
+
+
+```
+
 ## --- Rho Spearman Rank
 
 ```{r}
@@ -835,8 +871,8 @@ get_ranks <- function(order, reference_order) {
 # Define tree orders
 reference_order <- c("R", "F", "B", "D")
 SPE_order <- c("R", "F", "B", "D")
-CPE_order <- c("F", "R", "B", "D")
-TM_order <- c("R", "D", "B", "F")
+CPE_order <- c("R", "D", "F", "B")
+TM_order <- c("R", "D", "F", "B")
 
 # Compute ranks
 reference_ranks <- get_ranks(reference_order, reference_order)
@@ -858,7 +894,7 @@ a.25.1.1 <- c(SPE, CPE, TM)
 reference_order <- c("F", "R", "A", "B")
 SPE_order <- c("R", "F", "B", "A")
 CPE_order <- c("R", "F", "B", "A")
-TM_order <- c("B", "R", "F", "A")
+TM_order <- c("B", "A", "F", "R")
 
 reference_ranks <- get_ranks(reference_order, reference_order)
 SPE_ranks <- get_ranks(SPE_order, reference_order)
