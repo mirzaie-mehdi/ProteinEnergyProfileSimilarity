@@ -1401,7 +1401,82 @@ t_tmScore<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
   scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
                        type =  c("blue","green","red" ))+
   ggtitle('TM-Score')
-# ---------------------------
+# -----------------------------------------
+# Covid-SequenceBased-Phylogenetic tree
+# ---------- MSA ClustalW
+# -------------------
+df <- read.csv("Data/covidPDB/spike_seq.csv")
+rownames(df) <- df$pdbID
+df <- df[with(df, order(df$virus,decreasing = T)), ]
+row.names(df) <- df$pdbID
+rn <- df$pdbID
+grp <- list(SARS_Cov2  = rn[1:80],
+            SARS_Cov  = rn[81:111],
+            MERS_Cov  = rn[112:143])
+
+## --- Make a fasta file including spike protein sequences
+#  ampir::df_to_faa(df[,c(1,3)],'Data/covidPDB/Spike.fasta')
+# --- Read fasta sequences-------------
+sequences <- readAAStringSet("Data/covidPDB/Spike.fasta")
+# ---- Multiple sequence alignment using ClustalW---------
+tictoc::tic()
+alignment <- msa(sequences, method = "ClustalW")
+tictoc::toc()
+# --------------
+# t := 71.8 Sec
+# ------------------
+alignment2 <- msaConvert(alignment, type="seqinr::alignment")
+d <- seqinr::dist.alignment(alignment2, "identity")
+upgma <- phangorn::upgma(d)
+adjustedRandIndex(cutree(upgma, 3), df$virus)
+dend <- upgma %>% as.dendrogram
+tree_data <- as.phylo(dend)
+
+fu <- function(seq){
+  z <- apply(seq, 1, paste, collapse = " ")
+  z <- data.frame(pdbID=names(z), seq=z)
+  ampir::df_to_faa(z,'Data/temp.fasta')
+  z <- readAAStringSet(file = "Data/temp.fasta", format = "fasta")
+  align <- msa(z, method = "ClustalW")
+  align2 <- msaConvert(align, type="seqinr::alignment")
+  did <- seqinr::dist.alignment(align2, "identity")
+  upg <- phangorn::upgma(did)
+  den <- upg %>% as.dendrogram
+  tr <- as.phylo(den)
+  return(tr)
+}
+#myBoots <- boot.phylo(tree_data, alignment_matrix, FUN = fu, B = 100)
+#saveRDS(myBoots,'Data/rds/bootStraps_ClustalW.rds')
+myBoots <- readRDS('Data/rds/bootStraps_ClustalW.rds')
+boot_ci <- data.frame(bootValues=myBoots, ci=NA)
+for (i in 1:nrow(boot_ci)) {
+  print(i)
+  if(!is.na(boot_ci$bootValues[i])){
+    ci <- binom.confint(boot_ci$bootValues[i],
+                        100, methods="exact")
+    boot_ci$ci[i] <- paste0('(',round(ci$lower * 100, 1), " , ", round(ci$upper * 100, 1), ')')
+  }
+}
+
+p_data <- ggtree(tree_data, layout = 'dend',
+                 size = 2)
+
+p_data$data$boots <- c(rep(NA,143),boot_ci$bootValues)
+p_data$data$ci <- c(rep(NA,143),boot_ci$ci)
+p_data$data$edge <- paste0(p_data$data$parent, '_', p_data$data$node)
+
+t_Sequence_upgma <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
+  theme(legend.position="none",
+        plot.title = element_text(size = 50, 
+                                  face="bold",hjust = 0.5,vjust = 2))+
+    geom_text2(aes(subset=edge%in%c('144_146','146_148'), label=boots),
+             col='black', hjust=-.2, vjust=-.5)+
+  geom_text2(aes(subset=edge%in%c('144_146','146_148'), label=ci),
+             col='black', hjust=-.5, vjust=-.5)+
+  scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
+                      type =  c('black',"blue","green","red" ))+
+  ggtitle('MSA (ClustalW)')
+# ------------------------------------------
 mylegend <- get_legend(t_SPE+
                        theme(legend.position = 'bottom',
                              legend.title = element_blank(),
@@ -1419,20 +1494,7 @@ AB<-ggarrange(NULL,NULL,
     font.label = list(size = 55), # color = "red"
     hjust = 0,vjust = .5
     )
-#   title_grob <- grobTree(
-#     textGrob("Evolution of Spike protein", x = 0.5, y = -3, just = "center", 
-#              gp = gpar(col = "black", fontsize = 45, fontface = "bold")),
-#     textGrob("MERS_Cov",           x = 0.34, y = -9,   just = "center", 
-#              gp = gpar(col = "blue",  fontsize = 30, fontface = "bold")),
-#     textGrob(expression('\u2192'), x = 0.42, y = -9.5, just = "center", 
-#              gp = gpar(col = "black", fontsize = 40, fontface = "bold")),
-#     textGrob("SARS_Cov",           x = 0.50, y = -9,   just = "center", 
-#              gp = gpar(col = "green", fontsize = 30, fontface = "bold")),
-#     textGrob(expression('\u2192'), x = 0.58, y = -9.5, just = "center", 
-#              gp = gpar(col = "black", fontsize = 40, fontface = "bold")),
-#     textGrob("SARS_Cov2",          x = 0.67, y = -9,   just = "center", 
-#              gp = gpar(col = "red"  , fontsize = 30, fontface = "bold"))
-#   )
+
 p0 <- cowplot::plot_grid(AB, mylegend, ncol = 1, rel_heights = c(1,.05))
 #annotate_figure(AB, top = title_grob)
 # save FIG6.pdf 20x10

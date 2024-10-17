@@ -13,6 +13,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 options(knitr.table.format = "latex")
+library(RColorBrewer)
+library(scales)
 library(readr)
 library(data.table)
 library(MASS)
@@ -63,6 +65,7 @@ library(Biostrings)
 library(msa)
 library(lsa)
 library(TreeDist)
+library(binom)
 ```
 
 # Overlap PDBs
@@ -201,7 +204,7 @@ save(df_SPE, df_CPE, t_SPE, t_CPE,
 
 ```{r}
 load('Data/Large_Scale_SARS2/SPE_CPE_time.RData')
-dff = df_CPE[,-c(1:4)]/as.numeric(df_CPE$length)
+dff <- df_CPE[,-c(1:4)]/as.numeric(df_CPE$length)
 dis_CPE <- as.matrix(dff %>% proxy::dist(method = manhat))
 dff = df_SPE[,-c(1:4)]/as.numeric(df_SPE$length)
 dis_SPE <- as.matrix(dff %>% proxy::dist(method = manhat))
@@ -255,14 +258,16 @@ cbind(Method=c('TM', 'CPE', 'SPE'),
       Time=c(t_tm, t_CPE, t_SPE))
 ```
 
-## UMAP
+## --- UMAP
 
 ```{r}
+source('Functions.R')
 load('Data/Large_Scale_SARS2/SPE_CPE_time.RData')
-library(RColorBrewer)
-#---------------------UMAP-------------------------------
-dis_SPE <- as.matrix(proxy::dist(df_SPE[,-c(1:4)], method = manhat))
-ump <- umap(d = dis_SPE,
+palette_Dark2 <- colorRampPalette(brewer.pal(28, "Dark2"))
+#---------------------------------------------
+# ----------SPE
+dis <- as.matrix(proxy::dist(df_SPE[,-c(1:4)], method = manhat))
+ump <- umap(d = dis,
             n_neighbors = 150,
             min_dist = 0.1,
             input="dist")
@@ -270,16 +275,82 @@ ump <- ump$layout
 ump_df <- data.frame(family=df_SPE$sars_proteom, 
                   UMAP1=ump[,1],
                   UMAP2=ump[,2])
-palette_Dark2 <- colorRampPalette(brewer.pal(28, "Dark2"))
-h = ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
-  geom_point(size = 3,alpha=.7) +
-  mytheme() +
-  scale_fill_manual(values = palette_Dark2(14)) +
-  theme(legend.position = "bottom")
 
+p_SPE <- ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
+  geom_point(size = 3,alpha=.7) +
+  scale_fill_manual(values = palette_Dark2(14)) +
+  mytheme()+
+  ggtitle('SPE')+
+  theme(legend.position = "bottom",
+        legend.text = element_text(size=13,color = 'black'),
+        axis.text.x = element_text(size = 25,face = 'bold',color = 'black'),
+        axis.text.y = element_text(size = 25,face = 'bold',color = 'black'),
+        axis.title.x = element_text(size =25,face = 'bold',color = 'black'),
+        axis.title.y = element_text(size =25,face = 'bold',color = 'black'),
+        title = element_text(size =25,face = 'bold',color = 'black'))
+# save SARS_Proteom_SPE.pdf 13x17
+# ------------------------------------
+# ------------CPE
+dis <- as.matrix(proxy::dist(df_CPE[,-c(1:4)], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 150,
+            min_dist = 0.1,
+            input="dist")
+ump <- ump$layout
+ump_df <- data.frame(family=df_CPE$sars_proteom, 
+                  UMAP1=ump[,1],
+                  UMAP2=ump[,2])
+
+p_CPE <- ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
+  geom_point(size = 3,alpha=.7) +
+  scale_fill_manual(values = palette_Dark2(14)) +
+  mytheme()+
+  ggtitle('CPE')+
+  theme(legend.position = "bottom",
+        legend.text = element_text(size=13,color = 'black'),
+        axis.text.x = element_text(size = 25,face = 'bold',color = 'black'),
+        axis.text.y = element_text(size = 25,face = 'bold',color = 'black'),
+        axis.title.x = element_text(size =25,face = 'bold',color = 'black'),
+        axis.title.y = element_text(size =25,face = 'bold',color = 'black'),
+        title = element_text(size =25,face = 'bold',color = 'black'))
+# save SARS_Proteom_CPE.pdf 13x17
+# ------------------------------------
+# ------------TM-vec
+# ----------- load from google drive ---------------
+drive_deauth()
+drive_user()
+public_file <- drive_get(as_id("1QUAqdkypCPHraNESF11arxg29tDUp521"))
+drive_download(public_file, overwrite = TRUE)
+tm <- read.csv('disTM_vec_sars_proteom.csv')
+file.remove('disTM_vec_sars_proteom.csv')
+tm <- 1 - tm
+ump <- umap(d = tm,
+            n_neighbors = 150,
+            min_dist = 0.1,
+            input="dist")
+ump <- ump$layout
+ump_df <- data.frame(family=df_CPE$sars_proteom, 
+                  UMAP1=ump[,1],
+                  UMAP2=ump[,2])
+
+p_tm <- ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
+  geom_point(size = 3,alpha=.7) +
+  scale_fill_manual(values = palette_Dark2(14)) +
+  mytheme()+
+  ggtitle('TM-Vec')+
+  theme(legend.position = "bottom",
+        legend.text = element_text(size=13,color = 'black'),
+        axis.text.x = element_text(size = 25,face = 'bold',color = 'black'),
+        axis.text.y = element_text(size = 25,face = 'bold',color = 'black'),
+        axis.title.x = element_text(size =25,face = 'bold',color = 'black'),
+        axis.title.y = element_text(size =25,face = 'bold',color = 'black'),
+        title = element_text(size =25,face = 'bold',color = 'black'))
+# save SARS_Proteom_TM_Vec.pdf 13x17
+# -------------------------
+ggarrange(p_SPE,p_CPE,p_tm,common.legend = T,ncol = 1, legend = 'bottom')
 ```
 
-## PLPRO
+## --- PLPRO
 
 ```{r}
 source('Functions.R')
@@ -371,7 +442,8 @@ spe_p = ggplot(ump_SPE, aes(UMAP1, UMAP2, color= subClass)) +
   ggtitle("SPE") +
   mytheme() 
 
-ggarrange(tm_p,cpe_p,spe_p,ncol = 3)
+ggarrange(spe_p,cpe_p,tm_p,ncol = 3,
+          common.legend = T,legend = 'bottom')
 
 ```
 
@@ -455,6 +527,8 @@ save(t_SPE, t_CPE, dis_CPE, dis_SPE,
 
 ## --- Visual
 ```{r}
+source('Functions.R')
+# ------------------------
 load('Data/Globin/dis_CPE_SPE_time.RData')
 df <- read.csv('Data/Globin/Globin.csv')
 df$globin <- gsub('-.*','',df$globin)
@@ -506,7 +580,7 @@ gspe = ggplot(ump_df, aes(UMAP1, UMAP2, color= globin)) +
   geom_point(alpha=.7) +
   ggtitle("SPE") +
   mytheme() 
-ggarrange(gtm,gcpe,gspe,ncol = 3)
+ggarrange(gspe,gcpe,gtm,ncol = 3, common.legend = T, legend = 'bottom')
 
 
 
@@ -530,83 +604,6 @@ rbind(ac,pr,re,f1)
 ```
 
 
-
-
-# Covid-SequenceBased-Phylogenetic tree
-
-```{r}
-df <- read.csv("Data/covidPDB/spike_seq.csv")
-rownames(df) <- df$pdbID
-df <- df[with(df, order(df$virus,decreasing = T)), ]
-row.names(df) <- df$pdbID
-rn <- df$pdbID
-grp <- list(SARS_Cov2  = rn[1:80],
-            SARS_Cov  = rn[81:111],
-            MERS_Cov  = rn[112:143])
-
-## --- Make a fasta file including spike protein sequences
-#  ampir::df_to_faa(df[,c(1,3)],'Data/covidPDB/Spike.fasta')
-# --- Read fasta sequences-------------
-sequences <- readAAStringSet("Data/covidPDB/Spike.fasta")
-# ---- Multiple sequence alignment using ClustalW---------
-tictoc::tic()
-alignment <- msa(sequences, method = "ClustalW")
-tictoc::toc()
-# --------------
-# t := 71.8 Sec
-# ------------------
-alignment2 <- msaConvert(alignment, type="seqinr::alignment")
-d <- seqinr::dist.alignment(alignment2, "identity")
-upgma <- phangorn::upgma(d)
-adjustedRandIndex(cutree(upgma, 3), df$virus)
-dend <- upgma %>% as.dendrogram
-tree_data <- as.phylo(dend)
-
-fu <- function(seq){
-  z <- apply(seq, 1, paste, collapse = " ")
-  z <- data.frame(pdbID=names(z), seq=z)
-  ampir::df_to_faa(z,'~/Desktop/temp.fasta')
-  z <- readAAStringSet(file = "~/Desktop/temp.fasta", format = "fasta")
-  align <- msa(z, method = "ClustalW")
-  align2 <- msaConvert(align, type="seqinr::alignment")
-  did <- seqinr::dist.alignment(align2, "identity")
-  upg <- phangorn::upgma(did)
-  den <- upg %>% as.dendrogram
-  tr <- as.phylo(den)
-  return(tr)
-}
-#myBoots <- boot.phylo(tree_data, alignment_matrix, FUN = fu, B = 100)
-#saveRDS(myBoots,'Data/rds/bootStraps_ClustalW.rds')
-myBoots <- readRDS('Data/rds/bootStraps_ClustalW.rds')
-boot_ci <- data.frame(bootValues=myBoots, ci=NA)
-for (i in 1:nrow(boot_ci)) {
-  print(i)
-  if(!is.na(boot_ci$bootValues[i])){
-    ci <- binom.confint(boot_ci$bootValues[i],
-                        100, methods="exact")
-    boot_ci$ci[i] <- paste0('(',round(ci$lower * 100, 1), " , ", round(ci$upper * 100, 1), ')')
-  }
-}
-
-p_data <- ggtree(tree_data, layout = 'dend',
-                 size = 2)
-
-p_data$data$boots <- c(rep(NA,143),boot_ci$bootValues)
-p_data$data$ci <- c(rep(NA,143),boot_ci$ci)
-p_data$data$edge <- paste0(p_data$data$parent, '_', p_data$data$node)
-
-t_Sequence_upgma <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
-  theme(legend.position="none",
-        plot.title = element_text(size = 50, 
-                                  face="bold",hjust = 0.5,vjust = 2))+
-    geom_text2(aes(subset=edge%in%c('144_146','146_148'), label=boots),
-             col='black', hjust=-.2, vjust=-.5)+
-  geom_text2(aes(subset=edge%in%c('144_146','146_148'), label=ci),
-             col='black', hjust=-.5, vjust=-.5)+
-  scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
-                      type =  c('black',"blue","green","red" ))+
-  ggtitle('MSA (ClustalW)')
-```
 
 ## Spike Inter-Similarity
 
@@ -1500,49 +1497,6 @@ saveRDS(res, 'Data/rds/Length_Vs_Energy.rds')
 source('Functions.R')
 # ---------------
 res <- readRDS('Data/rds/Length_Vs_Energy.rds')
-p1 <- ggplot(res, aes(length, disTot))+
-  #geom_point(alpha=.3)+
-  geom_pointdensity(adjust = .1,alpha=.3,show.legend = T
-                    )+
-  scale_color_viridis()+
-  geom_smooth(method = 'glm',col='red')+
-  stat_cor(method = "pearson", size=5,
-           color = "red", geom = "label") +
-  theme_bw(base_line_size = .3)+
-  mytheme()+
-  #xlim(0,1000)+
-  ylim(-.5,.5)+
-  theme(strip.text.x = element_text(size = 30),
-  axis.text.x = element_text(size = 15),
-  axis.text.y = element_text(size = 15),
-  axis.title.x = element_text(size = 20),
-  axis.title.y = element_text(size = 20))
-# -------------------------
-length_var <- res$length
-other_vars <- res[, 54:263]
-
-cor_values <- numeric(ncol(other_vars))
-
-for (i in 1:ncol(other_vars)) {
-  test <- cor.test(length_var, other_vars[, i],
-                   method = 'spearman')
-  cor_values[i] <- test$estimate
-}
-
-cor_results <- data.frame(Correlation = cor_values)
-
-p2 <- ggplot(cor_results, aes(x = Correlation)) +
-  geom_histogram(binwidth = 0.03, color = "black", alpha = 0.7) +
-  labs(#title = "Histogram of Correlation Values",
-       x = "Correlation Coefficient",
-       y = "Count") +
-  mytheme()+
-  theme(strip.text.x = element_text(size = 30),
-  axis.text.x = element_text(size = 15),
-  axis.text.y = element_text(size = 15),
-  axis.title.x = element_text(size = 20),
-  axis.title.y = element_text(size = 20))
-# --------------------------------------
 # ------------ save 210 cor plot
 for (i in 1:210) {
   print(i)
@@ -1558,7 +1512,7 @@ for (i in 1:210) {
 }
 ```
 
-# scalability
+# Scalability
 
 ```{r}
 source('Functions.R')
@@ -1616,15 +1570,35 @@ tm$method <- 'TM'
 df <- rbind(cpe, tm)
 
 p<-ggplot(df, aes(n_protein, time/sumAA, col=method)) +
-  geom_point(size=3, alpha=.5) +
-  geom_smooth(method = "lm", se = FALSE, alpha=.3,linewidth = .3) +  
+  geom_point(size=3, alpha=1) +
+  geom_smooth(method = "lm", se = FALSE, alpha=1,linewidth = .3) +  
   stat_poly_eq(aes(label = paste(..eq.label..)),
                formula = y ~ x, parse = TRUE, label.x.npc = "right",
                label.y.npc = "top", size = 5)+
   xlab('N Protein')+
-  ylab('Time/AminoAcid (Sec/AA)')+
-  mytheme()
+  ylab('Time/AminoAcid (Sec/AA)') +
+  scale_color_manual(values = c('magenta', 'orange'))+
+  mytheme()+
+  theme(legend.position = c(.9,.15),
+        legend.text = element_text(face = 'bold'),
+        axis.title.y = element_text(size = 13, vjust = 2),
+        axis.title.x = element_text(size = 13, vjust = -.5))+
+  scale_x_continuous(breaks = unique(df$n_protein),
+                     labels = label_number(scale = 1e-3))+
+  scale_y_continuous(breaks = seq(0,1.2, .2)/1000,
+                     labels = label_number(scale = 1e3))+
+  annotation_custom(
+  grob = textGrob(bquote("×10"^-3),
+                  gp = gpar(col = "blue", fontsize = 15),rot=90),
+  xmin = -3100, xmax = -3100, ymin = 0.00096, ymax = 0.00096) +
+  annotation_custom(
+  grob = textGrob(bquote("×10"^3),
+                  gp = gpar(col = "blue", fontsize = 15)),
+  xmin = 19000, xmax = 19000, ymin = -.00012, ymax = -.00012) +
+  coord_cartesian(clip = "off") 
 
+ggarrange(NULL,p,ncol = 2,widths = c(.01,1))
+# save Fig13_new.pdf 7x6
 ```
 
 
