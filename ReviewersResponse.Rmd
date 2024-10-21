@@ -5,6 +5,13 @@ date: "2024-08-16"
 output: html_document
 ---
 
+CPU
+11th Gen Intel(R) Core(TM) i9-11950H @ 2.60GHz
+Thread(s) per core:   2
+Core(s) per socket:   8
+Memory:        32GB
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -1780,13 +1787,70 @@ tictoc::toc()
 saveRDS(E210_df5, file = "Data/rds/E210_fiveSF.rds")
 ```
 
+## --- kNN & RF
 
-add SPE for fiveSF and CT_Ho
-CPU
-11th Gen Intel(R) Core(TM) i9-11950H @ 2.60GHz
-Thread(s) per core:   2
-Core(s) per socket:   8
-Memory:        32GB
+```{r}
+source('Functions.R')
+# ----------------------SPE------------------------------
+# -------- 5 sf
+win <- 'a.4.5'
+imu <- 'b.1.1'
+ph <- 'b.55.1'
+ub <- 'd.15.1'
+ntf <- 'd.17.4'
+
+fiveSF <- c(win,imu,ph,ub,ntf)
+#############
+df5 <- readRDS('Data/rds/E210_fiveSF.rds')
+# ----------------------------------------
+# ---------- 1NN ----------------
+# ---------------------------------------
+dis <- as.matrix(proxy::dist(df5[,-c(1:9)], method = manhat))
+diag(dis) <- NA
+
+im <- apply(dis, 1, FUN = which.min)
+res <- data.frame(source=df5$superfamily, target=df5$superfamily[im])
+cm <- matrix(0,5,5)
+colnames(cm) <- rownames(cm) <- fiveSF
+for (sf in fiveSF) {
+  x <- res[res$source%in%sf,]
+  z <- table(x$target)
+  cm[sf,names(z)]<-z
+}
+Accuracy<-sum(diag(cm))/sum(cm)
+Precision <- diag(cm)/colSums(cm)
+Recall <- diag(cm)/rowSums(cm)
+F1 <- (2 * Precision * Recall) /(Precision + Recall)
+
+res1NN_CPE<-data.frame(t(round(c(Accuracy,F1),2)))
+# ----------------------------------------
+# ---------- 10 fold cross validation Random forest ----------------
+# ---------------------------------------
+set.seed(12345)
+df5[,-c(1:9)] <- df5[,-c(1:9)]/df5$length
+df5$superfamily <- factor(df5$superfamily)
+kfolds <- createFolds(df5$superfamily, k = 10)
+res<-c()
+for (i in 1:10) {
+  print(i)
+  x <- kfolds[[i]]
+  tr <- df5[-x,c(7, 10:219)]
+  te <- df5[x,c(7, 10:219)]
+  rf = randomForest(superfamily~.,data = tr)
+  p2 <- predict(rf, te)
+  cm2 <- confusionMatrix(p2, te$superfamily)
+  Accuracy <- c(cm2$overall['Accuracy'], F1=cm2$byClass[,'F1'])
+  res<-rbind(res,Accuracy)
+}
+res <- rbind(res,colMeans(res))
+res <- round(res,2)
+rownames(res) <- c(paste0("Fold_",1:length(kfolds)),'Average')
+colnames(res)[-1] <- gsub('.Class','',colnames(res)[-1])
+resRF_CPE <- res[11,]
+# -----------------
+res_final <- rbind(res1NN_CPE, resRF_CPE)
+colnames(res_final)<-colnames(res)
+```
 
 
 # MSA covid

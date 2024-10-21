@@ -76,7 +76,8 @@ AB <- ggplot(df_tot, aes(seq/2000,str/1000))+
        scale_color_viridis()+facet_wrap(vars(data))+
        theme_bw(base_line_size = .3)+
        xlab('Total energy (sequence)')+ylab('Total energy (structure)')+
-  mytheme()
+  mytheme()+
+  theme(strip.text.x = element_text(size = 20))
 # ************** distance 40 and 95
 df_dis40<-readRDS('manuscript/Revised/fig_data/dis_40_manhat.rds')
 df_dis95<-readRDS('manuscript/Revised/fig_data/dis_95_manhat.rds')
@@ -90,12 +91,56 @@ CD <- ggplot(df_dis, aes(dis_seq,dis_str))+
        scale_color_viridis()+facet_wrap(vars(data))+
        theme_bw(base_line_size = .3)+
        xlab('Distance (CPE)')+ylab('Distance (SPE)')+
-       mytheme()
+       mytheme()+
+  theme(strip.text.x = element_text(size = 20))
+# ----------------------------------------
+res <- readRDS('Data/rds/Length_Vs_Energy.rds')
+p1 <- ggplot(res, aes(length, disTot))+
+  #geom_point(alpha=.3)+
+  geom_pointdensity(adjust = .1,alpha=.3,show.legend = T
+                    )+
+  scale_color_viridis()+
+  geom_smooth(method = 'glm',col='red')+
+  stat_cor(method = "pearson", size=5,
+           color = "red", geom = "label") +
+  theme_bw(base_line_size = .3)+
+  mytheme()+
+  ylab('Distance Totoal Energy')+
+  #xlim(0,1000)+
+  ylim(-.5,.5)
+# -------------------------
+length_var <- res$length
+other_vars <- res[, 54:263]
 
+cor_values <- numeric(ncol(other_vars))
+
+for (i in 1:ncol(other_vars)) {
+  test <- cor.test(length_var, other_vars[, i],
+                   method = 'spearman')
+  cor_values[i] <- test$estimate
+}
+
+cor_results <- data.frame(Correlation = cor_values)
+
+p2 <- ggplot(cor_results, aes(x = Correlation)) +
+  geom_histogram(aes(fill = ..density..),
+                 binwidth = 0.03, color = "black", alpha = 0.7) +
+  scale_fill_viridis()+
+  labs(#title = "Histogram of Correlation Values",
+       x = "Correlation Coefficient",
+       y = "Count") +
+  mytheme()
+
+EF <- ggarrange(NULL,NULL,NULL,p1,NULL,p2, ncol = 3,nrow = 2,
+                heights = c(.05,1),widths = c(1,.05,.7),
+                labels = c('','','','C','','D'),
+                font.label = list(size = 30),
+                hjust = -.7,vjust = 0)
+# --------------------------
 p<-ggarrange(NULL,
-             AB, NULL,CD, ncol = 1,
-             heights = c(0.09, 1, 0.17, 1),
-             labels = c('',"A", "", "B"),
+             AB, NULL,CD, NULL, EF, ncol = 1,
+             heights = c(0.09, 1, 0.17, 1, .17, 1),
+             labels = c('',"A", "", "B", '',''),
              font.label = list(size = 30),    # color = "red"
              hjust = -.5,vjust = 0
              )
