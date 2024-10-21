@@ -357,7 +357,7 @@ p_tm <- ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
 ggarrange(p_SPE,p_CPE,p_tm,common.legend = T,ncol = 1, legend = 'bottom')
 ```
 
-## --- PLPRO
+## --- Fig 13 (PLPRO)
 
 ```{r}
 source('Functions.R')
@@ -406,10 +406,10 @@ df_SPE$subClass[df_SPE$pdbID%in%c2$V1] <- 'Nob'
 df_SPE$subClass[df_SPE$pdbID%in%c3$V1] <- 'Merb'
 df_SPE$subClass[df_SPE$pdbID%in%c4$V1] <- 'Emb'
 
-dff = df_CPE[,-c(1:5)]/as.numeric(df_CPE$length)
+dff <- df_CPE[,-c(1:5)]/as.numeric(df_CPE$length)
 dis_CPE <- as.matrix(proxy::dist(dff,
                                  method = manhat))
-dff = df_SPE[,-c(1:5)]/as.numeric(df_SPE$length)
+dff <- df_SPE[,-c(1:5)]/as.numeric(df_SPE$length)
 dis_SPE <- as.matrix(proxy::dist(dff,
                                  method = manhat))
 
@@ -419,11 +419,6 @@ ump_tm <- data.frame(pdbID=rownames(ump_tm),
                   UMAP1=ump_tm[,1],
                   UMAP2=ump_tm[,2])
 ump_tm <- left_join(df_CPE[,1:5], ump_tm, 'pdbID')
-
-tm_p = ggplot(ump_tm, aes(UMAP1, UMAP2, color= subClass)) +
-  geom_point(alpha=.7,size=3) +
-  ggtitle("TM-Vec") +
-  mytheme() 
 #----------------------CPE-----------
 ump_CPE <- umap(d = dis_CPE,n_neighbors = 13,input='dist',min_dist = 0.5)
 ump_CPE <- ump_CPE$layout
@@ -431,11 +426,6 @@ ump_CPE <- data.frame(pdbID=rownames(ump_CPE),
                   UMAP1=ump_CPE[,1],
                   UMAP2=ump_CPE[,2])
 ump_CPE <- left_join(df_CPE[,1:5], ump_CPE, 'pdbID')
-
-cpe_p = ggplot(ump_CPE, aes(UMAP1, UMAP2, color= subClass)) +
-  geom_point(alpha=.7,size=3) +
-  ggtitle("CPE") +
-  mytheme() 
 #----------------SPE--------------------
 ump_SPE <- umap(d = dis_SPE,n_neighbors = 13,input='dist',min_dist = 0.5)
 ump_SPE <- ump_SPE$layout
@@ -443,14 +433,18 @@ ump_SPE <- data.frame(pdbID=rownames(ump_SPE),
                   UMAP1=ump_SPE[,1],
                   UMAP2=ump_SPE[,2])
 ump_SPE <- left_join(df_CPE[,1:5], ump_SPE, 'pdbID')
+# ----------------
+ump_df <- data.frame(Method = rep(c('SPE', 'CPE', 'TM-Vec'), each=nrow(ump_CPE)),
+                     rbind(ump_SPE, ump_CPE, ump_tm))
 
-spe_p = ggplot(ump_SPE, aes(UMAP1, UMAP2, color= subClass)) +
+ump_df$Method <- factor(ump_df$Method,
+                        levels = c('SPE', 'CPE', 'TM-Vec'))
+
+p<-ggplot(ump_df, aes(UMAP1, UMAP2, color= subClass)) +
   geom_point(alpha=.7,size=3) +
-  ggtitle("SPE") +
-  mytheme() 
-
-ggarrange(spe_p,cpe_p,tm_p,ncol = 3,
-          common.legend = T,legend = 'bottom')
+  facet_grid( ~ Method)+
+  mytheme() +
+  theme(strip.text.x = element_text(size = 13, face = 'bold'))
 
 ```
 
@@ -532,7 +526,7 @@ save(t_SPE, t_CPE, dis_CPE, dis_SPE,
      file = 'Data/Globin/dis_CPE_SPE_time.RData')
 ```
 
-## --- Visual
+## --- Fig 8
 ```{r}
 source('Functions.R')
 # ------------------------
@@ -554,11 +548,7 @@ ump_tm <- ump_tm$layout
 ump_tm <- data.frame(pdbID=rownames(ump_tm), 
                   UMAP1=ump_tm[,1],
                   UMAP2=ump_tm[,2])
-ump_df <- left_join(df, ump_tm,'pdbID')
-gtm = ggplot(ump_df, aes(UMAP1, UMAP2, color= globin)) +
-  geom_point(alpha=.7) +
-  ggtitle("TM-Vec") +
-  mytheme() 
+ump_tm <- left_join(df, ump_tm,'pdbID')
 # ------------------cpe----------------
 ump_cpe <- umap(d = dis_CPE,
             n_neighbors = 13,
@@ -568,11 +558,7 @@ ump_cpe <- ump_cpe$layout
 ump_cpe <- data.frame(pdbID=rownames(ump_cpe), 
                   UMAP1=ump_cpe[,1],
                   UMAP2=ump_cpe[,2])
-ump_df <- left_join(df, ump_cpe,'pdbID')
-gcpe = ggplot(ump_df, aes(UMAP1, UMAP2, color= globin)) +
-  geom_point(alpha=.7) +
-  ggtitle("CPE") +
-  mytheme() 
+ump_cpe <- left_join(df, ump_cpe,'pdbID')
 # ------------------SPE----------------
 ump_spe <- umap(d = dis_SPE,
             n_neighbors = 13,
@@ -582,15 +568,20 @@ ump_spe <- ump_spe$layout
 ump_spe <- data.frame(pdbID=rownames(ump_spe), 
                   UMAP1=ump_spe[,1],
                   UMAP2=ump_spe[,2])
-ump_df <- left_join(df, ump_spe,'pdbID')
-gspe = ggplot(ump_df, aes(UMAP1, UMAP2, color= globin)) +
-  geom_point(alpha=.7) +
-  ggtitle("SPE") +
-  mytheme() 
-ggarrange(gspe,gcpe,gtm,ncol = 3, common.legend = T, legend = 'bottom')
+ump_spe <- left_join(df, ump_spe,'pdbID')
+# ---------------------
+ump_df <- data.frame(Method = rep(c('SPE', 'CPE', 'TM-Vec'), each=nrow(ump_cpe)),
+                     rbind(ump_spe, ump_cpe, ump_tm))
 
+ump_df$Method <- factor(ump_df$Method,
+                        levels = c('SPE', 'CPE', 'TM-Vec'))
 
-
+p<-ggplot(ump_df, aes(UMAP1, UMAP2, color= globin)) +
+  geom_point(alpha=.7,size=3) +
+  facet_grid( ~ Method)+
+  mytheme() +
+  theme(strip.text.x = element_text(size = 13, face = 'bold'))
+# ------------------------
 diag(dis_CPE) <- NA
 gl <- c('Alpha', 'Beta')
 # ---------- 1NN --------------------
@@ -1410,12 +1401,8 @@ df_str <- readRDS("Data/rds/E210.astral_40.rds")
 result <- mapply(function(x, y) manhat(x, y),
                  split(df_seq[,-c(1:8)]/df_seq$length, 1:nrow(df_seq)), 
                  split(df_str[,-c(1:8)]/df_str$length, 1:nrow(df_str)))
-res = data.frame(length = df_seq$length,dist = result)
-cor(res$length,res$dist,use = "complete.obs")
-res_60 = res[res$length < 60 , ]
-cor(res_60$length,res_60$dist, use = "complete.obs")
-res_100_200 = res[res$length < 100 & res$length > 60 ,]
-cor(res_100_200$length,res_100_200$dist, use = "complete.obs")
+
+res <- data.frame(length = df_seq$length,dist = result)
 
 result <- mapply(function(x, y) manhat(x,y),
                  split(df_seq[,-c(1:8)]/2, 1:nrow(df_seq)), 
@@ -1468,54 +1455,42 @@ entropyScore <- data.frame(scopeID=astral40$scopeID,
 res <- left_join(res, df_tot, 'scopeID')
 res <- left_join(res, entropyScore, 'scopeID')
 # ------------------------------------
-CPE_SPE_20 <- c()
-for (i in 1:nrow(df_seq)) {
-  print(i)
-  x <- as.numeric(df_seq[i,-c(1:8)])
-  m <- matrix(0, 20, 20)
-  m[lower.tri(m, diag = T)] <- x
-  m <- t(m)
-  m[lower.tri(m, diag = T)] <- x
-  cpe <- colSums(m)
-  # --------
-  x <- as.numeric(df_str[i,-c(1:8)])
-  m <- matrix(0, 20, 20)
-  m[lower.tri(m, diag = T)] <- x
-  m <- t(m)
-  m[lower.tri(m, diag = T)] <- x
-  spe <- colSums(m)
-  d <- c(cpe/2 , spe)
-  CPE_SPE_20 <- rbind(CPE_SPE_20, d)
-}
-CPE_SPE_20 <- data.frame(CPE_SPE_20)
-colnames(CPE_SPE_20) <- paste0(substr(colnames(df_seq[,-c(1:8)])[1:20], 2,2),
-                             rep(c('_CPE', '_SPE'), each=20))
-res <- data.frame(res, CPE_SPE_20)
-# ---------------------------------
-disDim <- df_seq[,-c(1:8)]/2 - df_str[,-c(1:8)]
+disDim <- df_seq[,-c(1:8)]/2000 - df_str[,-c(1:8)]/1000
 colnames(disDim) <- colnames(df_seq)[-c(1:8)]
 res <- data.frame(res, disDim)
 saveRDS(res, 'Data/rds/Length_Vs_Energy.rds')
 ```
 
-## --- Visual
+## --- Visual_210Cor
 
 ```{r}
 source('Functions.R')
-# ---------------
 res <- readRDS('Data/rds/Length_Vs_Energy.rds')
-# ------------ save 210 cor plot
-for (i in 1:210) {
+res <- res[,-c(1,3:13)]
+# -- save plots
+st <- seq(1,210,35)
+en <- seq(35,210,35)
+
+for (i in 1:6) {
   print(i)
-  df <- res[,c(2,i+53)]
-  aa <- colnames(df)[2]
-  colnames(df)[2] <- 'dis'
-  p <- ggplot(df, aes(length, dis))+
+  s <- st[i]+1
+  e <- en[i]+1
+  df <- res[,c(1, s:e)]
+  df2 <- df %>%
+    gather(key = "Int_i", value = "Value", -length)
+  p <- ggplot(df2, aes(length, Value))+
     geom_point()+
-    ylab('CPE - SPE')
-  file_name <- paste0('manuscript/Revised/sup_Fig/210cor/',
-                      aa, ".pdf")
-  ggsave(file_name, p, width = 9,height = 7)
+    facet_wrap( ~ Int_i, ncol = 5)+
+    ylab('Distance across CPE and SPE') +
+    theme_bw(base_line_size = .1)+
+    theme(strip.text.x = element_text(size = 13),
+          axis.title.x = element_text(size = 20),
+          axis.title.y = element_text(size = 20),
+          panel.grid.major = element_line(color = "black"),
+    panel.grid.minor = element_line(color = "black"))
+  ggsave(filename = paste0('manuscript/Revised/sup_Fig/210Cor', i, '.png'), 
+         plot = p, width = 9, height = 13, 
+         dpi = 600, device = "png")
 }
 ```
 
@@ -1565,28 +1540,33 @@ for (i in 1:nrow(df)) {
 write.csv(df, 'Data/csv/CPE_prfc_astral95.csv', row.names = F)
 ```
 
-## --- Visual 
+## --- Fig 14 
 ```{r}
 source('Functions.R')
 # ---------------
 cpe <- read.csv('Data/csv/CPE_prfc_astral95.csv')
 tm <- read.csv('Data/csv/TM_prfc_astral95.csv')
 cpe$method <- 'CPE'
-tm$method <- 'TM'
+tm$method <- 'TM-Vec'
 
 df <- rbind(cpe, tm)
 
 p<-ggplot(df, aes(n_protein, time/sumAA, col=method)) +
-  geom_point(size=3, alpha=1) +
-  geom_smooth(method = "lm", se = FALSE, alpha=1,linewidth = .3) +  
+  geom_point(size=5, alpha=1) +
+  geom_smooth(method = "lm", se = FALSE, alpha=1,linewidth = 1) +  
   stat_poly_eq(aes(label = paste(..eq.label..)),
-               formula = y ~ x, parse = TRUE, label.x.npc = "right",
-               label.y.npc = "top", size = 5)+
+               data = subset(df, method == "TM-Vec"),  
+               formula = y ~ x,label.y = 0.98, 
+               parse = TRUE,size = 7, color = "magenta") +  
+  stat_poly_eq(aes(label = paste(..eq.label..)),
+               data = subset(df, method == "CPE"),   
+               formula = y ~ x, label.y = 0.9,
+               parse = TRUE,size = 7, color = "orange") + 
   xlab('N Protein')+
   ylab('Time/AminoAcid (Sec/AA)') +
   scale_color_manual(values = c('magenta', 'orange'))+
   mytheme()+
-  theme(legend.position = c(.9,.15),
+  theme(legend.position = c(.85,.13),
         legend.text = element_text(face = 'bold'),
         axis.title.y = element_text(size = 13, vjust = 2),
         axis.title.x = element_text(size = 13, vjust = -.5))+
@@ -1802,6 +1782,7 @@ ntf <- 'd.17.4'
 fiveSF <- c(win,imu,ph,ub,ntf)
 #############
 df5 <- readRDS('Data/rds/E210_fiveSF.rds')
+df5 <- df5[!is.na(df5$FF),]
 # ----------------------------------------
 # ---------- 1NN ----------------
 # ---------------------------------------
@@ -1822,12 +1803,11 @@ Precision <- diag(cm)/colSums(cm)
 Recall <- diag(cm)/rowSums(cm)
 F1 <- (2 * Precision * Recall) /(Precision + Recall)
 
-res1NN_CPE<-data.frame(t(round(c(Accuracy,F1),2)))
+res1NN_SPE<-data.frame(t(round(c(Accuracy,F1),2)))
 # ----------------------------------------
 # ---------- 10 fold cross validation Random forest ----------------
 # ---------------------------------------
 set.seed(12345)
-df5[,-c(1:9)] <- df5[,-c(1:9)]/df5$length
 df5$superfamily <- factor(df5$superfamily)
 kfolds <- createFolds(df5$superfamily, k = 10)
 res<-c()
@@ -1846,10 +1826,10 @@ res <- rbind(res,colMeans(res))
 res <- round(res,2)
 rownames(res) <- c(paste0("Fold_",1:length(kfolds)),'Average')
 colnames(res)[-1] <- gsub('.Class','',colnames(res)[-1])
-resRF_CPE <- res[11,]
+resRF_SPE <- res[11,]
 # -----------------
-res_final <- rbind(res1NN_CPE, resRF_CPE)
-colnames(res_final)<-colnames(res)
+res_final <- rbind(res1NN_SPE, resRF_SPE)
+colnames(res_final) <- colnames(res)
 ```
 
 
@@ -1894,63 +1874,7 @@ t_msa<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
 # Corplot210
 
 ```{r}
-res <- readRDS('Data/rds/Length_Vs_Energy.rds')
-# ----------
-df <- res[,-c(1,3)]
-length_var <- df[, 1]
-other_vars <- df[, -1]
 
-cor_values <- numeric(ncol(other_vars))
-p_values <- numeric(ncol(other_vars))
-
-for (i in 1:ncol(other_vars)) {
-  test <- cor.test(length_var, other_vars[, i])
-  cor_values[i] <- test$estimate
-  p_values[i] <- test$p.value
-}
-
-# Create a data frame with the results
-cor_results <- data.frame(Variable = names(other_vars), Correlation = cor_values, P_Value = p_values)
-
-# Plotting the absolute correlation values
-library(ggplot2)
-
-# Plotting the p-values
-p1<-ggplot(zzz[-1,], aes(x = Estimate, y = reorder(Variable, Estimate))) +
-  geom_segment(aes(xend = 0, yend = Variable), color = "gray") +
-  geom_point(aes(#size = ifelse(P_Value<0.05, -log10(P_Value)/100,NA),
-                 color = ifelse(P_Value<0.05, P_Value,NA))) +  # Point size by p-value and color by p-value
-  scale_color_gradient(low = "red", high = "blue") +  # Gradient color to indicate p-values
-  labs(title = "Correlation of Length Variable with Other Variables",
-       x = "Correlation Coefficient", 
-       y = "Variable", 
-       size = "-log10(p-value)", 
-       color = "P-Value") +
-  theme_minimal()
-
-
-p2<-ggplot(zzz[-1,], aes(x = Estimate, fill = P_Value < 0.05)) +
-  geom_histogram(binwidth = 0.01, color = "black", alpha = 0.3) +
-  scale_fill_manual(values = c("red", "blue"),
-                    labels = c("p >= 0.05", "p < 0.05")) +
-  labs(title = "Histogram of Correlation Values",
-       x = "Correlation Coefficient",
-       y = "Count",
-       fill = "Significance (p-value)") +
-  theme_minimal()
-# ------------------------
-# -- save plots
-for (i in 1:210) {
-  print(i)
-  df <- res[,c(2,i+53)]#,i+33
-  aa <- colnames(df)[2]
-  colnames(df)[2] <- 'dis'
-  #df$dis <- df[,2]/2 - df[,3]
-  p<- ggplot(df, aes(length, dis))+
-    geom_point()
-  file_name <- paste0('~/Desktop/20AA/', aa, ".pdf")
-  ggsave(file_name, p, width = 9,height = 7)
-}
 ```
 
 # UmapDis

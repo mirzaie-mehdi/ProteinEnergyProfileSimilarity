@@ -61,7 +61,7 @@ library(googledrive)
 
 # Figures
 
-## Fig 1
+## Fig 2
 
 ```{r Fig 1}
 source('Functions.R')
@@ -148,7 +148,7 @@ p<-ggarrange(NULL,
 # save FIG1.pdf 10x9
 ```
 
-## Fig 2
+## Fig 3
 
 ```{r Fig 2}
 source('Functions.R')
@@ -189,7 +189,7 @@ p<- ggarrange(NULL,
 # save FIG2.pdf 10x9
 ```
 
-## Fig 3
+## Fig 4
 
 ```{r Fig 3}
 source('Functions.R')
@@ -254,7 +254,7 @@ p<- ggarrange(NULL,NULL,NULL,
 # save FIG3.pdf 10x10
 ```
 
-## Fig 4 A
+## Fig 5 A
 
 ```{r Fig 4 A}
 source('Functions.R')
@@ -362,10 +362,10 @@ A<-ggarrange(NULL,NULL,NULL,NULL,
   font.label = list(size = 30),
   hjust = .2,vjust = 0)
 #saveRDS(A,'manuscript/fig_data/Fig4A.rds')
-saveRDS(A,'manuscript/Revised/fig_data/Fig4A.rds')
+saveRDS(A,'manuscript/Revised/fig_data/Fig5A.rds')
 ```
 
-## Fig 4 B
+## Fig 5 B
 
 ```{r Fig 4 B}
 source('Functions.R')
@@ -471,10 +471,10 @@ B <- ggarrange(NULL,NULL,NULL,NULL,
                      '',"B", "", ""),
   font.label = list(size = 30),
   hjust = .2,vjust = 0)
-saveRDS(B,'manuscript/Revised/fig_data/Fig4B.rds')
+saveRDS(B,'manuscript/Revised/fig_data/Fig5B.rds')
 ```
 
-## Fig 4 C
+## Fig 5 C
 
 ```{r Fig 4 C}
 source('Functions.R')
@@ -578,23 +578,23 @@ C <- ggarrange(NULL,NULL,NULL,NULL,
                      '',"C", "", ""),
   font.label = list(size = 30),
   hjust = .2,vjust = 0)
-saveRDS(C,'manuscript/Revised/fig_data/Fig4C.rds')
+saveRDS(C,'manuscript/Revised/fig_data/Fig5C.rds')
 ```
 
-##Fig 4 ABC
+##Fig 5 ABC
 
 ```{r Fig 4 ABC}
 rm(list = ls())
-A <- readRDS('manuscript/Revised/fig_data/Fig4A.rds')
-B <- readRDS('manuscript/Revised/fig_data/Fig4B.rds')
-C <- readRDS('manuscript/Revised/fig_data/Fig4C.rds')
+A <- readRDS('manuscript/Revised/fig_data/Fig5A.rds')
+B <- readRDS('manuscript/Revised/fig_data/Fig5B.rds')
+C <- readRDS('manuscript/Revised/fig_data/Fig5C.rds')
 # ------------------------
 p<-ggarrange(NULL,A,B,C,ncol = 1,
           heights = c(0.07,1,1,1))
 # save FIG4.pdf 10x10
 ```
 
-## Fig 5 EF
+## Fig 6 EF
 
 ```{r Fig 5 EF}
 source('Functions.R')
@@ -671,7 +671,7 @@ mylegend <- get_legend(E+
                            theme(legend.position = 'bottom',
                                  legend.title = element_blank(),
                                  legend.text = element_text(size = 20)))
-saveRDS(mylegend,'manuscript/Revised/fig_data/Fig5mylegend.rds')
+saveRDS(mylegend,'manuscript/Revised/fig_data/Fig6mylegend.rds')
 # ******************************************
 # ****** structure95
 df <- readRDS("Data/rds/E210.astral_95.rds") 
@@ -761,10 +761,10 @@ EF<-ggarrange(
     labels = c("", "", "")
     )
 
-saveRDS(EF,'manuscript/Revised/fig_data/Fig5EF.rds')
+saveRDS(EF,'manuscript/Revised/fig_data/Fig6EF.rds')
 ```
 
-## Fig 5 CD
+## Fig 6 CD
 
 ```{r Fig 5 CD}
 source('Functions.R')
@@ -923,10 +923,10 @@ CD<-ggarrange(
     widths = c(1, 0.3, 1),
     labels = c("", "", "")
     )
-saveRDS(CD,'manuscript/Revised/fig_data/Fig5CD.rds')
+saveRDS(CD,'manuscript/Revised/fig_data/Fig6CD.rds')
 ```
 
-## Fig 5 AB
+## Fig 6 AB
 
 ```{r Fig 5 AB}
 source('Functions.R')
@@ -1088,17 +1088,17 @@ AB<-ggarrange(
     widths = c(1, 0.3, 1),
     labels = c("", "", "")
     )
-saveRDS(AB,'manuscript/Revised/fig_data/Fig5AB.rds')
+saveRDS(AB,'manuscript/Revised/fig_data/Fig6AB.rds')
 ```
 
-##Fig 5 All
+##Fig 6 All
 
 ```{r Fig 5 All}
 rm(list = ls())
-EF <- readRDS('manuscript/Revised/fig_data/Fig5EF.rds')
-CD <- readRDS('manuscript/Revised/fig_data/Fig5CD.rds')
-AB <- readRDS('manuscript/Revised/fig_data/Fig5AB.rds')
-mylegend <-readRDS('manuscript/fig_data/Fig5mylegend.rds')
+EF <- readRDS('manuscript/Revised/fig_data/Fig6EF.rds')
+CD <- readRDS('manuscript/Revised/fig_data/Fig6CD.rds')
+AB <- readRDS('manuscript/Revised/fig_data/Fig6AB.rds')
+mylegend <-readRDS('manuscript/fig_data/Fig6mylegend.rds')
 # ---------------------------------------------
 f5all <- ggarrange(NULL,AB,CD,EF,ncol = 1,
           heights = c(0.1,1,1,1))
@@ -1106,7 +1106,7 @@ p<-cowplot::plot_grid(f5all, mylegend, ncol = 1, rel_heights = c(1,.03))
 # save pdf 10x9
 ```
 
-## Fig 6 CT_Ho
+## Fig 7 CT_Ho
 
 ```{r Fig 6 CT_Ho}
 source('Functions.R')
@@ -1161,7 +1161,7 @@ p
 ```
 
 
-## Fig 7 ferritin
+## Fig 9 ferritin
 
 ```{r Fig 7 ferritin}
 source('Functions.R')
@@ -1197,7 +1197,7 @@ nnet <- neighborNet(dis)
 #write.nexus.networx(nnet,'Data/rds/E210.seq_ferritin.nxs')
 ```
 
-## Fig 8 covid
+## Fig 10 covid
 
 ```{r Fig 8 covid}
 source('Functions.R')
@@ -1216,8 +1216,6 @@ x <- df[,-c(1:4)]/df$length
 x  <- as.matrix(x) 
 dis <- x %>% proxy::dist(method = manhat)
 hc <- dis %>% hclust(method = "ward.D2")
-adjustedRandIndex(cutree(hc, 5), df$virus)
-#classError(cutree(hc, 4), df$virus)
 dend <- hc %>% as.dendrogram
 
 df <- df[with(df, order(df$virus)), ]
@@ -1271,8 +1269,6 @@ x <- df[,-c(1:4)]/df$length
 x  <- as.matrix(x) 
 dis <- x %>% proxy::dist(method = manhat)
 hc <- dis %>% hclust(method = "ward.D2")
-adjustedRandIndex(cutree(hc, 3), df$virus)
-classError(cutree(hc, 3), df$virus)
 dend <- hc %>% as.dendrogram
 
 df <- df[with(df, order(df$virus)), ]
@@ -1322,10 +1318,6 @@ diag(rms)<-0
 dis <- as.dist(rms)
 hc <- dis %>% hclust(method = "ward.D2")
 
-adjustedRandIndex(cutree(hc, 3), df$virus)
-classError(cutree(hc, 3), df$virus)
-
-
 df <- df[with(df, order(df$virus)), ]
 rn <- df$pdbID
 grp <- list(MERS_Cov  = rn[1:32],
@@ -1357,8 +1349,6 @@ tm_vec <- 1 - tm_vec
 dis <- as.dist(tm_vec)
 hc <- dis %>% hclust(method = "ward.D2")
 
-adjustedRandIndex(cutree(hc, 3), df$virus)
-classError(cutree(hc, 3), df$virus)
 dend <- hc %>% as.dendrogram
 
 df <- df[with(df, order(df$virus,decreasing = T)), ]
@@ -1423,8 +1413,6 @@ tm_max <- 1 - tm_max
 hc <- as.dist(tm_max)
 hc <- hc%>% hclust(method = "ward.D2")
 
-adjustedRandIndex(cutree(hc, 3), spike$virus)
-classError(cutree(hc, 3), spike$virus)
 dend <- hc %>% as.dendrogram
 
 df <- df[with(df, order(df$virus)), ]
@@ -1473,7 +1461,7 @@ tictoc::toc()
 alignment2 <- msaConvert(alignment, type="seqinr::alignment")
 d <- seqinr::dist.alignment(alignment2, "identity")
 upgma <- phangorn::upgma(d)
-adjustedRandIndex(cutree(upgma, 3), df$virus)
+
 dend <- upgma %>% as.dendrogram
 tree_data <- as.phylo(dend)
 
@@ -1599,7 +1587,7 @@ p190s
 p
 ```
 
-## Fig 9 Bacteriocin Tm-Vec
+## Fig 11 Bacteriocin Tm-Vec
 
 ```{r Fig 9 Bacteriocin Tm-Vec}
 source('Functions.R')
@@ -1680,7 +1668,7 @@ ggarrange(p2,NULL,p1,ncol = 3,nrow = 1,
 # save FIG8.pdf 15x8
 ```
 
-##Fig 10 DrugTarget
+##Fig 12 DrugTarget
 
 ```{r Fig 10 DrugTarget}
 source('Functions.R')
@@ -2058,8 +2046,27 @@ for (i in 3:6) {
   CE_TM_score <- c(CE_TM_score, classError(cutree(hc, i), df$virus)$errorRate)
 }
 # --------------------------------
-ARI_final <- rbind(ARI_CPE, ARI_SPE, ARI_RMSD, ARI_TM_Vec, ARI_TM_score,
-                   CE_CPE, CE_SPE, CE_RMSD, CE_TM_Vec, CE_TM_score)
+# ---------- MSA ClustalW
+# -------------------
+df <- read.csv("Data/covidPDB/spike_seq.csv")
+rownames(df) <- df$pdbID
+df <- df[with(df, order(df$virus,decreasing = T)), ]
+# --- Read fasta sequences-------------
+sequences <- readAAStringSet("Data/covidPDB/Spike.fasta")
+# ---- Multiple sequence alignment using ClustalW---------
+alignment <- msa(sequences, method = "ClustalW")
+alignment2 <- msaConvert(alignment, type="seqinr::alignment")
+d <- seqinr::dist.alignment(alignment2, "identity")
+upgma <- phangorn::upgma(d)
+ARI_MSA <- c()
+CE_MSA <- c()
+for (i in 3:6) {
+  ARI_MSA <- c(ARI_MSA, adjustedRandIndex(cutree(upgma, i), df$virus))
+  CE_MSA <- c(CE_MSA, classError(cutree(upgma, i), df$virus)$errorRate)
+}
+# ---------------------------------------------
+ARI_final <- rbind(ARI_CPE, ARI_SPE, ARI_RMSD, ARI_TM_Vec, ARI_TM_score,ARI_MSA,
+                   CE_CPE, CE_SPE, CE_RMSD, CE_TM_Vec, CE_TM_score, CE_MSA)
 colnames(ARI_final) <- paste0('cut_tree_', 3:6)
 ARI_final
 ```
