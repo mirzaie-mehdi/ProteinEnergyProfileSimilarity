@@ -63,17 +63,29 @@ library(googledrive)
 
 ## Fig 2
 
-```{r Fig 1}
+```{r Fig 2}
 source('Functions.R')
 # ----------------------------------------------------
 # ************** total energy 40 and 95
 df_tot <- readRDS('manuscript/Revised/fig_data/df_total_energy.rds')
 df_tot$data <- ifelse(df_tot$data=='Astral 40','ASTRAL40','ASTRAL95')
-AB <- ggplot(df_tot, aes(seq/2000,str/1000))+
+A <- ggplot(df_tot[df_tot$data=='ASTRAL40',], aes(seq/2000,str/1000))+
        geom_pointdensity(adjust = .1,alpha=.3,show.legend = T)+
        geom_smooth(method = 'glm',col='red')+
        stat_cor(method = "pearson", size=5, color = "red", geom = "label") +
-       scale_color_viridis()+facet_wrap(vars(data))+
+       scale_color_viridis()+
+  facet_wrap(vars(data))+
+       theme_bw(base_line_size = .3)+
+       xlab('Total energy (sequence)')+ylab('Total energy (structure)')+
+  mytheme()+
+  theme(strip.text.x = element_text(size = 20))
+
+B <- ggplot(df_tot[df_tot$data=='ASTRAL95',], aes(seq/2000,str/1000))+
+       geom_pointdensity(adjust = .1,alpha=.3,show.legend = T)+
+       geom_smooth(method = 'glm',col='red')+
+       stat_cor(method = "pearson", size=5, color = "red", geom = "label") +
+       scale_color_viridis()+
+  facet_wrap(vars(data))+
        theme_bw(base_line_size = .3)+
        xlab('Total energy (sequence)')+ylab('Total energy (structure)')+
   mytheme()+
@@ -84,7 +96,17 @@ df_dis95<-readRDS('manuscript/Revised/fig_data/dis_95_manhat.rds')
 df_dis <- rbind(df_dis40, df_dis95)
 df_dis$data <- ifelse(df_dis$data=='Astral 40','ASTRAL40','ASTRAL95')
 
-CD <- ggplot(df_dis, aes(dis_seq,dis_str))+
+C <- ggplot(df_dis[df_dis$data=='ASTRAL40',], aes(dis_seq,dis_str))+
+       geom_pointdensity(adjust = .1,alpha=.3,show.legend = T)+
+       geom_smooth(method = 'glm',col='red')+
+       stat_cor(method = "pearson", size=5, color = "red", geom = "label") +
+       scale_color_viridis()+facet_wrap(vars(data))+
+       theme_bw(base_line_size = .3)+
+       xlab('Distance (CPE)')+ylab('Distance (SPE)')+
+       mytheme()+
+  theme(strip.text.x = element_text(size = 20))
+
+D <- ggplot(df_dis[df_dis$data=='ASTRAL95',], aes(dis_seq,dis_str))+
        geom_pointdensity(adjust = .1,alpha=.3,show.legend = T)+
        geom_smooth(method = 'glm',col='red')+
        stat_cor(method = "pearson", size=5, color = "red", geom = "label") +
@@ -95,6 +117,7 @@ CD <- ggplot(df_dis, aes(dis_seq,dis_str))+
   theme(strip.text.x = element_text(size = 20))
 # ----------------------------------------
 res <- readRDS('Data/rds/Length_Vs_Energy.rds')
+res <- res[!is.na(res$length),]
 p1 <- ggplot(res, aes(length, disTot))+
   #geom_point(alpha=.3)+
   geom_pointdensity(adjust = .1,alpha=.3,show.legend = T
@@ -110,7 +133,7 @@ p1 <- ggplot(res, aes(length, disTot))+
   ylim(-.5,.5)
 # -------------------------
 length_var <- res$length
-other_vars <- res[, 54:263]
+other_vars <- res[, 14:223]
 
 cor_values <- numeric(ncol(other_vars))
 
@@ -131,16 +154,19 @@ p2 <- ggplot(cor_results, aes(x = Correlation)) +
        y = "Count") +
   mytheme()
 
-EF <- ggarrange(NULL,NULL,NULL,p1,NULL,p2, ncol = 3,nrow = 2,
-                heights = c(.05,1),widths = c(1,.05,.7),
-                labels = c('','','','C','','D'),
-                font.label = list(size = 30),
-                hjust = -.7,vjust = 0)
 # --------------------------
-p<-ggarrange(NULL,
-             AB, NULL,CD, NULL, EF, ncol = 1,
-             heights = c(0.09, 1, 0.17, 1, .17, 1),
-             labels = c('',"A", "", "B", '',''),
+p<-ggarrange(NULL,NULL,NULL,
+             A,NULL,B,
+             NULL,NULL,NULL,
+             C,NULL,D,
+             NULL,NULL,NULL,
+             p1,NULL,p2,
+             ncol = 3,nrow = 6,
+             heights = c(0.09, 1, 0.09, 1, 0.09, 1),
+             widths = c(1,.1,1),
+             labels = c('','','', 'A','','B', 
+                        '','','', 'C','','D',
+                        '','','', 'E','','F'),
              font.label = list(size = 30),    # color = "red"
              hjust = -.5,vjust = 0
              )
