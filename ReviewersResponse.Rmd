@@ -445,7 +445,7 @@ p<-ggplot(ump_df, aes(UMAP1, UMAP2, color= subClass)) +
   facet_grid( ~ Method)+
   mytheme() +
   theme(strip.text.x = element_text(size = 13, face = 'bold'))
-
+# save Fig13_new.pdf 10x5
 ```
 
 # Globin Alpha_Beta
@@ -581,6 +581,7 @@ p<-ggplot(ump_df, aes(UMAP1, UMAP2, color= globin)) +
   facet_grid( ~ Method)+
   mytheme() +
   theme(strip.text.x = element_text(size = 13, face = 'bold'))
+# save Fig8_new.pdf 10x5
 # ------------------------
 diag(dis_CPE) <- NA
 gl <- c('Alpha', 'Beta')
@@ -1466,7 +1467,8 @@ saveRDS(res, 'Data/rds/Length_Vs_Energy.rds')
 ```{r}
 source('Functions.R')
 res <- readRDS('Data/rds/Length_Vs_Energy.rds')
-res <- res[,-c(1,3:13)]
+res <- res[!is.na(res$length),-c(1,3:13)]
+res <- res[-4383,]
 # -- save plots
 st <- seq(1,210,35)
 en <- seq(35,210,35)
@@ -1480,8 +1482,12 @@ for (i in 1:6) {
     gather(key = "Int_i", value = "Value", -length)
   p <- ggplot(df2, aes(length, Value))+
     geom_point()+
+    stat_cor(aes(label = ..r.label..),
+             method = 'spearman', col='red', geom = "label",
+             label.x = 0, label.y = range(df2$Value,na.rm = T)[2]+.05)+
     facet_wrap( ~ Int_i, ncol = 5)+
-    ylab('Distance across CPE and SPE') +
+    ylab('CPE - SPE') +
+    ylim(range(df2$Value,na.rm = T)[1]-.1, range(df2$Value,na.rm = T)[2]+.1)+
     theme_bw(base_line_size = .1)+
     theme(strip.text.x = element_text(size = 13),
           axis.title.x = element_text(size = 20),
@@ -1554,14 +1560,16 @@ df <- rbind(cpe, tm)
 p<-ggplot(df, aes(n_protein, time/sumAA, col=method)) +
   geom_point(size=5, alpha=1) +
   geom_smooth(method = "lm", se = FALSE, alpha=1,linewidth = 1) +  
-  stat_poly_eq(aes(label = paste(..eq.label..)),
-               data = subset(df, method == "TM-Vec"),  
-               formula = y ~ x,label.y = 0.98, 
-               parse = TRUE,size = 7, color = "magenta") +  
-  stat_poly_eq(aes(label = paste(..eq.label..)),
-               data = subset(df, method == "CPE"),   
-               formula = y ~ x, label.y = 0.9,
-               parse = TRUE,size = 7, color = "orange") + 
+    annotation_custom(
+    grob = textGrob(bquote(paste("T/AA = 1.04 × 10"^"-8",
+                                 " N + 1.36 × 10"^"-5")),
+                    gp = gpar(col = "magenta", fontsize = 15)),
+    xmin = 10000, xmax = 10000, ymin = 0.0003, ymax = 0.0003)+
+  annotation_custom(
+    grob = textGrob(bquote(paste("T/AA = 2.33 × 10"^"-8",
+                                 " N + 4.71 × 10"^"-4")),
+                    gp = gpar(col = "orange", fontsize = 15)),
+    xmin = 10000, xmax = 10000, ymin = 0.001, ymax = 0.001)+
   xlab('N Protein')+
   ylab('Time/AminoAcid (Sec/AA)') +
   scale_color_manual(values = c('magenta', 'orange'))+
@@ -1869,74 +1877,5 @@ t_msa<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
                        type =  c('black',"blue","green","red" ))+
   ggtitle('MSA')
 ```
-
-
-# Corplot210
-
-```{r}
-
-```
-
-# UmapDis
-
-```{r}
-df1 <- readRDS("Data/rds/E210.seq_astral_40.rds")
-df1 <- df1[!is.na(df1$FF),]
-df1[,-c(1:8)] <- df1[,-c(1:8)]/2
-df3 <- readRDS("Data/rds/E210.astral_40.rds")
-df3 <- df3[!is.na(df3$FF),]
-
-df1$type <- 'CPE'
-df3$type <- 'SPE'
-
-m <- match(df3$scopeID, df1$scopeID)
-df3 <- df3[!is.na(m),]
-df <- rbind(df1[df1$scopeID%in%df3$scopeID,], df3)
-
-dis <- as.matrix(proxy::dist(df[,-c(1:8, 219)], method = manhat))
-
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df <- data.frame(type=df$type,
-                     length=df$length,
-                     scopeID=df$scopeID,
-                     UMAP1 = ump$layout[, 1],
-                     UMAP2 = ump$layout[, 2])
-
-ggplot(ump_df,aes(UMAP1, UMAP2, color= type)) +
-  geom_point(alpha=.5, size=.7) + 
-  mytheme()+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 5)))
-
-
-scopeID <- unique(ump_df$scopeID)
-df2 <- data.frame(scopeID=scopeID,length=NA,disUMAP=NA)
-for (i in 1:length(scopeID)) {
-  print(i)
-  x <- ump_df[ump_df$scopeID%in%scopeID[i],]
-  d <- dist(x[,c(4:5)])
-  df2$disUMAP[i] <- as.numeric(d)
-  df2$length[i] <- x$length[x$type=='CPE']
-}
-bins <- c(0,seq(150, 600, by = 100), 1700)
-df2$length_bins <- cut(df2$length, breaks = bins,
-                       include.lowest = TRUE)
-
-ggplot(df2, aes(length_bins, disUMAP))+
-  geom_boxplot()
-
-ggplot(df2, aes(length, disUMAP))+
-  geom_point()+
-  ylim(0,7)+
-  xlim(0,600)+
-  stat_cor(method = "pearson", size=5,
-           color = "red", geom = "label")
-
-```
-
 
 
