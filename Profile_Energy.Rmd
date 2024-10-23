@@ -117,22 +117,13 @@ for (NP in 1:nrow(E210.seq_astral_95)) {
     pdbX <- new_pdb$atom
     E210.astral_95$length[NP] = length(unique(pdbX$resno))
     Net_Frame <- NetworkFrame(PDB = new_pdb)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    energy210 <- Energy_SPE210(Net_Frame,energy_dell_dunbrack)
     E210.astral_95[NP,-c(1:8)] <- energy210
 # ----------- sequence enregy based on astral --------
     seq = astral$seq[NP]
     seq = gsub("X", "", seq)
     E210.seq_astral_95$length[NP] = nchar(seq)
-    seq = unlist(strsplit(seq,""))
-    freq = c()
-    for (j in 1:20){
-        freq[j] <-  length(grep(tolower(letters_list[j]), tolower(seq)))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+    aa210_p <- Energy_CPE210(seq)
     E210.seq_astral_95[NP,9:218] <- aa210_p
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
@@ -186,22 +177,13 @@ for (NP in 1:nrow(E210.seq_astral_40)) {
     pdbX <- new_pdb$atom
     E210.astral_40$length[NP] = length(unique(pdbX$resno))
     Net_Frame <- NetworkFrame(PDB = new_pdb)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    energy210 <- Energy_SPE210(Net_Frame,energy_dell_dunbrack)
     E210.astral_40[NP,-c(1:8)] <- energy210
     # ----------- sequence enregy based on astral --------
     seq = astral$seq[NP]
     seq = gsub("X", "", seq)
     E210.seq_astral_40$length[NP] = nchar(seq)
-    seq = unlist(strsplit(seq,""))
-    freq = c()
-    for (j in 1:20){
-        freq[j] <-  length(grep(tolower(letters_list[j]), tolower(seq)))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+    aa210_p <- Energy_CPE210(seq)
     E210.seq_astral_40[NP,9:218] <- aa210_p
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
@@ -230,16 +212,8 @@ tictoc::tic()
 for(NP in 1:nrow(E210.seq_CT_Ho)){
   print(NP)
   tryCatch({
-      seq <- unlist(strsplit(toupper(E210.seq_CT_Ho$seq[NP]),''))
-      freq = c()
-      for (j in 1:20){
-          freq[j] <- length(grep(letters_list[j],seq))
-      }
-      freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-      en_fr <- aaenergy * freq_matrix
-      en_fr <- en_fr/length(seq)
-      pair_es <- diag(freq) %*% as.matrix(en_fr)
-      aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+      seq <- E210.seq_CT_Ho$seq[NP]
+      aa210_p <- Energy_CPE210(seq)
       E210.seq_CT_Ho[NP,10:219] <- aa210_p
       }, error = function(e) {
        cat("Error downloading file:", e$message, "\n")
@@ -272,16 +246,8 @@ colnames(E210.seq_df5)[-c(1:9)] <- pair_inter
 tictoc::tic()
 for (NP in 1:Nprotein) {
   print(NP)
-  seq <- unlist(strsplit(E210.seq_df5$seq[NP],split = ''))
-  freq = c()
-  for (j in 1:20){
-      freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
-  }
-  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-  en_fr <- aaenergy * freq_matrix
-  en_fr <- en_fr/length(seq)
-  pair_es <- diag(freq) %*% as.matrix(en_fr)
-  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+  seq <- E210.seq_df5$seq[NP]
+  aa210_p <- Energy_CPE210(seq)
   E210.seq_df5[NP,10:219] <- aa210_p
 }
 df2 <- E210.seq_df5
@@ -291,7 +257,7 @@ tictoc::toc()
 saveRDS(E210.seq_df5,file = "Data/rds/E210.seq_fiveSF.rds")
 ```
 
-# Ferritin-like Superfamily CPE
+# Ferritin-like Superfamily SPE
 
 This segment computes the SPE for proteins belonging to the Ferritin-like superfamily. The PDB IDs of these proteins are located in the `Data\csv\Ferritin_Like.csv` file.
 
@@ -331,7 +297,7 @@ for (NP in 1:Nprotein) {
     pdbX <- pdbX[pdbX$elety == "CA",]
     E210_ferritin$length[NP] <- nrow(pdbX)
     Net_Frame <- NetworkFrame(PDB = new_pdb)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    energy210 <- Energy_SPE210(Net_Frame,energy_dell_dunbrack)
     E210_ferritin[NP,4:213] <- energy210
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
@@ -373,7 +339,7 @@ for (NP in 1:Nprotein) {
     # -------------------
     new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
     Net_Frame <- NetworkFrame(PDB = new_pdb)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    energy210 <- Energy_SPE210(Net_Frame,energy_dell_dunbrack)
     E210_spike[NP, -c(1:4)] <- energy210
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
@@ -389,16 +355,8 @@ colnames(E210.seq_spike)[-c(1:4)] <- pair_inter
 tictoc::tic()
 for (NP in 1:Nprotein) {
   print(NP)
-  seq <- unlist(strsplit(E210.seq_spike$seq[NP],''))
-  freq <- c()
-  for (j in 1:20){
-    freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
-    }
-  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-  en_fr <- aaenergy * freq_matrix
-  en_fr <- en_fr/length(seq)
-  pair_es <- diag(freq) %*% as.matrix(en_fr)
-  aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
+  seq <- E210.seq_spike$seq[NP]
+  aa210_p <- Energy_CPE210(seq)
   E210.seq_spike[NP,5:214] <- aa210_p
 }
 dis <- E210.seq_spike[,-c(1:4)] %>% proxy::dist(method = manhat)
@@ -447,16 +405,8 @@ colnames(tm_unique)[-c(1:6)] <- pair_inter
 tictoc::tic()
 for (i in 1:nprotein){
   print(i)
-  seq = unlist(strsplit(tolower(tm_unique$Seq[i]), ""))
-  freq = c()
-  for (j in 1:20){
-  freq[j] <-  length(grep(tolower(letters_list[j]),seq))
-  }
-  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-  en_fr <- aaenergy * freq_matrix
-  en_fr <- en_fr/length(seq)
-  pair_es <- diag(freq) %*% as.matrix(en_fr)
-  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+  seq <- tm_unique$Seq[i]
+  aa210_p <- Energy_CPE210(seq)
   tm_unique[i,7:216] <- aa210_p
 }
 df <- tm_unique[,-c(1:6)]
@@ -496,17 +446,9 @@ E210.seq_dti <- data.frame(df_seq,matrix(NA,nrow(df_seq),210))
 colnames(E210.seq_dti)[-c(1:5)] <- pair_inter
 for (NP in 1:nrow(df_seq)) {
   if(NP%%10==0)print(NP)
-  seq = unlist(strsplit(unlist(E210.seq_dti$seq_aa[NP]),''))
-    freq = c()
-    for (j in 1:20){
-        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-    E210.seq_dti[NP,-c(1:5)] <- aa210_p
+  seq <- E210.seq_dti$seq_aa[NP]
+  aa210_p <- Energy_CPE210(seq)
+  E210.seq_dti[NP,-c(1:5)] <- aa210_p
 }
 #saveRDS(E210.seq_dti,'Data/rds/E210.seq_dti.rds')
 ```
