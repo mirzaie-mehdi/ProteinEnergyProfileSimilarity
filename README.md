@@ -19,4 +19,4 @@ This repository contains all the necessary code and resource data to calculate t
 ## Example:
 
 
-<img src="https://github.com/user-attachments/assets/6229e59f-8869-43f3-b864-94e6ddb8f740" width="500" height="400">
+<img src="https://github.com/user-attachments/assets/6229e59f-8869-43f3-b864-94e6ddb8f740" width="400" height="300">
