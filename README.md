@@ -17,6 +17,6 @@ This repository contains all the necessary code and resource data to calculate t
 5. The file `Results_Figures_Tables.Rmd` contains all chunks used to generate results, figures and tables for every dataset referenced in the manuscript. All necessary files for running the `Results_Figures_Tables.Rmd` file have already been created and saved using the `Profile_Energy.Rmd` file.
 
       ### Example:
-     The `Example.R` file is a basic script designed to compute SPE and CPE for four alpha globin proteins from Human, Rat, Cow, and Dog. It also shows the correlation between Total Energy calculated using SPE and CPE as follows.
+     The `Example.R` file is a basic script designed to compute SPE and CPE for 4 alpha globin proteins from 4 different species. It also shows the correlation between Total Energy calculated using SPE and CPE as follows.
 
 <img src="https://github.com/user-attachments/assets/6229e59f-8869-43f3-b864-94e6ddb8f740" width="400" height="300">
