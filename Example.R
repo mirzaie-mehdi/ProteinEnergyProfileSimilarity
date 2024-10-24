@@ -1,13 +1,16 @@
+# ------------------------------------------------------------
+# ---------- load requirement function -------------
 source('Functions.R')
-pdb_chain <- c('2dn1A','2dhbA','3gouA','3gdjA','3dhtA','2raoA','1fsxA')
-sp <- c('Human', 'Horse','Dog','Camel','Rat','Rabbit','Cow')
+# ------------------------------------------------------------
+library(bio3d)
+library(geometry)
+exData <- read.csv('Data/example.csv')
+Nprotein <- nrow(exData)
 
-Nprotein <- length(sp)
-
-df_SPE <- data.frame(pdbID=pdb_chain, species= sp,
+df_SPE <- data.frame(exData,
                      matrix(NA, nrow = Nprotein, ncol = 210))
 
-colnames(df_SPE)[-c(1,2)] <- pair_inter
+colnames(df_SPE)[-c(1:2)] <- pair_inter
 
 df_CPE <- df_SPE
 
@@ -44,3 +47,26 @@ for (i in 1:Nprotein){
   aa210_p <- Energy_CPE210(seq)
   df_CPE[i,-c(1:2)] <- aa210_p
 }
+
+# -------------------------------------------------
+# ------- visual total energy ---------
+library(ggplot2)
+library(ggpubr)
+
+df <- data.frame(exData,
+                 SPE=rowSums(df_SPE[,-c(1:3)]),
+                 CPE=rowSums(df_CPE[,-c(1:3)])/2)
+
+ggplot(df, aes(SPE, CPE, col=species))+
+  geom_point(size=3, show.legend = F)+
+  geom_text(aes(label = species), size=4, 
+            hjust=ifelse(df$species=='Rat', .5, -.2),
+            vjust=ifelse(df$species=='Rat', 1.5, .2), show.legend = F)+
+  geom_smooth(method = 'glm', col='skyblue3', linewidth = .7, se = F)+
+  stat_cor(method = "pearson", size=5,
+           r.accuracy = 1e-2,
+           color = "red", geom = "label")+
+  theme_bw(base_line_size = .3)+
+  ggtitle('Total Energy nased on SPE and CPE')+
+  xlab('Structural Profile of Energy (SPE)')+
+  ylab('Compositional Profile of Energies (CPE)')
