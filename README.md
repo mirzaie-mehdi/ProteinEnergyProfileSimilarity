@@ -17,3 +17,6 @@ This repository contains all the necessary code and resource data to calculate t
 5. The file `Results_Figures_Tables.Rmd` contains all chunks used to generate results, figures and tables for every dataset referenced in the manuscript. All necessary files for running the `Results_Figures_Tables.Rmd` file have already been created and saved using the `Profile_Energy.Rmd` file.
 
 ## Example:
+
+
+<img src="https://github.com/user-attachments/assets/6229e59f-8869-43f3-b864-94e6ddb8f740" width="500" height="400">
