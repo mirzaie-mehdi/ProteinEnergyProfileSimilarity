@@ -15,3 +15,5 @@ This repository contains all the necessary code and resource data to calculate t
    To obtain the TM-Vec and TM-score results on the Covid dataset, you need to run the scripts `tm_vec_spike.py` and `tm_score_spike.py` located in the `Data/covidPDB/` folder. The results of these scripts are already saved in this folder as `disTM_vec_spike.csv` and `disTM_score_spike.csv`. The RMSD results for this dataset can be obtained from the script `Functions/RMSD_spike.R`. To run this script, you need to have the `muscle3.8.1551` software installed. The results of `Functions/RMSD_spike.R` script has been already saved at `Data/covidPDB/RMSD_spike.rds`.
 
 5. The file `Results_Figures_Tables.Rmd` contains all chunks used to generate results, figures and tables for every dataset referenced in the manuscript. All necessary files for running the `Results_Figures_Tables.Rmd` file have already been created and saved using the `Profile_Energy.Rmd` file.
+
+## Example:
