@@ -229,7 +229,7 @@ ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
             input="dist")
-ump_df_str40 <- data.frame(data='Astral 40',type='Structure',
+ump_df_str40 <- data.frame(data='Astral40',type='SPE',
                            class=df[,1],
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
@@ -244,7 +244,7 @@ ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
             input="dist")
-ump_df_seq40 <- data.frame(data='Astral 40',type='Sequence',
+ump_df_seq40 <- data.frame(data='Astral40',type='CPE',
                            class=df[,1],
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
@@ -259,7 +259,7 @@ ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
             input="dist")
-ump_df_str95 <- data.frame(data='Astral 95',type='Structure',
+ump_df_str95 <- data.frame(data='Astral95',type='SPE',
                            class=df[,1],
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
@@ -276,17 +276,14 @@ ump <- umap(d = dis,
             n_neighbors = 30,
             min_dist = 0.1,
             input="dist")
-ump_df_seq95 <- data.frame(data='Astral 95',type='Sequence',
+ump_df_seq95 <- data.frame(data='Astral95',type='CPE',
                            class=df[,1],
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
 ump_df_seq95 <- ump_df_seq95[ump_df_seq95$UMAP1> -1 & ump_df_seq95$UMAP1< 5.5,] #(-5,1.5)
 ump_df_seq95 <- ump_df_seq95[ump_df_seq95$UMAP2> -4 & ump_df_seq95$UMAP2< 4,]#(-2.5,3)
 ump_df_seq95$class <- ifelse(ump_df_seq95$class=='a','All-alpha','All-beta')
-# **** rbind
-ump_df <- rbind(ump_df_str40,ump_df_seq40,
-                ump_df_str95,ump_df_seq95)
-
+# ----------------------------
 #save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95,
 #     file = 'manuscript/fig_data/UMPs.RData')
 save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95,

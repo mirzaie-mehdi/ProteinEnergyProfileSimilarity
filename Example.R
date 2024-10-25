@@ -67,6 +67,6 @@ ggplot(df, aes(SPE, CPE, col=species))+
            r.accuracy = 1e-2,
            color = "red", geom = "label")+
   theme_bw(base_line_size = .3)+
-  ggtitle('Total Energy nased on SPE and CPE')+
+  ggtitle('Total Energy based on SPE and CPE')+
   xlab('Structural Profile of Energy (SPE)')+
   ylab('Compositional Profile of Energies (CPE)')
