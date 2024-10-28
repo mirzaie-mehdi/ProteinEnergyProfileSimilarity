@@ -60,7 +60,6 @@ library(googledrive)
 ```
 
 # Figures
-
 ## Fig 2
 
 ```{r Fig 2}
@@ -157,16 +156,16 @@ p2 <- ggplot(cor_results, aes(x = Correlation)) +
 
 # --------------------------
 p<-ggarrange(NULL,NULL,NULL,NULL,NULL,
-             A,NULL,C,NULL,p1,
+             A,NULL,B,NULL,p1,
              NULL,NULL,NULL,NULL,NULL,
-             B,NULL,D,NULL,p2,
+             C,NULL,D,NULL,p2,
              ncol = 5, nrow = 4,
              heights = c(.09, 1, .09, 1),
              widths = c(1, .09, 1, .09, 1),
              labels = c('', '', '', '', '',
-                        'A', '', 'C', '', 'E',
+                        'A', '', 'B', '', 'C',
                         '', '', '', '', '',
-                        'B', '', 'D', '', 'F'),
+                        'D', '', 'E', '', 'F'),
              font.label = list(size = 30),    # color = "red"
              hjust = -.5, vjust = 0
              )
