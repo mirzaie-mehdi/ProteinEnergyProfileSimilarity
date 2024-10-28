@@ -513,7 +513,8 @@ mytheme <- function(){
   mythem <- theme_bw(base_line_size = .2)+
     theme(axis.text.x = element_text(size=13, face = "bold"),
           axis.text.y = element_text(size=13, face = "bold"),
-          axis.title = element_text(size = 20, face = "bold"),
+          axis.title.x = element_text(size = 20, face = "bold"),
+          axis.title.y = element_text(size = 20, face = "bold"),
           legend.text = element_text(size = 15, colour = "black"),
           legend.title = element_blank(),
           title = element_text(size = 15)
