@@ -128,7 +128,8 @@ p1 <- ggplot(res, aes(length, disTot))+
            color = "red", geom = "label") +
   theme_bw(base_line_size = .3)+
   mytheme()+
-  ylab('Distance Totoal Energy')+
+  ylab('Distance of Totoal Energy')+
+  xlab('Length')+
   #xlim(0,1000)+
   ylim(-.5,.5)
 # -------------------------
@@ -155,28 +156,27 @@ p2 <- ggplot(cor_results, aes(x = Correlation)) +
   mytheme()
 
 # --------------------------
-p<-ggarrange(NULL,NULL,NULL,
-             A,NULL,B,
-             NULL,NULL,NULL,
-             C,NULL,D,
-             NULL,NULL,NULL,
-             p1,NULL,p2,
-             ncol = 3,nrow = 6,
-             heights = c(0.09, 1, 0.09, 1, 0.09, 1),
-             widths = c(1,.1,1),
-             labels = c('','','', 'A','','B', 
-                        '','','', 'C','','D',
-                        '','','', 'E','','F'),
+p<-ggarrange(NULL,NULL,NULL,NULL,NULL,
+             A,NULL,C,NULL,p1,
+             NULL,NULL,NULL,NULL,NULL,
+             B,NULL,D,NULL,p2,
+             ncol = 5, nrow = 4,
+             heights = c(.09, 1, .09, 1),
+             widths = c(1, .09, 1, .09, 1),
+             labels = c('', '', '', '', '',
+                        'A', '', 'C', '', 'E',
+                        '', '', '', '', '',
+                        'B', '', 'D', '', 'F'),
              font.label = list(size = 30),    # color = "red"
-             hjust = -.5,vjust = 0
+             hjust = -.5, vjust = 0
              )
 
-# save FIG1.pdf 10x9
+# save FIG2.pdf 10x9
 ```
 
 ## Fig 3
 
-```{r Fig 2}
+```{r Fig 3}
 source('Functions.R')
 # ----------------------------------------------------
 df_tot <- readRDS('manuscript/Revised/fig_data/df_total_energy.rds')
@@ -193,7 +193,8 @@ AB <- ggplot(df_tot,aes(class,str/length,fill=class))+
   xlab('')+ylab('Total energy (structure)')+
   coord_cartesian(ylim = c(-15, -4))+
   mytheme()+theme(legend.title = element_blank(),
-               axis.text.x = element_blank())
+               axis.text.x = element_blank(),
+               strip.text = element_text(size = 23))
 
 CD <- ggplot(df_tot,aes(class,seq/(2*length),fill=class))+
   geom_boxplot(outlier.alpha = .1)+
@@ -201,88 +202,91 @@ CD <- ggplot(df_tot,aes(class,seq/(2*length),fill=class))+
   xlab('')+ylab('Total energy (sequence)')+
   coord_cartesian(ylim = c(-15, -6))+
   mytheme()+theme(legend.title = element_blank(),
-               axis.text.x = element_blank())
+               axis.text.x = element_blank(),
+               strip.text = element_text(size = 23))
 
 
-p<- ggarrange(NULL,
+p <- ggarrange(NULL,
               AB, NULL,CD, ncol = 1,
-              heights = c(0.09, 1, 0.17, 1),
+              heights = c(0.09, 1, 0.09, 1),
               labels = c('',"A", "", "B"),
               common.legend = T, legend = 'bottom',
               font.label = list(size = 30),    # color = "red"
               hjust = -.5,vjust = 0
               )
-# save FIG2.pdf 10x9
+# save FIG3.pdf 10x9
 ```
 
 ## Fig 4
 
-```{r Fig 3}
+```{r Fig 4}
 source('Functions.R')
 # ----------------------------------------------------
 load('manuscript/Revised/fig_data/UMPs.RData')
-ump_df_str40$type <- ifelse(ump_df_str40$type=='Structure','SPE','CPE')
-ump_df_seq40$type <- ifelse(ump_df_seq40$type=='Structure','SPE','CPE')
-ump_df_str95$type <- ifelse(ump_df_str95$type=='Structure','SPE','CPE')
-ump_df_seq95$type <- ifelse(ump_df_seq95$type=='Structure','SPE','CPE')
+ump_df_seq40$class <- gsub('-',' ', ump_df_seq40$class)
+ump_df_str40$class <- gsub('-',' ', ump_df_str40$class)
+ump_df_seq95$class <- gsub('-',' ', ump_df_seq95$class)
+ump_df_str95$class <- gsub('-',' ', ump_df_str95$class)
 
-ump_df_str40$data <- ump_df_seq40$data <- 'ASTRAL40'
-
-p1<-ggplot(ump_df_str40,aes(UMAP1, UMAP2, color= class)) +
+p1<-ggplot(ump_df_seq40,aes(UMAP1, UMAP2, color= class)) +
   geom_point(alpha=.7,size=.5) + 
-  #facet_grid(data ~ type)+xlab('')+ylab('')+
+  facet_grid(~type)+xlab('')+
   mytheme()+scale_color_manual(values = c('green','magenta'))+
   theme(legend.title = element_blank(),
-        legend.text = element_text(size = 18))+
+        legend.text = element_text(size = 18),
+        strip.text = element_text(size = 23))+
   guides(color = guide_legend(override.aes = list(size = 5)))
 
-p2<-ggplot(ump_df_seq40,aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7,size=.5) + 
-  facet_grid( ~ type)+xlab('')+
-  #facet_grid(data ~ type)+xlab('')+ylab('')+
-  mytheme()+scale_color_manual(values = c('green','magenta'))+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 5)))
-
-p3<-ggplot(ump_df_str95,aes(UMAP1, UMAP2, color= class)) +
+p2<-ggplot(ump_df_str40,aes(UMAP1, UMAP2, color= class)) +
   geom_point(alpha=.7,size=.5) +
+  facet_grid(data ~ type)+xlab('')+ylab('')+
+  mytheme()+scale_color_manual(values = c('green','magenta'))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 18),
+        strip.text = element_text(size = 23))+
+  guides(color = guide_legend(override.aes = list(size = 5)))
+
+p3<-ggplot(ump_df_seq95,aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7,size=.5) +
+  #facet_grid(cols = vars(type))+
+  mytheme()+scale_color_manual(values = c('green','magenta'))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 18),
+        strip.text = element_text(size = 23))+
+  guides(color = guide_legend(override.aes = list(size = 5)))
+
+
+p4<-ggplot(ump_df_str95,aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7,size=.5) + 
   facet_grid(rows = vars(data))+ylab('')+
   mytheme()+scale_color_manual(values = c('green','magenta'))+
   theme(legend.title = element_blank(),
-        legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 5)))
-
-
-p4<-ggplot(ump_df_seq95,aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7,size=.5) + 
-  #facet_grid(rows = vars(data))+ylab('')+
-  mytheme()+scale_color_manual(values = c('green','magenta'))+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(size = 18))+
+        legend.text = element_text(size = 18),
+        strip.text = element_text(size = 23))+
   guides(color = guide_legend(override.aes = list(size = 5)))
 
 # ********
-p<- ggarrange(NULL,NULL,NULL,
-          p2,NULL,p1,
+p <- ggarrange(NULL,NULL,NULL,
+          p1,NULL,p2,
           NULL,NULL,NULL,
-          p4,NULL,p3,ncol = 3,nrow = 4,
+          p3,NULL,p4,ncol = 3,nrow = 4,
           common.legend = T,
           labels = c('','','',
-                     "A", "", "B",
+                     "", "", "",
                      '','','',
-                     'C','','D'),
+                     '','',''),
           font.label = list(size = 30),
-          widths = c(1, 0.12, 1),
-          heights = c(.1, 1, 0.12, 1),
+          widths = c(1, 0.01, 1),
+          heights = c(0, 1, 0.1, 1),
           hjust = -.5,vjust = 0,legend = 'bottom')
 
-# save FIG3.pdf 10x10
+
+# save FIG4.pdf 10x10
 ```
 
 ## Fig 5 A
 
-```{r Fig 4 A}
+```{r Fig 5 A}
 source('Functions.R')
 # ----------------------------------------------------
 # ******** str40
@@ -393,7 +397,7 @@ saveRDS(A,'manuscript/Revised/fig_data/Fig5A.rds')
 
 ## Fig 5 B
 
-```{r Fig 4 B}
+```{r Fig 5 B}
 source('Functions.R')
 # ----------------------------------------------------
 # ******** str40
@@ -502,7 +506,7 @@ saveRDS(B,'manuscript/Revised/fig_data/Fig5B.rds')
 
 ## Fig 5 C
 
-```{r Fig 4 C}
+```{r Fig 5 C}
 source('Functions.R')
 # ----------------------------------------------------
 # ******** str40
@@ -609,7 +613,7 @@ saveRDS(C,'manuscript/Revised/fig_data/Fig5C.rds')
 
 ##Fig 5 ABC
 
-```{r Fig 4 ABC}
+```{r Fig 5 ABC}
 rm(list = ls())
 A <- readRDS('manuscript/Revised/fig_data/Fig5A.rds')
 B <- readRDS('manuscript/Revised/fig_data/Fig5B.rds')
@@ -617,12 +621,12 @@ C <- readRDS('manuscript/Revised/fig_data/Fig5C.rds')
 # ------------------------
 p<-ggarrange(NULL,A,B,C,ncol = 1,
           heights = c(0.07,1,1,1))
-# save FIG4.pdf 10x10
+# save FIG5.pdf 10x10
 ```
 
 ## Fig 6 EF
 
-```{r Fig 5 EF}
+```{r Fig 6 EF}
 source('Functions.R')
 # ----------------------------------------------------
 # ******** a.29.3
@@ -685,9 +689,10 @@ E <- ggboxplot(df_family, x='gr',y='distance',
                size=2, color="red", fill="red")+xlab('')+
   mytheme()+
   theme(legend.position = 'none',
-        axis.text.x = element_blank())+
+        axis.text.x = element_blank(),
+    strip.text = element_text(size = 15))+
   scale_fill_viridis(discrete = TRUE, alpha=0.6)+
-  stat_compare_means(method = 't.test',size=3,label.y = 18,
+  stat_compare_means(method = 't.test',size=5,label.y = 18,
                      label.x = 1.4,
                      aes(label = paste0("p = ", ..p.format..)))+
   facet_nested(~ data + type)+
@@ -758,13 +763,14 @@ FF <- ggboxplot(df_family, x='gr',y='distance',
                size=2, color="red", fill="red")+xlab('')+
   mytheme()+
   theme(legend.position = 'none',
-    axis.text.x = element_blank())+
+    axis.text.x = element_blank(),
+    strip.text = element_text(size = 15))+
   scale_fill_viridis(discrete = TRUE, alpha=0.6)+
-  stat_compare_means(method = 't.test',size=3,
+  stat_compare_means(method = 't.test',size=5,
                      label.y = 18,
                      label.x = 1.4,
                      aes(label = paste0("p = ", ..p.format..)))+
-  facet_nested(~ data + type)+
+  facet_nested(~ data + type)+ylab('')+
   coord_cartesian(ylim = c(0, 20))
 # ********
 E<-ggarrange(
@@ -792,7 +798,7 @@ saveRDS(EF,'manuscript/Revised/fig_data/Fig6EF.rds')
 
 ## Fig 6 CD
 
-```{r Fig 5 CD}
+```{r Fig 6 CD}
 source('Functions.R')
 # ----------------------------------------------------
 # ******** a.29
@@ -856,10 +862,11 @@ C <- ggboxplot(df_superfamily, x='gr',y='distance',
                size=2, color="red", fill="red")+xlab('')+
   mytheme()+
   theme(legend.position = 'none',
-        axis.text.x = element_blank())+
+        axis.text.x = element_blank(),
+    strip.text = element_text(size = 15))+
   scale_fill_viridis(discrete = TRUE, alpha=0.6)+
   stat_compare_means(comparisons = my_comparisons, method = 't.test',
-                     size=3,label.y = 17,
+                     size=5,label.y = 17,
                      label.x = 1.4,bracket.size = NA,tip.length = NA)+
   facet_nested(~ data + type)+
   coord_cartesian(ylim = c(0, 20))
@@ -923,11 +930,12 @@ D <- ggboxplot(df_superfamily, x='gr',y='distance',
                size=2, color="red", fill="red")+xlab('')+
   mytheme()+
   theme(legend.position = 'none',
-        axis.text.x = element_blank())+
+        axis.text.x = element_blank(),
+    strip.text = element_text(size = 15))+
   scale_fill_viridis(discrete = TRUE, alpha=0.6)+
-  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=3,
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=5,
                      label.x = 1.4,label.y = 17,bracket.size = NA,tip.length = NA)+
-  facet_nested(~ data + type)+
+  facet_nested(~ data + type)+ylab('')+
   coord_cartesian(ylim = c(0, 20))
 # ********
 C<-ggarrange(
@@ -954,7 +962,7 @@ saveRDS(CD,'manuscript/Revised/fig_data/Fig6CD.rds')
 
 ## Fig 6 AB
 
-```{r Fig 5 AB}
+```{r Fig 6 AB}
 source('Functions.R')
 # ----------------------------------------------------
 # ******** a
@@ -1020,9 +1028,10 @@ A <- ggboxplot(df_fold, x='gr',y='distance',
                size=2, color="red", fill="red")+xlab('')+
   mytheme()+
   theme(legend.position = 'none',
-        axis.text.x = element_blank())+
+        axis.text.x = element_blank(),
+    strip.text = element_text(size = 15))+
   scale_fill_viridis(discrete = TRUE, alpha=0.6)+
-  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=3,
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=5,
                      label.y = 30,bracket.size = NA,tip.length = NA)+
   facet_nested(~ data + type)+
   coord_cartesian(ylim = c(0, 40))
@@ -1085,14 +1094,15 @@ df_fold <- rbind(df_fold_seq, df_fold_str)
 B <- ggboxplot(df_fold, x='gr',y='distance', 
           fill = 'gr',alpha=.5,outlier.shape = NA)+
   stat_summary(fun.y=mean, geom="point", shape=8,
-               size=2, color="red", fill="red")+xlab('')+
+               size=3, color="red", fill="red")+xlab('')+
   mytheme()+
   theme(legend.position = 'none',
-        axis.text.x = element_blank())+
+        axis.text.x = element_blank(),
+    strip.text = element_text(size = 15))+
   scale_fill_viridis(discrete = TRUE, alpha=0.6)+
-  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=3,
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=5,
                      label.y = 30, bracket.size = NA,tip.length = NA)+
-  facet_nested(~ data + type)+
+  facet_nested(~ data + type)+ylab('')+
   coord_cartesian(ylim = c(0, 40))
 # ********
 A<-ggarrange(
@@ -1119,22 +1129,22 @@ saveRDS(AB,'manuscript/Revised/fig_data/Fig6AB.rds')
 
 ##Fig 6 All
 
-```{r Fig 5 All}
+```{r Fig 6 All}
 rm(list = ls())
 EF <- readRDS('manuscript/Revised/fig_data/Fig6EF.rds')
 CD <- readRDS('manuscript/Revised/fig_data/Fig6CD.rds')
 AB <- readRDS('manuscript/Revised/fig_data/Fig6AB.rds')
-mylegend <-readRDS('manuscript/fig_data/Fig6mylegend.rds')
+mylegend <-readRDS('manuscript/Revised/fig_data/Fig6mylegend.rds')
 # ---------------------------------------------
-f5all <- ggarrange(NULL,AB,CD,EF,ncol = 1,
+f6all <- ggarrange(NULL,AB,CD,EF,ncol = 1,
           heights = c(0.1,1,1,1))
-p<-cowplot::plot_grid(f5all, mylegend, ncol = 1, rel_heights = c(1,.03))
+p<-cowplot::plot_grid(f6all, mylegend, ncol = 1, rel_heights = c(1,.03))
 # save pdf 10x9
 ```
 
 ## Fig 7 CT_Ho
 
-```{r Fig 6 CT_Ho}
+```{r Fig 7 CT_Ho}
 source('Functions.R')
 # ----------------------------------------------------
 df <- data.frame(method=c('GR-Align','RMSD','TM-Score',
@@ -1187,9 +1197,9 @@ p
 ```
 
 
-## Fig 9 ferritin
+## Fig 9B,D,F ferritin
 
-```{r Fig 7 ferritin}
+```{r Fig 9 ferritin}
 source('Functions.R')
 # ----------------------------------------------------
 E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
@@ -1225,7 +1235,7 @@ nnet <- neighborNet(dis)
 
 ## Fig 10 covid
 
-```{r Fig 8 covid}
+```{r Fig 10 covid}
 source('Functions.R')
 bootFun <- function(e){
   as.phylo(hclust(proxy::dist(e,
@@ -1543,8 +1553,8 @@ mylegend <- get_legend(t_SPE+
 
 
 AB<-ggarrange(NULL,NULL,
-    t_CPE,t_SPE, NULL,NULL,
-    t_Sequence_upgma,t_tmVec, NULL,NULL,
+    t_Sequence_upgma,t_SPE, NULL,NULL,
+    t_CPE,t_tmVec, NULL,NULL,
     t_RMSS, t_tmScore,
     ncol = 2,nrow = 6,
     heights = c(.15, 1.3, .2, 1.3),
@@ -1615,7 +1625,7 @@ p
 
 ## Fig 11 Bacteriocin Tm-Vec
 
-```{r Fig 9 Bacteriocin Tm-Vec}
+```{r Fig 11 Bacteriocin Tm-Vec}
 source('Functions.R')
 # ----------------------------------------------------
 tm <- readRDS('Data/rds/bacteriocin_tm_vec.rds')
@@ -1691,12 +1701,12 @@ p2 <- ggarrange(NULL,NULL,
 ggarrange(p2,NULL,p1,ncol = 3,nrow = 1,
           widths = c(.5,.05,1))
 
-# save FIG8.pdf 15x8
+# save FIG11.pdf 15x8
 ```
 
 ##Fig 12 DrugTarget
 
-```{r Fig 10 DrugTarget}
+```{r Fig 12 DrugTarget}
 source('Functions.R')
 # ----------------------------------------------------
 my_sab <- readRDS('Data/rds/my_sab.rds')
@@ -1715,60 +1725,67 @@ p1 <- ggplot(df,aes(sAB,my_sAB))+
         axis.text.x = element_text(size = 13),
         axis.text.y = element_text(size = 13),)+
   xlab('sAB (PPI)')+ylab('sAB (CPE)')
-# save FIG9.pdf 10x7
-```
-
-## Fig S1
-
-```{r Fig S1}
-source('Functions.R')
-# ----------------------------------------------------
-spike <- read.csv("Data/covidPDB/spike_seq.csv")
-df <- spike
-# --------------TM score-------------
-tm <- read.csv('Data/covidPDB/disTM_score_spike.csv')
-rownames(tm) <- colnames(tm) <- df$pdbID
-
-tm_max <- tm
-for (i in 1:nrow(tm_max)) {
-  print(i)
-  for (j in 1:nrow(tm_max)) {
-    tm_max[i,j] <- max(tm_max[i,j], tm_max[j,i])
-    tm_max[j,i] <- tm_max[i,j]
-  }
-}
-tm_max <- 1 - tm_max
-hc <- as.dist(tm_max)
-hc <- hc%>% hclust(method = "ward.D2")
-
-adjustedRandIndex(cutree(hc, 3), spike$virus)
-classError(cutree(hc, 3), spike$virus)
-dend <- hc %>% as.dendrogram
-
-df <- df[with(df, order(df$virus)), ]
-rn <- df$pdbID
-tree_data <- as.phylo(dend)
-grp <- list(MERS_Cov  = rn[1:32],
-            SARS_Cov  = rn[33:63],
-            SARS_Cov2 = rn[64:143])
-
-p_data <- ggtree(tree_data, layout = 'dendrogram',
-                 size = 1) 
-
-groupOTU(p_data, grp, "groups") + aes(color=groups) +
-  theme(#legend.position="none",
-    plot.title = element_text(size = 17, hjust = 0.5,vjust = 0))+
-  #geom_tiplab2(aes(label=label,angle=angle),
-  #              hjust=-.1,size=3.5,fontface="bold",align=F)+
-    geom_tiplab(aes(label=label),
-               hjust=1,size=1.5,fontface="bold",align=F)+
-  scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
-                       type =  c("blue","green","red" ))+
-  ggtitle('TM-Score')
+# save FIG12.pdf 10x7
 ```
 
 
 #Tables
+
+## Table 1 CT_Ho
+
+```{r Table 1 CT_Ho}
+source('Functions.R')
+# ----------------------------------------------------
+# ------------------------------------------
+# ------------ CPE ---------------------------
+# -----------------------------------
+df <- readRDS('Data/rds/E210.seq_CT_Ho.rds')
+df <- df[!is.na(df$FF),]
+twoSF <- unique(df$cathID)
+dis <- as.matrix(dist(df[,-c(1:9)], method = manhat))
+diag(dis) <- NA
+
+# ---------- 1NN --------------------
+im <- apply(dis,1, FUN = which.min)
+res <- data.frame(source=df$cathID, target=df$cathID[im])
+## ----------
+cm <- matrix(0,2,2)
+colnames(cm) <- rownames(cm) <- twoSF
+for (sf in twoSF) {
+  x <- res[res$source%in%sf,]
+  z <- table(x$target)
+  cm[sf,names(z)]<-z
+}
+ac<-round(sum(diag(cm))/sum(cm),2)*100
+# ---------------------------------------------
+# -------- Note: --------------
+# the time was obtaind from the `C-terminal_Homing_CPE` chunck in `Profile_Energy.Rmd` script.
+# ---------------------------------------------------------------
+res_final <- data.frame(Method='CPE', Accuracy=ac, Time='1 sec') 
+# ------------------------------------------
+# ------------- TM-vec -----------------------------
+# ---------------------------------------------
+dis <- read.csv('Data/csv/disTM_vec_CT_Ho.csv')
+diag(dis) <- 1
+dis <- 1 - dis
+diag(dis) <- NA
+
+# ---------- 1NN --------------------
+im <- apply(dis,1, FUN = which.min)
+res <- data.frame(source=df$cathID, target=df$cathID[im])
+## ----------
+cm <- matrix(0,2,2)
+colnames(cm) <- rownames(cm) <- twoSF
+for (sf in twoSF) {
+  x <- res[res$source%in%sf,]
+  z <- table(x$target)
+  cm[sf,names(z)]<-z
+}
+ac <- round(sum(diag(cm))/sum(cm),2)*100
+
+res_final <- rbind(res_final, c('TM-Vec', ac, '67 sec'))
+res_final
+```
 
 ## Table 2 FiveSF
 
@@ -1870,134 +1887,9 @@ res_final <- data.frame(method=c('CPE (1NN)','CPE (RF)','TM_Vec (1NN)'),res_fina
 res_final
 ```
 
-## Table 1 CT_Ho
-
-```{r Table 1 CT_Ho}
-source('Functions.R')
-# ----------------------------------------------------
-# ------------------------------------------
-# ------------ CPE ---------------------------
-# -----------------------------------
-df <- readRDS('Data/rds/E210.seq_CT_Ho.rds')
-df <- df[!is.na(df$FF),]
-twoSF <- unique(df$cathID)
-dis <- as.matrix(dist(df[,-c(1:9)], method = manhat))
-diag(dis) <- NA
-
-# ---------- 1NN --------------------
-im <- apply(dis,1, FUN = which.min)
-res <- data.frame(source=df$cathID, target=df$cathID[im])
-## ----------
-cm <- matrix(0,2,2)
-colnames(cm) <- rownames(cm) <- twoSF
-for (sf in twoSF) {
-  x <- res[res$source%in%sf,]
-  z <- table(x$target)
-  cm[sf,names(z)]<-z
-}
-ac<-round(sum(diag(cm))/sum(cm),2)*100
-# ---------------------------------------------
-# -------- Note: --------------
-# the time was obtaind from the `C-terminal_Homing_CPE` chunck in `Profile_Energy.Rmd` script.
-# ---------------------------------------------------------------
-res_final <- data.frame(Method='CPE', Accuracy=ac, Time='1 sec') 
-# ------------------------------------------
-# ------------- TM-vec -----------------------------
-# ---------------------------------------------
-dis <- read.csv('Data/csv/disTM_vec_CT_Ho.csv')
-diag(dis) <- 1
-dis <- 1 - dis
-diag(dis) <- NA
-
-# ---------- 1NN --------------------
-im <- apply(dis,1, FUN = which.min)
-res <- data.frame(source=df$cathID, target=df$cathID[im])
-## ----------
-cm <- matrix(0,2,2)
-colnames(cm) <- rownames(cm) <- twoSF
-for (sf in twoSF) {
-  x <- res[res$source%in%sf,]
-  z <- table(x$target)
-  cm[sf,names(z)]<-z
-}
-ac <- round(sum(diag(cm))/sum(cm),2)*100
-
-res_final <- rbind(res_final, c('TM-Vec', ac, '67 sec'))
-res_final
-```
 
 
-## Table 3 
-
-```{r Table 3}
-source('Functions.R')
-# ----------------------------------------------------
-# -----------------CPE------------------------
-df <- readRDS("Data/rds/E210.seq_spike.rds")
-x <- as.matrix(df[,-c(1:5)]/df$length)
-hc <- x %>% proxy::dist(method = manhat)
-hc <- hc%>% hclust(method = "ward.D2")
-ARI_CPE <- c()
-for (i in 3:6) {
-  ARI_CPE <- c(ARI_CPE, adjustedRandIndex(cutree(hc, i), df$virus))
-}
-# -----------------------------------
-# -----------------SPE------------------------
-df <- readRDS("Data/rds/E210_spike.rds")
-x <- as.matrix(df[,-c(1:5)]/df$length)
-hc <- x %>% proxy::dist(method = manhat)
-hc <- hc %>% hclust(method = "ward.D2")
-ARI_SPE <- c()
-for (i in 3:6) {
-  ARI_SPE <- c(ARI_SPE, adjustedRandIndex(cutree(hc, i), df$virus))
-}
-# -----------------------------------
-# -----------------RMSD------------------------
-rms <- data.frame(readRDS('Data/covidPDB/RMSD_spike.rds'))
-diag(rms)<-0
-hc <- as.dist(rms)
-hc <- hc %>% hclust(method = "ward.D2")
-ARI_RMSD <- c()
-for (i in 3:6) {
-  ARI_RMSD <- c(ARI_RMSD, adjustedRandIndex(cutree(hc, i), df$virus))
-}
-# -----------------------------------
-# -----------------TM-Vec------------------------
-tm_vec <- read.csv('Data/covidPDB/disTM_vec_spike.csv')
-colnames(tm_vec) <- rownames(tm_vec) <- df$pdbID
-tm_vec <- 1 - tm_vec
-hc <- as.dist(tm_vec)
-hc <- hc %>% hclust(method = "ward.D2")
-ARI_TM_Vec <- c()
-for (i in 3:6) {
-  ARI_TM_Vec <- c(ARI_TM_Vec, adjustedRandIndex(cutree(hc, i), df$virus))
-}
-# -----------------------------------
-# -----------------TM-score------------------------
-tm <- read.csv('Data/covidPDB/disTM_score_spike.csv')
-tm_max <- tm
-for (i in 1:nrow(tm_max)) {
-  print(i)
-  for (j in 1:nrow(tm_max)) {
-    tm_max[i,j] <- max(tm_max[i,j], tm_max[j,i])
-    tm_max[j,i] <- tm_max[i,j]
-  }
-}
-tm_max <- 1 - tm_max
-diag(tm_max) <- NA
-hc <- as.dist(tm_max)
-hc <- hc%>% hclust(method = "ward.D2")
-ARI_TM_score <- c()
-for (i in 3:6) {
-  ARI_TM_score <- c(ARI_TM_score, adjustedRandIndex(cutree(hc, i), df$virus))
-}
-# --------------------------------
-ARI_final <- rbind(ARI_CPE, ARI_SPE, ARI_RMSD, ARI_TM_Vec, ARI_TM_score)
-colnames(ARI_final) <- paste0('cut_tree_', 3:6)
-ARI_final
-```
-
-## Table S1
+## Table 4 and Table S1 ARI covid
 
 ```{r Table S1}
 source('Functions.R')

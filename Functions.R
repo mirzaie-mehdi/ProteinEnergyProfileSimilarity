@@ -1,5 +1,32 @@
 # -----------------------------------------------------------------------------
 rm(list = ls())
+# -----------------------------------
+# -------------------------------------------------------------
+# ------------------------------
+# ---- Load Knowledge_based potential from structure and sequence
+# --------------------------------------------
+# --------------------------------------------------------
+# -------------------------------------------------------------------------------------
+energy_dell_dunbrack <- read.csv("Data/csv/energy_rm_Olaps.csv",header = FALSE,sep ="," )
+energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
+# ------Pairwise Amino Acid names-------------
+AA <- c("PHE","LEU","ILE","VAL","TRP","TYR","MET","CYS","HIS","THR",
+        "ARG","ALA","ASN","GLN","PRO","SER","ASP","GLY","LYS","GLU")
+letters_list <- bio3d::aa321(AA)
+pair_inter <- character(0)
+for (i in 1:20) {
+  for (j in i:20) {
+    pair_inter <- c(pair_inter, paste0(letters_list[i], letters_list[j]))
+  }
+} 
+# -----------------------------------
+# -----  Sequence Energy Estimator (predictor)
+aaenergy <- read.csv("Data/csv/Pij_rm_Olaps.csv", header = F,sep = ";")
+aaenergy <- (aaenergy + t(aaenergy))/2
+colnames(aaenergy) <- rownames(aaenergy) <- letters_list
+# -------------------------------------------------------------
+rm(i,j,AA)
+# -----------
 # -------------------------
 # ------ This function code Amino Acid name into number.
 # ------------------------------------------------------------
@@ -31,8 +58,7 @@ amacid2num <- function(amname){
        21
        )
   v
-  }
-
+}
 # -------------------------------------------------
 # -----------------------
 # ----------- This function code pair of Atom types into numbers.
@@ -388,7 +414,7 @@ inedx_HelixSheet <- function(PDB){
 # --------------------------------
 # ------------- This function convert the contact graph into the 210D profile energy.
 # ----------------------------------------------------------
-Energy_PC210 <- function(NetworkFrame,energy_dell_dunbrack){ 
+Energy_SPE210 <- function(NetworkFrame,energy_dell_dunbrack){ 
   # Pairwise Contact potential
   # -------------------- Energy file Indexing ----------------------------
   cn <- 1; index167 <- matrix(0,ncol = 167,nrow = 167)
@@ -446,6 +472,23 @@ Energy_PC210 <- function(NetworkFrame,energy_dell_dunbrack){
   }
   return(energy210)
 }
+# --------------------------------------------------
+# --------------------------------
+# ------------- This function calculate the 210D profile energy from Amino Acid sequence.
+# ---------------------------------------------------------
+Energy_CPE210 <- function(sequenceAA){
+  s <- toupper(unlist(strsplit(sequenceAA,"")))
+  freq <- table(s)[letters_list]
+  indxNA <- which(is.na(freq))
+  names(freq)[indxNA] <- letters_list[indxNA]
+  freq[indxNA] <- 0
+  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
+  en_fr <- aaenergy * freq_matrix
+  en_fr <- en_fr/length(s)
+  pair_es <- diag(freq) %*% as.matrix(en_fr)
+  aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
+  return(aa210_p)
+}
 # ---------------------------------------------------------------
 # ------------------------------------
 # ------------ This function calculates the distance between two profiles of energy.
@@ -477,30 +520,4 @@ mytheme <- function(){
     )
   return(mythem)
 }
-# -------------------------------------------------------------
-# ------------------------------
-# ---- Load Knowledge_based potential from structure and sequence
-# --------------------------------------------
-# --------------------------------------------------------
-# -------------------------------------------------------------------------------------
-energy_dell_dunbrack <- read.csv("Data/csv/energy_rm_Olaps.csv",header = FALSE,sep ="," )
-energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
-# ------Pairwise Amino Acid names-------------
-AA <- c("PHE","LEU","ILE","VAL","TRP","TYR","MET","CYS","HIS","THR",
-        "ARG","ALA","ASN","GLN","PRO","SER","ASP","GLY","LYS","GLU")
-letters_list <- bio3d::aa321(AA)
-pair_inter <- character(0)
-for (i in 1:20) {
-  for (j in i:20) {
-    pair_inter <- c(pair_inter, paste0(letters_list[i], letters_list[j]))
-  }
-} 
-# -----------------------------------
-# -----  Sequence Energy Estimator (predictor)
-aaenergy <- read.csv("Data/csv/Pij_rm_Olaps.csv", header = F,sep = ";")
-aaenergy <- (aaenergy + t(aaenergy))/2
-colnames(aaenergy) <- rownames(aaenergy) <- letters_list
-# -------------------------------------------------------------
-rm(i,j,AA)
-# -----------
-
+# --------------------------------

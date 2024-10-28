@@ -65,93 +65,8 @@ library(ggh4x)
 library(googledrive)
 ```
 
-# Parse Scope 2.08
-## ASTRAL95_parse
-This chunk parse the astral 95 data downloaded form Scope 2.08 and organize it into a suitable data-frame with columns "scopeID","pdbID" ,"Position", "class","fold","superfamily","family","seq". Since we already made 'astral_95.rds' and 'astrals_95_seq.rds', we do not need to run the following chunk.
 
-```{r Parse_Astral95}
-astrals_95 <- read_table("Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-95-2.08.fa", col_names = FALSE)
-astrals_95_seq <- readFASTA("Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-95-2.08.fa")
-
-rows_keep <- grep(">", astrals_95$X1)
-astrals_95 <- astrals_95[rows_keep,c(1,2,3)]
-colnames(astrals_95) <- c("scopeID","ID_scope","Position")
-astral_95 <- data.frame(
-    scopeID = character(dim(astrals_95)[1]),
-    pdbID = character(dim(astrals_95)[1]),
-    Position = character(dim(astrals_95)[1]),
-    seq = t(data.frame(astrals_95_seq)))
-row.names(astral_95) <- c(1:dim(astral_95)[1])
-astral_95$scopeID <- substr(astrals_95$scopeID, start = 2, stop = nchar(astrals_95$scopeID))
-astral_95$pdbID <- substr(astrals_95$scopeID, start = 3, stop = 6)
-#----------Split scopeID into class, fold, super and family---------
-split_values <- strsplit(astrals_95$ID_scope, "\\.")
-matrix_values <- matrix("", nrow = nrow(astrals_95), ncol = 4)
-for (i in 1:4) {
-  matrix_values[, i] <- sapply(split_values, function(x) paste(x[1:i], collapse = "."))
-}
-df_split <- as.data.frame(matrix_values)
-colnames(df_split) <- c("class", "fold", "superfamily", "family")
-#-------------------------------------------------------------------
-# ------------split Position, start and end--------------------------
-astral_95$Position <- gsub("[()]", "", astrals_95$Position)
-#-----------------------------------------------------------------
-astral_95 <- cbind(astral_95,df_split)
-astral_95 <- astral_95[,c("scopeID","pdbID" ,"Position", "class","fold","superfamily","family","seq")]
-#astral_95$seq <- toupper(astral_95$seq)
-#saveRDS(astral_95, file = "Data/rds/astral_95.rds")
-```
-
-## ASTRAL40_parse
-This chunk parse the astral 40 data downloaded form Scope 2.08 and organize it into a suitable data-frame with columns "scopeID","pdbID" ,"Position", "class","fold","superfamily","family","seq". Since we already made 'astral_40.rds' and 'astrals_40_seq.rds', we do not need to run the following chunk.
-
-```{r Parse_Astral40}
-astrals_40 <- read_table("Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-40-2.08.fa", col_names = FALSE)
-astrals_40_seq <- readFASTA("Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-40-2.08.fa")
-
-rows_keep <- grep(">", astrals_40$X1)
-astrals_40 <- astrals_40[rows_keep,c(1,2,3)]
-colnames(astrals_40) <- c("pdbID","scopeID","chainID")
-astral_40 <- data.frame(
-  scope = character(dim(astrals_40)[1]),
-    pdbID = character(dim(astrals_40)[1]),
-    chainID = character(dim(astrals_40)[1]),
-    position = integer(dim(astrals_40)[1]),
-    start = integer(dim(astrals_40)[1]),
-    end = integer(dim(astrals_40)[1]),
-  seq = t(data.frame(astrals_40_seq)))
-astral_40$scope <- substr(astrals_40$pdbID, start = 2, stop = nchar(astrals_40$pdbID))
-astral_40$pdbID <- substr(astrals_40$pdbID, start = 3, stop = 6)
-#----------Split scopeID into class, fold, super and family---------
-split_values <- strsplit(astrals_40$scopeID, "\\.")
-matrix_values <- matrix("", nrow = nrow(astrals_40), ncol = 4)
-for (i in 1:4) {
-  matrix_values[, i] <- sapply(split_values, function(x) paste(x[1:i], collapse = "."))
-}
-df_split <- as.data.frame(matrix_values)
-colnames(df_split) <- c("class", "fold", "superfamily", "family")
-#-------------------------------------------------------------------
-# ------------split chainID, start and end--------------------------
-astral_40$chainID <- gsub("[()]", "", astrals_40$chainID)
-astral_40$position <- substr(astral_40$chainID, start = regexpr(":", astral_40$chainID) + 1, stop = nchar(astral_40$chainID))
-astral_40$chainID <- substr(astral_40$chainID,start = 1, stop = 1)
-astral_40$start <- NA
-astral_40$end <- NA
-split_values <- strsplit(astral_40$position, "-")
-for (i in seq_along(split_values)) {
-  if (length(split_values[[i]]) == 2) {
-    astral_40$start[i] <- as.numeric(split_values[[i]][1])
-    astral_40$end[i] <- as.numeric(split_values[[i]][2])
-  }
-}
-#-----------------------------------------------------------------
-astral_40 <- cbind(astral_40,df_split)
-#astral_40$length <- apply(data.frame(astral_40$seq),1,nchar)
-#saveRDS(astral_40, file = "Data/rds/astral_40.rds")
-```
-
-
-# ASTRAL95/40_SPE_CPE
+# ASTRAL 95/40 SPE_CPE
 
 This chunk calculate the profile of energy for protein domains in ASTRAL95/40 based on sequence and structure.
 
@@ -202,22 +117,13 @@ for (NP in 1:nrow(E210.seq_astral_95)) {
     pdbX <- new_pdb$atom
     E210.astral_95$length[NP] = length(unique(pdbX$resno))
     Net_Frame <- NetworkFrame(PDB = new_pdb)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    energy210 <- Energy_SPE210(Net_Frame,energy_dell_dunbrack)
     E210.astral_95[NP,-c(1:8)] <- energy210
 # ----------- sequence enregy based on astral --------
     seq = astral$seq[NP]
     seq = gsub("X", "", seq)
     E210.seq_astral_95$length[NP] = nchar(seq)
-    seq = unlist(strsplit(seq,""))
-    freq = c()
-    for (j in 1:20){
-        freq[j] <-  length(grep(tolower(letters_list[j]), tolower(seq)))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+    aa210_p <- Energy_CPE210(seq)
     E210.seq_astral_95[NP,9:218] <- aa210_p
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
@@ -271,22 +177,13 @@ for (NP in 1:nrow(E210.seq_astral_40)) {
     pdbX <- new_pdb$atom
     E210.astral_40$length[NP] = length(unique(pdbX$resno))
     Net_Frame <- NetworkFrame(PDB = new_pdb)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    energy210 <- Energy_SPE210(Net_Frame,energy_dell_dunbrack)
     E210.astral_40[NP,-c(1:8)] <- energy210
     # ----------- sequence enregy based on astral --------
     seq = astral$seq[NP]
     seq = gsub("X", "", seq)
     E210.seq_astral_40$length[NP] = nchar(seq)
-    seq = unlist(strsplit(seq,""))
-    freq = c()
-    for (j in 1:20){
-        freq[j] <-  length(grep(tolower(letters_list[j]), tolower(seq)))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+    aa210_p <- Energy_CPE210(seq)
     E210.seq_astral_40[NP,9:218] <- aa210_p
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
@@ -297,207 +194,8 @@ saveRDS(E210.astral_40,file = "Data/rds/E210.astral_40.rds")
 saveRDS(E210.seq_astral_40,file = "Data/rds/E210.seq_astral_40.rds")
 ```
 
-## Distance_95/40
-create distance files and save them.
 
-```{r Dis_ASTRAl_95/40}
-source('Functions.R')
-# ----------------------------------------------------
-# astral 95
-df_seq <- readRDS("Data/rds/E210.seq_astral_95.rds") 
-df_seq <- df_seq[!is.na(df_seq$FL),] 
-
-df_str <- readRDS("Data/rds/E210.astral_95.rds") 
-df_str <- df_str[!is.na(df_str$FL),] 
-
-m<-match(df_str$scopeID,df_seq$scopeID)
-df_str <- df_str[which(!is.na(m)),]
-# --- distance 95
-#dis_seq <- dist(df_seq[,-c(1:8)],method = manhat)
-#saveRDS(dis_seq,'~/Desktop/dis_seq95.rds')
-#rm(dis_seq)
-dis_str <- dist(df_str[,-c(1:8)],method = manhat)
-saveRDS(dis_str,'~/Desktop/dis_str95.rds')
-rm(dis_str)
-# -------------------------------
-# astral 95
-df_seq <- readRDS("Data/rds/E210.seq_astral_40.rds") 
-df_seq <- df_seq[!is.na(df_seq$FL),] 
-
-df_str <- readRDS("Data/rds/E210.astral_40.rds") 
-df_str <- df_str[!is.na(df_str$FL),] 
-
-m<-match(df_str$scopeID,df_seq$scopeID)
-df_str <- df_str[which(!is.na(m)),]
-# --- distance 40
-#dis_seq <- dist(df_seq[,-c(1:8)],method = manhat)
-#saveRDS(dis_seq,'~/Desktop/dis_seq40.rds')
-#rm(dis_seq)
-dis_str <- dist(df_str[,-c(1:8)],method = manhat)
-saveRDS(dis_str,'~/Desktop/dis_str40.rds')
-rm(dis_str)
-# --------------------------------
-# These RDS files were uploaded on Google Drive from the desktop.
-# ----------------------
-```
-
-## Total_Energy_95/40
-
-```{r TotalDis_ASTRAl_95/40}
-source('Functions.R')
-# ----------------------------------------------------
-# astral 95
-df_seq <- readRDS("Data/rds/E210.seq_astral_95.rds") 
-df_seq <- df_seq[!is.na(df_seq$FL),] 
-
-df_str <- readRDS("Data/rds/E210.astral_95.rds") 
-df_str <- df_str[!is.na(df_str$FL),] 
-m<-match(df_str$scopeID,df_seq$scopeID)
-df_str <- df_str[which(!is.na(m)),]
-# **** total energy 95
-df_tot95 <- data.frame(data='Astral 95', class=df_str$class,
-                       length = df_seq$length,
-                       seq=rowSums(df_seq[,-c(1:8)]),
-                       str=rowSums(df_str[,-c(1:8)]))
-# --------- load from google drive -----------------------
-drive_deauth()
-drive_user()
-public_file <- drive_get(as_id("1eTpvnrgqZgJmP_2ELTg8a9nV3sUxe_zX"))
-drive_download(public_file, overwrite = TRUE)
-dis_str <- readRDS('dis_str95.rds')
-file.remove('dis_str95.rds')
-public_file <- drive_get(as_id("1HqyTp8DjxqFF9WI7U5FMqqY9sbeItK0k"))
-drive_download(public_file, overwrite = TRUE)
-dis_seq <- readRDS('dis_seq95.rds')
-file.remove('dis_seq95.rds')
-# ----------------------------------------------------------
-idx <- sample(length(dis_str),100000)
-df_dis95 <- data.frame(data='Astral 95',
-                       dis_str=as.vector(dis_str)[idx],
-                       dis_seq=as.vector(dis_seq)[idx])
-rm(dis_seq, dis_str)
-saveRDS(df_dis95,'manuscript/Revised/fig_data/dis_95_manhat.rds')
-# ************************************************************
-# astral 40
-df_seq <- readRDS("Data/rds/E210.seq_astral_40.rds") 
-df_seq = df_seq[!is.na(df_seq$FL),] 
-
-df_str <- readRDS("Data/rds/E210.astral_40.rds") 
-df_str = df_str[!is.na(df_str$FL),] 
-m<-match(df_str$scopeID,df_seq$scopeID)
-df_str <- df_str[which(!is.na(m)),]
-# **** total energy 40
-df_tot40 <- data.frame(data='Astral 40', class=df_str$class,
-                       length=df_seq$length,
-                       seq=rowSums(df_seq[,-c(1:8)]),
-                       str=rowSums(df_str[,-c(1:8)]))
-# --------- load from google drive -----------------------
-drive_deauth()
-drive_user()
-public_file <- drive_get(as_id("1DpLH-9KVobXD2uZZYgLPoWo6-6RN2oss"))
-drive_download(public_file, overwrite = TRUE)
-dis_str <- readRDS('dis_str40.rds')
-file.remove('dis_str40.rds')
-public_file <- drive_get(as_id("13h3ChkrQR7IkLPV7cA67GbztdE9ssKO6"))
-drive_download(public_file, overwrite = TRUE)
-dis_seq <- readRDS('dis_seq40.rds')
-file.remove('dis_seq40.rds')
-# ----------------------------------------------------------
-idx <- sample(length(dis_str),100000)
-df_dis40 <- data.frame(data='Astral 40',
-                       dis_str=as.vector(dis_str)[idx],
-                       dis_seq=as.vector(dis_seq)[idx])
-rm(dis_seq, dis_str)
-#saveRDS(df_dis40,'manuscript/fig_data/dis_40_manhat.rds')
-saveRDS(df_dis40,'manuscript/Revised/fig_data/dis_40_manhat.rds')
-# **************************************
-df_tot <- rbind(df_tot40, df_tot95)
-#saveRDS(df_tot, 'manuscript/fig_data/df_total_energy.rds')
-saveRDS(df_tot, 'manuscript/Revised/fig_data/df_total_energy.rds')
-```
-
-
-## UMAP
-
-```{r UMAP}
-source('Functions.R')
-# ----------------------------------------------------
-# ******** str40
-df <- readRDS("Data/rds/E210.astral_40.rds")
-df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
-df <- df[,c(5,3,9:218)]
-dis <- as.matrix(proxy::dist(df[,-c(1,2)]/df$length, method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df_str40 <- data.frame(data='Astral 40',type='Structure',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-ump_df_str40$class <- ifelse(ump_df_str40$class=='a','All-alpha','All-beta')
-
-# ******** seq40
-df <- readRDS("Data/rds/E210.seq_astral_40.rds")
-df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
-df <- df[,c(5,3,9:218)]
-dis <- as.matrix(proxy::dist(df[,-c(1,2)]/df$length, method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df_seq40 <- data.frame(data='Astral 40',type='Sequence',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-ump_df_seq40$class <- ifelse(ump_df_seq40$class=='a','All-alpha','All-beta')
-
-# ******** str95
-df <- readRDS("Data/rds/E210.astral_95.rds")
-df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
-df <- df[,c(5,3,9:218)]
-dis <- as.matrix(proxy::dist(df[,-c(1,2)]/df$length, method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df_str95 <- data.frame(data='Astral 95',type='Structure',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-ump_df_str95 <- ump_df_str95[ump_df_str95$UMAP1> -1.5 & ump_df_str95$UMAP1< 4.5,]
-ump_df_str95 <- ump_df_str95[ump_df_str95$UMAP2> -1.5 & ump_df_str95$UMAP2< 6,]
-ump_df_str95$class <- ifelse(ump_df_str95$class=='a','All-alpha','All-beta')
-
-# ******** seq95
-df <- readRDS("Data/rds/E210.seq_astral_95.rds")
-df <- df[df$class %in% c("a","b")& df$length > 100 & !is.na(df$FF),]
-df <- df[,c(5,3,9:218)]
-dis <- as.matrix(proxy::dist(df[,-c(1,2)]/df$length, method = manhat))
-ump <- umap(d = dis,
-            n_neighbors = 30,
-            min_dist = 0.1,
-            input="dist")
-ump_df_seq95 <- data.frame(data='Astral 95',type='Sequence',
-                           class=df[,1],
-                           UMAP1 = ump$layout[, 1],
-                           UMAP2 = ump$layout[, 2])
-ump_df_seq95 <- ump_df_seq95[ump_df_seq95$UMAP1> -1 & ump_df_seq95$UMAP1< 5.5,] #(-5,1.5)
-ump_df_seq95 <- ump_df_seq95[ump_df_seq95$UMAP2> -4 & ump_df_seq95$UMAP2< 4,]#(-2.5,3)
-ump_df_seq95$class <- ifelse(ump_df_seq95$class=='a','All-alpha','All-beta')
-# **** rbind
-ump_df <- rbind(ump_df_str40,ump_df_seq40,
-                ump_df_str95,ump_df_seq95)
-
-#save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95,
-#     file = 'manuscript/fig_data/UMPs.RData')
-save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95,
-     file = 'manuscript/Revised/fig_data/UMPs.RData')
-```
-
-
-
-# C-terminal_Homing_CPE
+# C-terminal & Homing CPE
 This chunk calculates the CPE of proteins from two superfamilies: the C-terminal domain in the DNA helicase RuvA subunit and the Homing endonucleases.
 
 ```{r C-terminal_Homing_CPE}
@@ -514,16 +212,8 @@ tictoc::tic()
 for(NP in 1:nrow(E210.seq_CT_Ho)){
   print(NP)
   tryCatch({
-      seq <- unlist(strsplit(toupper(E210.seq_CT_Ho$seq[NP]),''))
-      freq = c()
-      for (j in 1:20){
-          freq[j] <- length(grep(letters_list[j],seq))
-      }
-      freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-      en_fr <- aaenergy * freq_matrix
-      en_fr <- en_fr/length(seq)
-      pair_es <- diag(freq) %*% as.matrix(en_fr)
-      aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+      seq <- E210.seq_CT_Ho$seq[NP]
+      aa210_p <- Energy_CPE210(seq)
       E210.seq_CT_Ho[NP,10:219] <- aa210_p
       }, error = function(e) {
        cat("Error downloading file:", e$message, "\n")
@@ -538,7 +228,7 @@ saveRDS(E210.seq_CT_Ho,'Data/rds/E210.seq_CT_Ho.rds')
 ```
 
 
-# Five superfamily_CPE
+# Five superfamily CPE
 
 This chunk calculates the energy profile (CPE) for five distinct SCOP superfamilies: winged helix (a.4.5), PH domain-like (b.55.1), NTF-like (d.17.4), Ubiquitin-like (d.15.1), and Immunoglobulins (b.1.1).
 
@@ -556,16 +246,8 @@ colnames(E210.seq_df5)[-c(1:9)] <- pair_inter
 tictoc::tic()
 for (NP in 1:Nprotein) {
   print(NP)
-  seq <- unlist(strsplit(E210.seq_df5$seq[NP],split = ''))
-  freq = c()
-  for (j in 1:20){
-      freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
-  }
-  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-  en_fr <- aaenergy * freq_matrix
-  en_fr <- en_fr/length(seq)
-  pair_es <- diag(freq) %*% as.matrix(en_fr)
-  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+  seq <- E210.seq_df5$seq[NP]
+  aa210_p <- Energy_CPE210(seq)
   E210.seq_df5[NP,10:219] <- aa210_p
 }
 df2 <- E210.seq_df5
@@ -575,7 +257,7 @@ tictoc::toc()
 saveRDS(E210.seq_df5,file = "Data/rds/E210.seq_fiveSF.rds")
 ```
 
-# Ferritin-like Superfamily
+# Ferritin-like Superfamily SPE
 
 This segment computes the SPE for proteins belonging to the Ferritin-like superfamily. The PDB IDs of these proteins are located in the `Data\csv\Ferritin_Like.csv` file.
 
@@ -615,7 +297,7 @@ for (NP in 1:Nprotein) {
     pdbX <- pdbX[pdbX$elety == "CA",]
     E210_ferritin$length[NP] <- nrow(pdbX)
     Net_Frame <- NetworkFrame(PDB = new_pdb)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    energy210 <- Energy_SPE210(Net_Frame,energy_dell_dunbrack)
     E210_ferritin[NP,4:213] <- energy210
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
@@ -625,7 +307,7 @@ saveRDS(E210_ferritin,file = "Data/rds/E210_ferritin.rds")
 
 ```
 
-# Covid_Spike_Proteins
+# Covid Spike SPE_CPE
 
 This segment computes the SPE and CPE for spike glycoprotein proteins. The PDB IDs of these proteins are located in the 'Data/csv/spike.csv' file. 
 
@@ -657,7 +339,7 @@ for (NP in 1:Nprotein) {
     # -------------------
     new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
     Net_Frame <- NetworkFrame(PDB = new_pdb)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    energy210 <- Energy_SPE210(Net_Frame,energy_dell_dunbrack)
     E210_spike[NP, -c(1:4)] <- energy210
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
@@ -673,16 +355,8 @@ colnames(E210.seq_spike)[-c(1:4)] <- pair_inter
 tictoc::tic()
 for (NP in 1:Nprotein) {
   print(NP)
-  seq <- unlist(strsplit(E210.seq_spike$seq[NP],''))
-  freq <- c()
-  for (j in 1:20){
-    freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
-    }
-  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-  en_fr <- aaenergy * freq_matrix
-  en_fr <- en_fr/length(seq)
-  pair_es <- diag(freq) %*% as.matrix(en_fr)
-  aa210_p <- pair_es[lower.tri(pair_es,diag = T)]
+  seq <- E210.seq_spike$seq[NP]
+  aa210_p <- Energy_CPE210(seq)
   E210.seq_spike[NP,5:214] <- aa210_p
 }
 dis <- E210.seq_spike[,-c(1:4)] %>% proxy::dist(method = manhat)
@@ -694,7 +368,7 @@ saveRDS(E210.seq_spike,file = "Data/rds/E210.seq_spike.rds")
 ```
 
 
-# Bacteriocin
+# Bacteriocin CPE
 
 This section calculates the CPE and pairwise distances between Bacteriocin proteins. The file 'Data/csv/TM_vec_bac.csv' was obtained by requesting it from the authors of the paper 'Protein remote homology detection and structural alignment using deep learning'. This file contains results from AlphaFold2, OmegaFold, ESMFold, and TM-Vec software tools for comparison purposes. The 'bacteriocin_tm_vec' file includes their results along with those generated using the CPE method.
 
@@ -731,16 +405,8 @@ colnames(tm_unique)[-c(1:6)] <- pair_inter
 tictoc::tic()
 for (i in 1:nprotein){
   print(i)
-  seq = unlist(strsplit(tolower(tm_unique$Seq[i]), ""))
-  freq = c()
-  for (j in 1:20){
-  freq[j] <-  length(grep(tolower(letters_list[j]),seq))
-  }
-  freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-  en_fr <- aaenergy * freq_matrix
-  en_fr <- en_fr/length(seq)
-  pair_es <- diag(freq) %*% as.matrix(en_fr)
-  aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
+  seq <- tm_unique$Seq[i]
+  aa210_p <- Energy_CPE210(seq)
   tm_unique[i,7:216] <- aa210_p
 }
 df <- tm_unique[,-c(1:6)]
@@ -764,10 +430,7 @@ saveRDS(tm,'Data/rds/bacteriocin_tm_vec.rds')
 saveRDS(tm_unique,'Data/rds/E210.seq_bacteriocin.rds')
 ```
 
-# Drug_Target 
-
-
-## Protein_Targets_CPE
+# Drug Target CPE
 This section retrieves the protein sequences (drug targets) utilized in the study:
 "Cheng F, Kovács IA, Barabási A-L. Network-based prediction of drug combinations. Nature communications 10, 1197 (2019)". 
 The drug-target information downloaded from its supplementary information (`41467_2019_9186_MOESM4_ESM.xlsx`, `41467_2019_9186_MOESM4_ESM.xlsx`)
@@ -783,70 +446,9 @@ E210.seq_dti <- data.frame(df_seq,matrix(NA,nrow(df_seq),210))
 colnames(E210.seq_dti)[-c(1:5)] <- pair_inter
 for (NP in 1:nrow(df_seq)) {
   if(NP%%10==0)print(NP)
-  seq = unlist(strsplit(unlist(E210.seq_dti$seq_aa[NP]),''))
-    freq = c()
-    for (j in 1:20){
-        freq[j] <-  length(grep(tolower(letters_list[j]),tolower(seq)))
-    }
-    freq_matrix <- matrix(rep(freq, each = 20), nrow = 20)
-    en_fr <- aaenergy * freq_matrix
-    en_fr <- en_fr/length(seq)
-    pair_es <- diag(freq) %*% as.matrix(en_fr)
-    aa210_p<-pair_es[lower.tri(pair_es,diag = T)]
-    E210.seq_dti[NP,-c(1:5)] <- aa210_p
+  seq <- E210.seq_dti$seq_aa[NP]
+  aa210_p <- Energy_CPE210(seq)
+  E210.seq_dti[NP,-c(1:5)] <- aa210_p
 }
 #saveRDS(E210.seq_dti,'Data/rds/E210.seq_dti.rds')
 ```
-
-## Drug similarity 
-
-This Chunk computes the similarity between drugs using Equation 6 from the manuscript.
-
-```{r Drug similarity}
-source('Functions.R')
-# ----------------------------------------------------
-sab<-read_excel('Data/csv/41467_2019_9186_MOESM7_ESM.xlsx')
-sab <- sab[-2081,-6]
-colnames(sab)[1:2]<-c('d1','d2')
-E210.seq_dti<-readRDS('Data/rds/E210.seq_dti.rds')
-
-df0 <- E210.seq_dti 
-df <- cbind(df0[,1:5],df0[,-c(1:5)]/df0$length) 
-
-df2 <- aggregate(.~drug+entrezID,df[,-c(3:5)],mean)
-drugs<-unique(df2$drug)
-#########################
-my_sab<-matrix(0,65,65)
-for (i in 1:65) {
-  print(i)
-  for (j in 1:65) {
-    if(i>=j){
-      x<-drugs[i]
-      y<-drugs[j]
-      zx<-df2[df2$drug%in%x,]
-      zy<-df2[df2$drug%in%y,]
-      xnames<-paste0(zx$drug,'_',zx$entrezID)
-      ynames<-paste0(zy$drug,'_',zy$entrezID)
-      z<-rbind(zx,zy)
-      dis<-as.matrix(dist(z[,-c(1:2)],method = manhat))
-      colnames(dis)<-rownames(dis)<-paste0(z$drug,'_',z$entrezID)
-      diag(dis)<-NA
-      dis[is.nan(dis)] <- 0
-      disx<-dis[xnames,xnames]
-      dxx<-mean(diag(as.matrix(disx[apply(disx,2,which.min),])))
-      disy<-dis[ynames,ynames]
-      dyy<-mean(diag(as.matrix(disy[apply(disy,2,which.min),])))
-      disxy<-dis[xnames,ynames]
-      disyx<-dis[ynames,xnames]
-      dxy<-mean(c(diag(as.matrix(disxy[apply(disxy,2,which.min),])),
-                  diag(as.matrix(disyx[apply(disyx,2,which.min),]))))
-      my_sab[i,j]<-dxy-((dxx+dyy)/2)
-      my_sab[j,i]<-my_sab[i,j]
-    }
-  }
-}
-diag(my_sab)<-NA
-colnames(my_sab)<-rownames(my_sab)<-drugs
-saveRDS(my_sab,'Data/rds/my_sab.rds')
-```
-
