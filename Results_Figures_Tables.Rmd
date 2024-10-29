@@ -70,7 +70,7 @@ library(lsa)
 source('Functions.R')
 # ----------------------------------------------------
 # ************** total energy 40 and 95
-df_tot <- readRDS('manuscript/Revised/fig_data/df_total_energy.rds')
+df_tot <- readRDS('Fig_Manuscript/Revised/fig_data/df_total_energy.rds')
 df_tot$data <- ifelse(df_tot$data=='Astral 40','ASTRAL40','ASTRAL95')
 A <- ggplot(df_tot[df_tot$data=='ASTRAL40',], aes(seq/2000,str/1000))+
        geom_pointdensity(adjust = .1,alpha=.3,show.legend = T)+
@@ -94,8 +94,8 @@ B <- ggplot(df_tot[df_tot$data=='ASTRAL95',], aes(seq/2000,str/1000))+
   mytheme()+
   theme(strip.text.x = element_text(size = 20))
 # ************** distance 40 and 95
-df_dis40<-readRDS('manuscript/Revised/fig_data/dis_40_manhat.rds')
-df_dis95<-readRDS('manuscript/Revised/fig_data/dis_95_manhat.rds')
+df_dis40<-readRDS('Fig_Manuscript/Revised/fig_data/dis_40_manhat.rds')
+df_dis95<-readRDS('Fig_Manuscript/Revised/fig_data/dis_95_manhat.rds')
 df_dis <- rbind(df_dis40, df_dis95)
 df_dis$data <- ifelse(df_dis$data=='Astral 40','ASTRAL40','ASTRAL95')
 
@@ -182,7 +182,7 @@ p<-ggarrange(NULL,NULL,NULL,NULL,NULL,
 ```{r Fig 3}
 source('Functions.R')
 # ----------------------------------------------------
-df_tot <- readRDS('manuscript/Revised/fig_data/df_total_energy.rds')
+df_tot <- readRDS('Fig_Manuscript/Revised/fig_data/df_total_energy.rds')
 df_tot <- df_tot[df_tot$class%in%c('a','b','c','d'),]
 df_tot$class[df_tot$class=='a']<-'All_alpha'
 df_tot$class[df_tot$class=='b']<-'All_beta'
@@ -225,7 +225,7 @@ p <- ggarrange(NULL,
 ```{r Fig 4}
 source('Functions.R')
 # ----------------------------------------------------
-load('manuscript/Revised/fig_data/UMPs.RData')
+load('Fig_Manuscript/Revised/fig_data/UMPs.RData')
 ump_df_seq40$class <- gsub('-',' ', ump_df_seq40$class)
 ump_df_str40$class <- gsub('-',' ', ump_df_str40$class)
 ump_df_seq95$class <- gsub('-',' ', ump_df_seq95$class)
@@ -394,8 +394,8 @@ A<-ggarrange(NULL,NULL,NULL,NULL,
                      '',"A", "", ""),
   font.label = list(size = 30),
   hjust = .2,vjust = 0)
-#saveRDS(A,'manuscript/fig_data/Fig4A.rds')
-saveRDS(A,'manuscript/Revised/fig_data/Fig5A.rds')
+#saveRDS(A,'Fig_Manuscript/Old_Figures/Fig4A.rds')
+saveRDS(A,'Fig_Manuscript/Revised/fig_data/Fig5A.rds')
 ```
 
 ## Fig 5 B
@@ -504,7 +504,7 @@ B <- ggarrange(NULL,NULL,NULL,NULL,
                      '',"B", "", ""),
   font.label = list(size = 30),
   hjust = .2,vjust = 0)
-saveRDS(B,'manuscript/Revised/fig_data/Fig5B.rds')
+saveRDS(B,'Fig_Manuscript/Revised/fig_data/Fig5B.rds')
 ```
 
 ## Fig 5 C
@@ -611,16 +611,16 @@ C <- ggarrange(NULL,NULL,NULL,NULL,
                      '',"C", "", ""),
   font.label = list(size = 30),
   hjust = .2,vjust = 0)
-saveRDS(C,'manuscript/Revised/fig_data/Fig5C.rds')
+saveRDS(C,'Fig_Manuscript/Revised/fig_data/Fig5C.rds')
 ```
 
 ##Fig 5 ABC
 
 ```{r Fig 5 ABC}
 rm(list = ls())
-A <- readRDS('manuscript/Revised/fig_data/Fig5A.rds')
-B <- readRDS('manuscript/Revised/fig_data/Fig5B.rds')
-C <- readRDS('manuscript/Revised/fig_data/Fig5C.rds')
+A <- readRDS('Fig_Manuscript/Revised/fig_data/Fig5A.rds')
+B <- readRDS('Fig_Manuscript/Revised/fig_data/Fig5B.rds')
+C <- readRDS('Fig_Manuscript/Revised/fig_data/Fig5C.rds')
 # ------------------------
 p<-ggarrange(NULL,A,B,C,ncol = 1,
           heights = c(0.07,1,1,1))
@@ -705,7 +705,7 @@ mylegend <- get_legend(E+
                            theme(legend.position = 'bottom',
                                  legend.title = element_blank(),
                                  legend.text = element_text(size = 20)))
-saveRDS(mylegend,'manuscript/Revised/fig_data/Fig6mylegend.rds')
+saveRDS(mylegend,'Fig_Manuscript/Revised/fig_data/Fig6mylegend.rds')
 # ******************************************
 # ****** structure95
 df <- readRDS("Data/rds/E210.astral_95.rds") 
@@ -796,7 +796,7 @@ EF<-ggarrange(
     labels = c("", "", "")
     )
 
-saveRDS(EF,'manuscript/Revised/fig_data/Fig6EF.rds')
+saveRDS(EF,'Fig_Manuscript/Revised/fig_data/Fig6EF.rds')
 ```
 
 ## Fig 6 CD
@@ -960,7 +960,7 @@ CD<-ggarrange(
     widths = c(1, 0.3, 1),
     labels = c("", "", "")
     )
-saveRDS(CD,'manuscript/Revised/fig_data/Fig6CD.rds')
+saveRDS(CD,'Fig_Manuscript/Revised/fig_data/Fig6CD.rds')
 ```
 
 ## Fig 6 AB
@@ -1127,17 +1127,17 @@ AB<-ggarrange(
     widths = c(1, 0.3, 1),
     labels = c("", "", "")
     )
-saveRDS(AB,'manuscript/Revised/fig_data/Fig6AB.rds')
+saveRDS(AB,'Fig_Manuscript/Revised/fig_data/Fig6AB.rds')
 ```
 
 ##Fig 6 All
 
 ```{r Fig 6 All}
 rm(list = ls())
-EF <- readRDS('manuscript/Revised/fig_data/Fig6EF.rds')
-CD <- readRDS('manuscript/Revised/fig_data/Fig6CD.rds')
-AB <- readRDS('manuscript/Revised/fig_data/Fig6AB.rds')
-mylegend <-readRDS('manuscript/Revised/fig_data/Fig6mylegend.rds')
+EF <- readRDS('Fig_Manuscript/Revised/fig_data/Fig6EF.rds')
+CD <- readRDS('Fig_Manuscript/Revised/fig_data/Fig6CD.rds')
+AB <- readRDS('Fig_Manuscript/Revised/fig_data/Fig6AB.rds')
+mylegend <-readRDS('Fig_Manuscript/Revised/fig_data/Fig6mylegend.rds')
 # ---------------------------------------------
 f6all <- ggarrange(NULL,AB,CD,EF,ncol = 1,
           heights = c(0.1,1,1,1))
@@ -1187,20 +1187,23 @@ p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
   scale_fill_manual(values = mycol)+
   ylim(0,100)
 
-p200s <- p12h+xlim(c('CPE','TM-Vec','GR-Align','SPE'))+
-  ylim(0,.465)+ #4.65*12*3.6 = 200sec
+p80s <- p12h+xlim(c('CPE','TM-Vec'))+
+  ylim(0,.186)+ #1.86*12*3.6 = 80sec
   theme(legend.text = element_text(face = 'bold',size = 15))
 
 df2 <- df
 df2$Time <- df2$TimeS+1
 p <- ggplot(df2,aes(Accuracy,Time,col=method,label=method))+
-  geom_point(size=7,show.legend = F)+    
-  geom_text(show.legend = F,vjust=.7,hjust=1.2,col='black',size=6, fontface='bold')+
+  geom_point(size=13,show.legend = F)+    
+  geom_text(show.legend = F,vjust=.7,hjust=1.2,
+            col='black',size=13, fontface='bold')+
   mytheme()+ylab('Time (s)')+
   scale_color_manual(values = mycol)+
   scale_y_log10()+xlim(50,103)+
-  theme(axis.text.x = element_text(face = 'bold',color = 'black',size = 20),
-        axis.text.y = element_text(face = 'bold',color = 'black',size = 20))
+  theme(axis.text.x = element_text(face = 'bold',color = 'black',size = 30),
+        axis.text.y = element_text(face = 'bold',color = 'black',size = 30),
+        axis.title.x = element_text(face = 'bold',color = 'black',size = 40),
+        axis.title.y = element_text(face = 'bold',color = 'black',size = 40))
 # ---------------------------------------------------------------
 ```
 
@@ -1779,7 +1782,7 @@ p <- ggplot(df2, aes(variable,value, fill=method))+
         axis.title.y = element_text(size = 25, face = 'bold',color = 'black'))
 # --------------------------------------------
 p12h
-p190s
+p80s
 p
 ```
 
@@ -2175,7 +2178,7 @@ for (i in 1:6) {
           axis.title.y = element_text(size = 20),
           panel.grid.major = element_line(color = "black"),
     panel.grid.minor = element_line(color = "black"))
-  ggsave(filename = paste0('manuscript/Revised/sup_Fig/210Cor', i, '.png'), 
+  ggsave(filename = paste0('Fig_Manuscript/Revised/sup_Fig/210Cor', i, '.png'), 
          plot = p, width = 9, height = 13, 
          dpi = 600, device = "png")
 }

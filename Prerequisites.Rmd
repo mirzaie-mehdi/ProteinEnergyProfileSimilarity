@@ -174,7 +174,7 @@ df_dis95 <- data.frame(data='Astral 95',
                        dis_str=as.vector(dis_str)[idx],
                        dis_seq=as.vector(dis_seq)[idx])
 rm(dis_seq, dis_str)
-saveRDS(df_dis95,'manuscript/Revised/fig_data/dis_95_manhat.rds')
+saveRDS(df_dis95,'Fig_Manuscript/Revised/fig_data/dis_95_manhat.rds')
 # ************************************************************
 # astral 40
 df_seq <- readRDS("Data/rds/E210.seq_astral_40.rds") 
@@ -206,12 +206,12 @@ df_dis40 <- data.frame(data='Astral 40',
                        dis_str=as.vector(dis_str)[idx],
                        dis_seq=as.vector(dis_seq)[idx])
 rm(dis_seq, dis_str)
-#saveRDS(df_dis40,'manuscript/fig_data/dis_40_manhat.rds')
-saveRDS(df_dis40,'manuscript/Revised/fig_data/dis_40_manhat.rds')
+#saveRDS(df_dis40,'Fig_Manuscript/Old_Figures/dis_40_manhat.rds')
+saveRDS(df_dis40,'Fig_Manuscript/Revised/fig_data/dis_40_manhat.rds')
 # **************************************
 df_tot <- rbind(df_tot40, df_tot95)
-#saveRDS(df_tot, 'manuscript/fig_data/df_total_energy.rds')
-saveRDS(df_tot, 'manuscript/Revised/fig_data/df_total_energy.rds')
+#saveRDS(df_tot, 'Fig_Manuscript/Old_Figures/df_total_energy.rds')
+saveRDS(df_tot, 'Fig_Manuscript/Revised/fig_data/df_total_energy.rds')
 ```
 
 
@@ -285,9 +285,9 @@ ump_df_seq95 <- ump_df_seq95[ump_df_seq95$UMAP2> -4 & ump_df_seq95$UMAP2< 4,]#(-
 ump_df_seq95$class <- ifelse(ump_df_seq95$class=='a','All-alpha','All-beta')
 # ----------------------------
 #save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95,
-#     file = 'manuscript/fig_data/UMPs.RData')
+#     file = 'Fig_Manuscript/Old_Figures/UMPs.RData')
 save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95,
-     file = 'manuscript/Revised/fig_data/UMPs.RData')
+     file = 'Fig_Manuscript/Revised/fig_data/UMPs.RData')
 ```
 
 # Length_Vs_Energy
