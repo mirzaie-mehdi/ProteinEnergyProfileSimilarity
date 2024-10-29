@@ -343,3 +343,57 @@ diag(my_sab)<-NA
 colnames(my_sab)<-rownames(my_sab)<-drugs
 saveRDS(my_sab,'Data/rds/my_sab.rds')
 ```
+
+# Overlap PDBs
+
+```{r Overlap PDBs}
+test4 <- read.csv('Data/csv/fiveSF.csv')
+test3 <- read.csv('Data/csv/spike.csv')
+test2 <- read.csv('Data/csv/Ferritin_Like_seq.csv')
+test1 <- read.csv('Data/csv/CT_Ho_cathID_filtered.csv')
+train <- read.csv("Train_Energy/list_with_chainID.txt",header = F)
+# -------
+pdbs1 <- toupper(substr(test1$pdbID,1,5))
+pdbs2 <- toupper(substr(test2$pdbID,1,5))
+pdbs3 <- toupper(substr(test3$pdbID,1,5))
+pdbs4 <- toupper(paste0(test4$pdbID, substr(test4$position,1,1)))
+pdbs <- unique(c(pdbs1, pdbs2, pdbs3, pdbs4))
+m <- match(train$V1, pdbs)
+idx_rm <- which(!is.na(m))
+idx_rm <- data.frame(V1=idx_rm)
+write.csv(idx_rm,'Train_Energy/idx_rm.csv',row.names = F)
+```
+
+# Pij_old_new
+
+```{r Pij_old_new}
+Pij <- read.csv("Data/csv/Pij.csv", header = F,sep = ";")
+pij_old <- (Pij + t(Pij))/2
+
+Pij_rm_Olaps <- read.csv("Data/csv/Pij_rm_Olaps.csv",
+                         header = F,sep = ";")
+
+Pij_new <- (Pij_rm_Olaps + t(Pij_rm_Olaps))/2
+
+df <- data.frame(Pij_old = pij_old[upper.tri(pij_old,diag = T)],
+                 Pij_new = Pij_new[upper.tri(Pij_new,diag = T)])
+
+saveRDS(df, 'Data/rds/Pij_old_new.rds')
+```
+
+## --- PijVisual
+```{r PijVisual}
+source('Functions.R')
+df <- readRDS('Data/rds/Pij_old_new.rds')
+
+p<-ggplot(df, aes(Pij_old, Pij_new))+
+  geom_point(size=3, alpha=.5)+
+  geom_smooth(method = 'glm',col='skyblue2',linewidth = .2)+
+       stat_cor(method = "pearson", size=5,
+                r.accuracy = 1e-6,
+                color = "red", geom = "label") +
+       theme_bw(base_line_size = .3)+
+       xlab('Old predictor')+ylab('New predictor')+
+  mytheme()
+
+```
