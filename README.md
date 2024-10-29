@@ -20,7 +20,7 @@ This repository contains all the necessary code and resource data to calculate t
 Below is a list of datasets used in this project:
 - The list of PDB.IDs for training set for Knowledge-based potential [PDBIDs](Train_Energy/list_with_chainID_rm_Olaps.txt)
 - Covid19 spike proteins data set [covidPDBIDs](Data/covidPDB/)
-- The list of proteins utilized for the large_scale proteome analysis (The protein modesl can be find in the folder [large](Data/Large_Scale_SARS2) according to the sars_proteom column [SARS_Proteom](Data/Large_Scale_SARS2/sars_proteom.csv).
+- The list of proteins utilized for the large_scale proteome analysis (The protein modesl can be find in the [Large_Scale_SARS2](Data/Large_Scale_SARS2) folder according to the sars_proteom column [SARS_Proteom](Data/Large_Scale_SARS2/sars_proteom.csv).
 
  ## Example:
 The `Example.R` file is a simple script developed to compute SPE and CPE for four alpha-globin proteins across four different species. Additionally, it demonstrates the correlation between the Total Energy calculated using SPE and CPE, as outlined below.
