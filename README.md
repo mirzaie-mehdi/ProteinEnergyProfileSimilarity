@@ -18,7 +18,7 @@ This repository contains all the necessary code and resource data to calculate t
 
  ## Datasets
 Below is a list of datasets used in this project:
-- The list of PDB.IDs for training set for Knowledge-based potential [list_with_chainID_rm_Olaps.txt](Train_Energy/list_with_chainID_rm_Olaps.txt)
+- The list of PDB.IDs for training set for Knowledge-based potential [list_with_chainID](Train_Energy/list_with_chainID_rm_Olaps.txt)
 - Covid19 spike proteins data set [covidPDB folder](Data/covidPDB/)
 - 
 
