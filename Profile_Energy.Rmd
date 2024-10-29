@@ -197,7 +197,7 @@ saveRDS(E210.seq_astral_40,file = "Data/rds/E210.seq_astral_40.rds")
 
 # C-terminal & Homing CPE
 This chunk calculates the CPE of proteins from two superfamilies: the C-terminal domain in the DNA helicase RuvA subunit and the Homing endonucleases.
-
+this chunk has run on win 10 with 2.4 GHz cpu and 8 GB RAM.
 ```{r C-terminal_Homing_CPE}
 source('Functions.R')
 # ----------------------------------------------------
@@ -228,6 +228,54 @@ saveRDS(E210.seq_CT_Ho,'Data/rds/E210.seq_CT_Ho.rds')
 ```
 
 
+
+# C-terminal & Homing SPE
+this chunk has run on win 10 with 2.4 GHz cpu and 8 GB RAM.
+```{r C-terminal & Homing SPE}
+source('Functions.R')
+# ----------------------------------------------------
+df <- read.csv('Data/csv/CT_Ho_cathID_filtered.csv')
+
+E210_CT_Ho <- data.frame(df,
+                         matrix(NA, ncol = 210, nrow = nrow(df)))
+
+colnames(E210_CT_Ho)[-c(1:9)] <- pair_inter
+
+tictoc::tic()
+for (NP in 1:nrow(E210_CT_Ho)) {
+  print(NP)
+  pdbname <- substr(E210_CT_Ho$pdbID[NP],1,4)
+  tryCatch({
+    pdb0 <- read.pdb(pdbname, verbose = FALSE)
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM",
+                         chain=substr(E210_CT_Ho$pdbID[NP],5,5))
+    pdb0 <- trim.pdb(pdb0, sele1, verbose = FALSE)
+    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+    sele4 <- atom.select(pdb0, "noh")
+    # ------------
+    r <- unique(pdb0$atom$resno)
+    pos <- as.numeric(unlist(strsplit(E210_CT_Ho$position[NP],'-')))
+    st <- pos[1]
+    en <- ifelse(pos[2]>length(r), length(r), pos[2])
+    sele3 <- atom.select(pdb0,  resno=r[st]:r[en], verbose=FALSE)
+    sele <- combine.select(sele2, sele4, operator="AND")
+    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    E210_CT_Ho[NP,-c(1:9)] <- energy210
+    }, error = function(e) {
+     cat("Error downloading file:", e$message, "\n")
+    })
+}
+dis <- as.matrix(E210_CT_Ho[,-c(1:9)] %>% proxy::dist(method = manhat))
+tictoc::toc()
+# ---------------
+# time = 187 sec
+# ---------------
+saveRDS(E210_CT_Ho,'Data/rds/E210_CT_Ho.rds')
+```
+
+
 # Five superfamily CPE
 
 This chunk calculates the energy profile (CPE) for five distinct SCOP superfamilies: winged helix (a.4.5), PH domain-like (b.55.1), NTF-like (d.17.4), Ubiquitin-like (d.15.1), and Immunoglobulins (b.1.1).
@@ -254,14 +302,163 @@ df2 <- E210.seq_df5
 df2 <- df2[!is.na(df2$FF),]
 dis <- as.matrix(proxy::dist(df2[,-c(1:9)], method = manhat))
 tictoc::toc()
+# ---------------
+# time = 103
+# ---------------
 saveRDS(E210.seq_df5,file = "Data/rds/E210.seq_fiveSF.rds")
 ```
 
-# Ferritin-like Superfamily SPE
+# Five superfamily SPE
+
+```{r Five superfamily SPE}
+source('Functions.R')
+# ----------------------------------------------------
+df5 <- read.csv('Data/csv/fiveSF.csv')
+Nprotein <- nrow(df5)
+#----------------------------------------------
+num_columns <- 210
+E210_df5 <- data.frame(df5,
+                       matrix(NA,ncol=num_columns,nrow=Nprotein))
+
+colnames(E210_df5)[-c(1:9)] <- pair_inter
+tictoc::tic()
+for (NP in 1:Nprotein) {
+  print(NP)
+  chain_resno <- split_position(E210_df5$position[NP])
+  pdbname <- E210_df5$pdbID[NP]
+  tryCatch({
+    pdb0 <- read.pdb(pdbname,verbose = FALSE)
+    pdblist = list()
+    for (ind in 1:dim(chain_resno)[1]){
+      sele1 <- atom.select(pdb0,"protein",type = "ATOM",
+                           chain=chain_resno$chain[ind])
+      sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+      sele4 <- atom.select(pdb0, "noh")
+      sele <- combine.select(sele1, sele2,sele4, operator="AND",verbose = FALSE)
+      if (!(chain_resno$start[ind]=="NA") & !(chain_resno$end[ind])=="NA"){
+         st <- chain_resno$start[ind]
+         en <- chain_resno$end[ind]
+         sele3 <- atom.select(pdb0,  resno=st:en, verbose=FALSE)
+         sele <- combine.select(sele1,sele2,sele3,sele4,operator="AND",verbose = FALSE)
+      }
+      pdblist[[ind]] <- trim.pdb(pdb0, sele,verbose = FALSE)
+    }
+    new_pdb = pdblist[[1]]
+    if (dim(chain_resno)[1] > 1) {
+      for (ind in 2:dim(chain_resno)[1]){
+      new_pdb <- cat.pdb(new_pdb, pdblist[[ind]], rechain=FALSE)
+      }
+    }
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    E210_df5[NP,-c(1:9)] <- energy210
+    }, error = function(e) {
+     cat("Error downloading file:", e$message, "\n")
+    })
+}
+df2 <- E210_df5
+df2 <- df2[!is.na(df2$FF),]
+dis <- as.matrix(proxy::dist(df2[,-c(1:9)], method = manhat))
+tictoc::toc()
+# ---------------------------------
+# t = 3524 ----------------
+#saveRDS(E210_df5, file = "Data/rds/E210_fiveSF.rds")
+```
+
+# Globin SPE_CPE
+
+```{r Globin AlphaBeta SPE_CPE}
+source('Functions.R')
+E210.SPE <- function(pdb){
+  tryCatch({
+    pdb0 <- pdb
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM")
+    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+    sele4 <- atom.select(pdb0, "noh")
+    sele <- combine.select(sele1, sele2,sele4, operator="AND", verbose = FALSE)
+    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+    pdbx <- new_pdb$atom
+    pdbx <- pdbx[!duplicated(pdbx$resno),]
+    seq <- paste0(aa321(pdbx$resid),collapse = '')
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    return(c(seq,energy210))
+  }, error = function(e) {
+    cat("Error downloading file:", e$message, "\n")
+  })
+}
+# -----------------------------------------
+globin <- list.dirs("Data/Globin",
+                          full.names = TRUE)
+globin <- globin[basename(globin)!='Globin']
+
+df <- c()
+tictoc::tic()
+for (i in 1:length(globin)) {
+  pdbFiles <- list.files(globin[i],full.names = TRUE)
+  pdbs <- purrr::map(pdbFiles, read.pdb)
+  print(paste0(i, ': ', length(pdbs)))
+  x <- lapply(pdbs, E210.SPE)
+  x <- do.call(rbind, x)
+  x <- data.frame(globin=strsplit(globin[i],'/')[[1]][3],
+                  pdbID=basename(pdbFiles),
+                  x)
+  df <- rbind(df, x)
+}
+colnames(df)[-c(1:2)] <- c('seq',pair_inter)
+rownames(df) <- df$pdbID
+df <- cbind(df[,1:3],apply(df[,-c(1:3)], 2, FUN = as.numeric))
+dis_SPE <- as.matrix(proxy::dist(df[,-c(1:3)], method = manhat))
+z <- tictoc::toc()
+t_SPE <- z$toc - z$tic
+write.csv(df[,1:3],'Data/Globin/Globin.csv',
+          row.names = F)
+# ---------------
+annot <- read.csv('Data/Globin/Globin.csv')
+df <- data.frame(annot,
+                 matrix(NA,ncol=210,nrow=nrow(annot)))
+colnames(df)[-c(1:3)] <- pair_inter
+rownames(df) <- df$pdbID
+tictoc::tic()
+for (NP in 1:nrow(df)) {
+  print(NP)
+  seq <- df$seq[NP]
+  aa210_p <- Energy_CPE210(seq)
+  df[NP, -c(1:3)] <- aa210_p
+}
+dis_CPE <- as.matrix(df[,-c(1:3)] %>% proxy::dist(method = manhat))
+z <- tictoc::toc()
+t_CPE <- z$toc - z$tic
+
+save(t_SPE, t_CPE, dis_CPE, dis_SPE,
+     file = 'Data/Globin/dis_CPE_SPE_time.RData')
+```
+
+# Ferritin CPE
+
+```{r Ferritin CPE}
+source('Functions.R')
+ferritin <- read.csv("Data/csv/Ferritin_Like_seq.csv",sep = ",")
+Nprotein <- nrow(ferritin)
+E210.seq_ferritin <- data.frame(ferritin,
+                            matrix(NA, ncol = 210, 
+                                   nrow = Nprotein))
+colnames(E210.seq_ferritin)[-c(1:4)] <- pair_inter
+
+for (NP in 1:Nprotein) {
+  print(NP)
+  seq <- E210.seq_ferritin$seq[NP]
+  aa210_p <- Energy_CPE210(seq)
+  E210.seq_ferritin[NP,5:214] <- aa210_p
+}
+
+saveRDS(E210.seq_ferritin,file = "Data/rds/E210.seq_ferritin.rds")
+```
+# Ferritin SPE
 
 This segment computes the SPE for proteins belonging to the Ferritin-like superfamily. The PDB IDs of these proteins are located in the `Data\csv\Ferritin_Like.csv` file.
 
-```{r Ferritin-like Superfamily}
+```{r Ferritin SPE}
 source('Functions.R')
 # ----------------------------------------------------
 ferritin <- read.csv("Data/csv/Ferritin_Like.csv",sep = ",")
@@ -451,4 +648,106 @@ for (NP in 1:nrow(df_seq)) {
   E210.seq_dti[NP,-c(1:5)] <- aa210_p
 }
 #saveRDS(E210.seq_dti,'Data/rds/E210.seq_dti.rds')
+```
+
+
+# SARS_Proteom Large Scale
+
+```{r SARS_Proteom Large Scale}
+source('Functions.R')
+E210.SPE <- function(pdb){
+  tryCatch({
+    pdb0 <- pdb
+    sele1 <- atom.select(pdb0,"protein",type = "ATOM")
+    sele2 <- atom.select(pdb0, "protein", elety=c("H","OXT"),inverse=TRUE)
+    sele4 <- atom.select(pdb0, "noh")
+    sele <- combine.select(sele1, sele2,sele4, operator="AND", verbose = FALSE)
+    new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
+    pdbx <- new_pdb$atom
+    pdbx <- pdbx[!duplicated(pdbx$resno),]
+    seq <- paste0(aa321(pdbx$resid),collapse = '')
+    Net_Frame <- NetworkFrame(PDB = new_pdb)
+    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    return(c(nchar(seq), seq, energy210))
+  }, error = function(e) {
+    cat("Error downloading file:", e$message, "\n")
+  })
+}
+# ------------------------------------------
+sars_proteom <- list.dirs("Data/Large_Scale_SARS2",full.names = TRUE)
+sars_proteom <- sars_proteom[basename(sars_proteom)!='__pycache__']
+sars_proteom <- sars_proteom[basename(sars_proteom)=='RenamedModels']
+
+df <- c()
+tictoc::tic()
+for (i in 1:length(sars_proteom)) {
+  pdbFiles <- list.files(sars_proteom[i],full.names = TRUE)
+  pdbs <- purrr::map(pdbFiles, read.pdb)
+  print(paste0(i, ': ', length(pdbs)))
+  x <- lapply(pdbs, E210.SPE)
+  x <- do.call(rbind, x)
+  x <- data.frame(sars_proteom=strsplit(sars_proteom[i],'/')[[1]][3],
+                  pdbID=basename(pdbFiles),
+                  x)
+  df <- rbind(df, x)
+}
+colnames(df)[-c(1,2)] <- c('length', 'seq', pair_inter)
+dis_SPE <- as.matrix(proxy::dist(df[,-c(1:4)], method = manhat))
+t_SPE <- tictoc::toc()
+
+
+write.csv(df[,1:4],'Data/Large_Scale_SARS2/sars_proteom.csv',
+          row.names = F)
+# ---------------
+annot <- read.csv('Data/Large_Scale_SARS2/sars_proteom.csv')
+annot <- df[,1:4]
+df <- data.frame(annot,
+                 matrix(NA,ncol=210,nrow=nrow(annot)))
+colnames(df)[-c(1:4)] <- pair_inter
+tictoc::tic()
+for (NP in 1:nrow(df)) {
+  print(NP)
+  seq <- df$seq[NP]
+  aa210_p <- Energy_CPE210(seq)
+  df[NP,5:214] <- aa210_p
+}
+dis_CPE <- as.matrix(df[,-c(1:4)] %>% proxy::dist(method = manhat))
+t_CPE <- tictoc::toc()
+
+save(df_SPE, df_CPE, t_SPE, t_CPE,
+     file='Data/Large_Scale_SARS2/SPE_CPE_time.RData')
+```
+
+
+# Scalability (ASTRAL 95)
+
+```{r Scalability}
+source('Functions.R')
+# ----------------------------
+path <- 'Data/csv/'
+astral <- paste0(path,
+                 'Astral95_subset_',
+                 c(1,seq(5,30,5)),'k.csv')
+
+
+df <- data.frame(subset=1:7,
+                 n_protein=c(1,seq(5,30,5))*1000,
+                 sumAA=NA,
+                 time=NA)
+
+
+for (i in 1:nrow(df)) {
+  print(i)
+  df2 <- read.csv(astral[i])
+  tictoc::tic()
+  x <- lapply(as.list(df2$seq), Energy_CPE210)
+  x <- do.call(rbind, x)
+  dis <- x %>% proxy::dist(method = manhat)
+  z <- tictoc::toc()
+  df$time[i] <- z$toc - z$tic
+  df$sumAA[i] <- sum(nchar(df2$seq))
+  rm(df2, dis)
+}
+
+write.csv(df, 'Data/csv/CPE_prfc_astral95.csv', row.names = F)
 ```

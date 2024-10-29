@@ -59,6 +59,8 @@ library(mclust)
 library(googledrive)
 library(Biostrings)
 library(msa)
+library(binom)
+library(lsa)
 ```
 
 # Figures
@@ -135,7 +137,7 @@ p1 <- ggplot(res, aes(length, disTot))+
   ylim(-.5,.5)
 # -------------------------
 length_var <- res$length
-other_vars <- res[, 14:223]
+other_vars <- res[, 4:213]
 
 cor_values <- numeric(ncol(other_vars))
 
@@ -172,7 +174,7 @@ p<-ggarrange(NULL,NULL,NULL,NULL,NULL,
              hjust = -.5, vjust = 0
              )
 
-# save FIG2.pdf 10x9
+# save FIG2.pdf 16x9
 ```
 
 ## Fig 3
@@ -1143,15 +1145,22 @@ p<-cowplot::plot_grid(f6all, mylegend, ncol = 1, rel_heights = c(1,.03))
 # save pdf 10x9
 ```
 
-## Fig 7 CT_Ho
+## Fig 7 CT_Ho (regenerat)
 
 ```{r Fig 7 CT_Ho}
 source('Functions.R')
+# -----------------------------------
+# time_for_SPE  = 187 Sec
+# accuracy_for_SPE = 99
+# Extracted from 'SPE for Ct_Ho' chunk
 # ----------------------------------------------------
 df <- data.frame(method=c('GR-Align','RMSD','TM-Score',
-                          'YH(10Rotation)','YH(2500Rotation)','TM-Vec','CPE'),
-                 Accuracy=c(62.3, 59.2, 61.5, 70.8, 81.5, 100, 100),
-                 TimeS=c(120, 3600, 33600, 600, 18600, 67, 1))
+                          'YH(10Rotation)','YH(2500Rotation)','TM-Vec','CPE',
+                          'SPE'),
+                 Accuracy=c(62.3, 59.2, 61.5, 70.8, 81.5, 100, 100,
+                            99),
+                 TimeS=c(120, 3600, 33600, 600, 18600, 67, 1,
+                         187))
 # ------------------------------------------------------------------------
 # ---------   the values for  `GR-Align`, `RMSD`, `TM-Score`, `YH(10Rotation)`, `YH(2500Rotation)` 
 # ----------      were previously reported in the `Yau.S et.al. Journal of Biomolecular Structure and Dynamics (2018)`.
@@ -1162,7 +1171,7 @@ df$ratio<-log10(df$Accuracy/df$Time+1)
 df <- df[order(df$ratio, decreasing = T),]
 df$method <- factor(df$method, 
                     levels = df$method)
-mycol <-c('magenta','orange','skyblue3','purple','red','yellow4','green')
+mycol <-c('magenta','orange','cyan','skyblue3','purple','red','yellow4','green')
 
 
 p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
@@ -1178,7 +1187,8 @@ p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
   scale_fill_manual(values = mycol)+
   ylim(0,100)
 
-p130s <- p12h+xlim(c('CPE','TM-Vec','GR-Align'))+ylim(0,.3)+ #3.0*12*3.6 = 130sec
+p200s <- p12h+xlim(c('CPE','TM-Vec','GR-Align','SPE'))+
+  ylim(0,.465)+ #4.65*12*3.6 = 200sec
   theme(legend.text = element_text(face = 'bold',size = 15))
 
 df2 <- df
@@ -1191,12 +1201,68 @@ p <- ggplot(df2,aes(Accuracy,Time,col=method,label=method))+
   scale_y_log10()+xlim(50,103)+
   theme(axis.text.x = element_text(face = 'bold',color = 'black',size = 20),
         axis.text.y = element_text(face = 'bold',color = 'black',size = 20))
-# --------------------------------------------------------------------------
-p12h
-p130s
-p
+# ---------------------------------------------------------------
 ```
 
+## Fig 8 Globin
+
+```{r Fig8_new}
+source('Functions.R')
+# ------------------------
+load('Data/Globin/dis_CPE_SPE_time.RData')
+df <- read.csv('Data/Globin/Globin.csv')
+df$globin <- gsub('-.*','',df$globin)
+# ---------------------
+tm <- read.csv('Data/Globin/disTM_vec_Globin.csv')
+colnames(tm)<-rownames(tm)<-df$pdbID
+tm <- 1 - tm
+diag(tm) <- NA
+t_tm <- 4.91
+# ------------------tm----------------
+ump_tm <- umap(d = tm,
+            n_neighbors = 13,
+            min_dist = 0.1,
+            input="dist")
+ump_tm <- ump_tm$layout
+ump_tm <- data.frame(pdbID=rownames(ump_tm), 
+                  UMAP1=ump_tm[,1],
+                  UMAP2=ump_tm[,2])
+ump_tm <- left_join(df, ump_tm,'pdbID')
+# ------------------cpe----------------
+ump_cpe <- umap(d = dis_CPE,
+            n_neighbors = 13,
+            min_dist = 0.1,
+            input="dist")
+ump_cpe <- ump_cpe$layout
+ump_cpe <- data.frame(pdbID=rownames(ump_cpe), 
+                  UMAP1=ump_cpe[,1],
+                  UMAP2=ump_cpe[,2])
+ump_cpe <- left_join(df, ump_cpe,'pdbID')
+# ------------------SPE----------------
+ump_spe <- umap(d = dis_SPE,
+            n_neighbors = 13,
+            min_dist = 0.1,
+            input="dist")
+ump_spe <- ump_spe$layout
+ump_spe <- data.frame(pdbID=rownames(ump_spe), 
+                  UMAP1=ump_spe[,1],
+                  UMAP2=ump_spe[,2])
+ump_spe <- left_join(df, ump_spe,'pdbID')
+# ---------------------
+ump_df <- data.frame(Method = rep(c('SPE', 'CPE', 'TM-Vec'), each=nrow(ump_cpe)),
+                     rbind(ump_spe, ump_cpe, ump_tm))
+
+ump_df$Method <- factor(ump_df$Method,
+                        levels = c('SPE', 'CPE', 'TM-Vec'))
+
+p<-ggplot(ump_df, aes(UMAP1, UMAP2, color= globin)) +
+  geom_point(alpha=.7,size=3) +
+  facet_grid( ~ Method)+
+  mytheme() +
+  theme(strip.text.x = element_text(size = 13, face = 'bold'))
+# save Fig8_new.pdf 10x5
+
+```
 
 ## Fig 9B,D,F ferritin
 
@@ -1233,6 +1299,99 @@ dis <- proxy::dist(df[,-c(1:4)], method = manhat)
 nnet <- neighborNet(dis)
 #write.nexus.networx(nnet,'Data/rds/E210.seq_ferritin.nxs')
 ```
+
+
+## Fig 9C,E,G ferritin (mean distance)
+
+```{r Fig 9C,E,G ferritin (mean distance)}
+source('Functions.R')
+# -----------------------
+mean_pairwise_dis <- function(dis, gr, gr_idx){
+  n <- length(unique(gr))
+  calculate_mean_distance <- function(group1_indices,group2_indices,
+                                      distance_matrix) {
+    submatrix <- distance_matrix[group1_indices, group2_indices]
+    return(mean(submatrix))
+  }
+  mean_dis <- matrix(NA, nrow = n, ncol = n,
+                     dimnames = list(levels(gr),levels(gr)))
+  for (i in 1:n) {
+    for (j in 1:n) {
+      mean_dis[i, j] <- calculate_mean_distance(gr_idx[[i]],gr_idx[[j]],dis)
+    }
+  }
+  diag(mean_dis) <- 0
+  minmax_dis <- mean_dis
+  minmax_dis <- (minmax_dis - min(minmax_dis))/(max(minmax_dis) - min(minmax_dis))
+  minmax_dis <- round(minmax_dis, 2)
+  return(minmax_dis)
+}
+# ------------------------------------
+# -------- SPE
+E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
+df <- E210_ferritin
+rownames(df) <- df$pdbID
+dis <- as.matrix(proxy::dist(df[,-c(1:4)], method = manhat))
+group <-as.factor(df$group)
+group_indices <-  split(seq_len(length(group)), group)
+PWdisGroup<-mean_pairwise_dis(as.matrix(dis),
+                             gr = group, gr_idx = group_indices)
+tree_data <- ape::bionj(as.dist(PWdisGroup))
+
+t_SPE <- ggtree(tree_data, layout = 'unrooted',
+                size=5,aes(color = label)) +
+  geom_tiplab(aes(label=label, col=label),
+              hjust=.5,vjust=-.9,size=4,fontface="bold",align=F)+
+  scale_color_discrete(type =  c('red',"orange2","yellow4","green3",
+                                 'skyblue3','blue',
+                                 'magenta','purple2'
+  ))+
+  theme(legend.position = 'none')
+# ------------------------------
+# ---------- CPE
+E210.seq_ferritin <- readRDS("Data/rds/E210.seq_ferritin.rds")
+df <- E210.seq_ferritin
+rownames(df) <- df$pdbID
+dis <- as.matrix(proxy::dist(df[,-c(1:4)], method = manhat))
+group <- as.factor(df$group)
+group_indices <- split(seq_len(length(group)), group)
+PWdisGroup <- mean_pairwise_dis(as.matrix(dis),
+                                gr = group, gr_idx = group_indices)
+tree_data <- ape::bionj(as.dist(PWdisGroup))
+
+t_CPE <- ggtree(tree_data, layout = 'unrooted',
+                size=5,aes(color = label)) +
+  geom_tiplab(aes(label=label, col=label),
+              hjust=.5,vjust=-.9,size=4,fontface="bold",align=F)+
+  scale_color_discrete(type =  c('red',"orange2","yellow4","green3",
+                                 'skyblue3','blue',
+                                 'magenta','purple2'
+  ))+
+  theme(legend.position = 'none')
+# ----------------------
+# --------- TM
+df <- read.csv('Data/csv/Ferritin_Like_seq.csv')
+dis <- read.csv('Data/csv/disTM_vec_Ferritin_Like_seq.csv')
+dis <- 1 - dis
+colnames(dis) <- rownames(dis) <- df$pdbID
+group <- as.factor(df$group)
+group_indices <- split(seq_len(length(group)), group)
+PWdisGroup <- mean_pairwise_dis(as.matrix(dis),
+                                gr = group, gr_idx = group_indices)
+tree_data <- ape::bionj(as.dist(PWdisGroup))
+
+t_TM <- ggtree(tree_data, layout = 'unrooted',
+               size=5,aes(color = label)) +
+  geom_tiplab(aes(label=label, col=label),
+              hjust=.5,vjust=-.9,size=4,fontface="bold",align=F)+
+  scale_color_discrete(type =  c('red',"orange2","yellow4","green3",
+                                 'skyblue3','blue',
+                                 'magenta','purple2'
+  ))+
+  theme(legend.position = 'none')
+```
+
+
 
 ## Fig 10 covid
 
@@ -1599,8 +1758,8 @@ p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
   scale_fill_manual(values = mycol)+
   ylim(0,100)
 
-p190s <- p12h+xlim(c('CPE','MSA (ClustalW)','TM-Vec','SPE'))+
-  ylim(0,.44)+ #4.4*12*3.6 = 190sec
+p80s <- p12h+xlim(c('CPE','MSA (ClustalW)','TM-Vec'))+
+  ylim(0,.186)+ #1.86*12*3.6 = 80sec
     theme(legend.text = element_text(face = 'bold',size = 15))
 
 
@@ -1623,6 +1782,121 @@ p12h
 p190s
 p
 ```
+
+## Fig 10i (Spike Inter-Similarity)
+
+This chunk calculates the minimum pairwise distance among the SARS2, SARS, and MERS groups to assess their inter-similarity
+
+```{r Spike Inter-Similarity}
+source('Functions.R')
+# --------------------SPE-----------
+df <- readRDS("Data/rds/E210_spike.rds")
+rownames(df) <- df$pdbID
+x <- as.matrix(df[,-c(1:4)]/df$length)
+dis_SPE <- as.matrix(x %>% proxy::dist(method = manhat))
+# ----------------------------------
+# -----------------CPE-------------------
+df <- readRDS("Data/rds/E210.seq_spike.rds")
+rownames(df) <- df$pdbID
+x <- as.matrix(df[,-c(1:4)]/df$length)
+dis_CPE <- as.matrix(x %>% proxy::dist(method = manhat))
+# ------------------------------------------------
+# -------------------Seq identity from MSA------------------------
+sequences <- readAAStringSet("Data/covidPDB/Spike.fasta")
+# ---- Multiple sequence alignment using ClustalW---------
+alignment <- msa(sequences, method = "ClustalW")
+alignment2 <- msaConvert(alignment,type="seqinr::alignment")
+d <- seqinr::dist.alignment(alignment2, "identity")
+dis_seqid <- as.matrix(d)
+dis_seqid <- dis_seqid[df$pdbID, df$pdbID]
+# -------------------------------------
+# -------------RMSD---------------------
+rms <- data.frame(readRDS('Data/covidPDB/RMSD_spike.rds'))
+colnames(rms)<-rownames(rms)
+diag(rms)<-0
+rms <- as.matrix(rms)
+# -------------------------------------
+# -------------TM---------------------
+tm <- read.csv('Data/covidPDB/disTM_vec_spike.csv')
+colnames(tm) <- rownames(tm) <- df$pdbID
+tm <- 1 - tm
+tm_vec <- as.matrix(tm)
+# -------------------------------------
+# -------------TM score---------------------
+spike <- read.csv("Data/covidPDB/spike_seq.csv")
+df <- spike
+tm <- read.csv('Data/covidPDB/disTM_score_spike.csv')
+rownames(tm) <- colnames(tm) <- df$pdbID
+
+tm_max <- tm
+for (i in 1:nrow(tm_max)) {
+  print(i)
+  for (j in 1:nrow(tm_max)) {
+    tm_max[i,j] <- max(tm_max[i,j], tm_max[j,i])
+    tm_max[j,i] <- tm_max[i,j]
+  }
+}
+diag(tm_max) <- 1
+tm_max <- as.matrix(1 - tm_max)
+# -------------Groups----------
+group <- factor(df$virus)
+group_indices <- split(seq_len(length(group)), group)
+# -----------Function to calculate mean of pairwise distance between two groups
+mean_pairwise_dis <- function(dis, gr, gr_idx){
+  n <- length(unique(gr))
+  calculate_mean_distance <- function(group1_indices,group2_indices,
+                                     distance_matrix) {
+  submatrix <- distance_matrix[group1_indices, group2_indices]
+  return(mean(submatrix))
+  }
+mean_dis <- matrix(NA, nrow = n, ncol = n,
+                   dimnames = list(levels(gr),levels(gr)))
+for (i in 1:n) {
+    for (j in 1:n) {
+      mean_dis[i, j] <- calculate_mean_distance(gr_idx[[i]],gr_idx[[j]],dis)
+    }
+  }
+diag(mean_dis)<-0
+minmax_dis <- mean_dis
+minmax_dis <- (minmax_dis - min(minmax_dis))/(max(minmax_dis) - min(minmax_dis))
+
+minmax_dis <- round(minmax_dis,2)
+return(minmax_dis)
+}
+# -----------------------------------------------------------
+dists <- list(CPE=dis_CPE,SPE=dis_SPE,seqid=dis_seqid,
+              TM_vec=tm_vec,RMSD=rms, TM_score=tm_max)
+pair_dis_minPair <- lapply(dists, FUN = mean_pairwise_dis,
+                           gr=group,gr_idx=group_indices)
+lower_triangles <- lapply(pair_dis_minPair, function(x) x[lower.tri(x)])
+mean_pair_dist <- do.call(rbind, lower_triangles)
+colnames(mean_pair_dist) = c("MERS-CoV ~ SARS-CoV", "MERS-CoV ~ SARS-CoV-2", "SARS-CoV ~ SARS-CoV-2")
+library(reshape2)
+group_dis <- melt(mean_pair_dist)
+colnames(group_dis) = c("Method","Comparison","Distance")
+#saveRDS(group_dis, 'Data/rds/Spike_group_dis.rds')
+# -------------------
+group_dis <- readRDS('Data/rds/Spike_group_dis.rds')
+# Plot the bar plot
+p0<-ggplot(group_dis,
+           aes(x = Comparison, y = Distance, fill = Method)) +
+  geom_bar(stat = "identity", position = "dodge", width = 0.7,
+           show.legend = F) +
+  labs(x = "", y = "Distance") +
+  mytheme() +
+  theme(legend.title = element_blank(),
+        axis.text.x = element_text(size = 15, face = 'bold',
+                                   color = 'black', angle = 15, 
+                                   hjust = .8, vjust = .8),
+        axis.text.y = element_text(size = 20, face = 'bold',
+                                   color = 'black'),
+        axis.title.y = element_text(size = 25, face = 'bold',
+                                   color = 'black'),)+
+  scale_fill_manual(values = c('magenta', 'blue','cyan','orange','red','green'))
+
+```
+
+
 
 ## Fig 11 Bacteriocin Tm-Vec
 
@@ -1729,6 +2003,277 @@ p1 <- ggplot(df,aes(sAB,my_sAB))+
 # save FIG12.pdf 10x7
 ```
 
+## Fig 13 (PLPRO)
+
+```{r Fig 13 (PLPRO)}
+source('Functions.R')
+load('Data/Large_Scale_SARS2/SPE_CPE_time.RData')
+df_CPE$pdbID <- gsub('.pdb','',df_CPE$pdbID)
+df_SPE$pdbID <- gsub('.pdb','',df_SPE$pdbID)
+# ----------- load TM from google drive ---------------
+drive_deauth()
+drive_user()
+public_file <- drive_get(as_id("1QUAqdkypCPHraNESF11arxg29tDUp521"))
+drive_download(public_file, overwrite = TRUE)
+tm <- read.csv('disTM_vec_sars_proteom.csv')
+file.remove('disTM_vec_sars_proteom.csv')
+tm <- 1 - tm
+# ------------------------------------
+# -------------------
+idx_PLpro <- grep('PLPro', df_CPE$sars_proteom)
+
+df_CPE <- df_CPE[idx_PLpro,]
+df_SPE <- df_SPE[idx_PLpro,]
+rownames(df_CPE) <- df_CPE$pdbID
+rownames(df_SPE) <- df_SPE$pdbID
+
+tm <- tm[idx_PLpro, idx_PLpro]
+colnames(tm) <- rownames(tm) <- df_CPE$pdbID
+
+c1 <- read.delim('Data/Large_Scale_SARS2/NSP3_cd21732_betaCoV_PLPro/cluster1.txt', header = F)
+
+
+c2 <- read.delim('Data/Large_Scale_SARS2/NSP3_cd21732_betaCoV_PLPro/cluster2.txt', header = F)
+
+c3 <- read.delim('Data/Large_Scale_SARS2/NSP3_cd21732_betaCoV_PLPro/cluster3.txt', header = F)
+
+c4 <- read.delim('Data/Large_Scale_SARS2/NSP3_cd21732_betaCoV_PLPro/cluster4.txt', header = F)
+
+
+df_CPE <- data.frame(subClass=NA, df_CPE)
+df_CPE$subClass[df_CPE$pdbID%in%c1$V1] <- 'Sarb'
+df_CPE$subClass[df_CPE$pdbID%in%c2$V1] <- 'Nob'
+df_CPE$subClass[df_CPE$pdbID%in%c3$V1] <- 'Merb'
+df_CPE$subClass[df_CPE$pdbID%in%c4$V1] <- 'Emb'
+
+df_SPE <- data.frame(subClass=NA, df_SPE)
+df_SPE$subClass[df_SPE$pdbID%in%c1$V1] <- 'Sarb'
+df_SPE$subClass[df_SPE$pdbID%in%c2$V1] <- 'Nob'
+df_SPE$subClass[df_SPE$pdbID%in%c3$V1] <- 'Merb'
+df_SPE$subClass[df_SPE$pdbID%in%c4$V1] <- 'Emb'
+
+dff <- df_CPE[,-c(1:5)]/as.numeric(df_CPE$length)
+dis_CPE <- as.matrix(proxy::dist(dff,
+                                 method = manhat))
+dff <- df_SPE[,-c(1:5)]/as.numeric(df_SPE$length)
+dis_SPE <- as.matrix(proxy::dist(dff,
+                                 method = manhat))
+
+ump_tm <- umap(d = tm,n_neighbors = 13,input='dist',min_dist = 0.5)
+ump_tm <- ump_tm$layout
+ump_tm <- data.frame(pdbID=rownames(ump_tm), 
+                  UMAP1=ump_tm[,1],
+                  UMAP2=ump_tm[,2])
+ump_tm <- left_join(df_CPE[,1:5], ump_tm, 'pdbID')
+#----------------------CPE-----------
+ump_CPE <- umap(d = dis_CPE,n_neighbors = 13,input='dist',min_dist = 0.5)
+ump_CPE <- ump_CPE$layout
+ump_CPE <- data.frame(pdbID=rownames(ump_CPE), 
+                  UMAP1=ump_CPE[,1],
+                  UMAP2=ump_CPE[,2])
+ump_CPE <- left_join(df_CPE[,1:5], ump_CPE, 'pdbID')
+#----------------SPE--------------------
+ump_SPE <- umap(d = dis_SPE,n_neighbors = 13,input='dist',min_dist = 0.5)
+ump_SPE <- ump_SPE$layout
+ump_SPE <- data.frame(pdbID=rownames(ump_SPE), 
+                  UMAP1=ump_SPE[,1],
+                  UMAP2=ump_SPE[,2])
+ump_SPE <- left_join(df_CPE[,1:5], ump_SPE, 'pdbID')
+# ----------------
+ump_df <- data.frame(Method = rep(c('SPE', 'CPE', 'TM-Vec'), each=nrow(ump_CPE)),
+                     rbind(ump_SPE, ump_CPE, ump_tm))
+
+ump_df$Method <- factor(ump_df$Method,
+                        levels = c('SPE', 'CPE', 'TM-Vec'))
+
+p<-ggplot(ump_df, aes(UMAP1, UMAP2, color= subClass)) +
+  geom_point(alpha=.7,size=3) +
+  facet_grid( ~ Method)+
+  mytheme() +
+  theme(strip.text.x = element_text(size = 13, face = 'bold'))
+# save Fig13_new.pdf 10x5
+```
+
+## Fig 14  (Scalability)
+```{r Fig 14}
+source('Functions.R')
+# ---------------
+cpe <- read.csv('Data/csv/CPE_prfc_astral95.csv')
+tm <- read.csv('Data/csv/TM_prfc_astral95.csv')
+cpe$method <- 'CPE'
+tm$method <- 'TM-Vec'
+
+df <- rbind(cpe, tm)
+
+p<-ggplot(df, aes(n_protein, time/sumAA, col=method)) +
+  geom_point(size=5, alpha=1) +
+  geom_smooth(method = "lm", se = FALSE, alpha=1,linewidth = 1) +  
+    annotation_custom(
+    grob = textGrob(bquote(paste("T/AA = 1.04 × 10"^"-8",
+                                 " N + 1.36 × 10"^"-5")),
+                    gp = gpar(col = "magenta", fontsize = 15)),
+    xmin = 10000, xmax = 10000, ymin = 0.0003, ymax = 0.0003)+
+  annotation_custom(
+    grob = textGrob(bquote(paste("T/AA = 2.33 × 10"^"-8",
+                                 " N + 4.71 × 10"^"-4")),
+                    gp = gpar(col = "orange", fontsize = 15)),
+    xmin = 10000, xmax = 10000, ymin = 0.001, ymax = 0.001)+
+  xlab('N Protein')+
+  ylab('Time/AminoAcid (Sec/AA)') +
+  scale_color_manual(values = c('magenta', 'orange'))+
+  mytheme()+
+  theme(legend.position = c(.85,.13),
+        legend.text = element_text(face = 'bold'),
+        axis.title.y = element_text(size = 13, vjust = 2),
+        axis.title.x = element_text(size = 13, vjust = -.5))+
+  scale_x_continuous(breaks = unique(df$n_protein),
+                     labels = label_number(scale = 1e-3))+
+  scale_y_continuous(breaks = seq(0,1.2, .2)/1000,
+                     labels = label_number(scale = 1e3))+
+  annotation_custom(
+  grob = textGrob(bquote("×10"^-3),
+                  gp = gpar(col = "blue", fontsize = 15),rot=90),
+  xmin = -3100, xmax = -3100, ymin = 0.00096, ymax = 0.00096) +
+  annotation_custom(
+  grob = textGrob(bquote("×10"^3),
+                  gp = gpar(col = "blue", fontsize = 15)),
+  xmin = 19000, xmax = 19000, ymin = -.00012, ymax = -.00012) +
+  coord_cartesian(clip = "off") 
+
+ggarrange(NULL,p,ncol = 2,widths = c(.01,1))
+# save Fig13_new.pdf 7x6
+```
+
+## Fig S1 210Cor
+
+```{r Fig S1 210Cor}
+res <- readRDS('Data/rds/Length_Vs_Energy.rds')
+res <- res[!is.na(res$length),-c(1,3:13)]
+res <- res[-4383,]
+# -- save plots
+st <- seq(1,210,35)
+en <- seq(35,210,35)
+
+for (i in 1:6) {
+  print(i)
+  s <- st[i]+1
+  e <- en[i]+1
+  df <- res[,c(1, s:e)]
+  df2 <- df %>%
+    gather(key = "Int_i", value = "Value", -length)
+  p <- ggplot(df2, aes(length, Value))+
+    geom_point()+
+    stat_cor(aes(label = ..r.label..),
+             method = 'spearman', col='red', geom = "label",
+             label.x = 0, label.y = range(df2$Value,na.rm = T)[2]+.05)+
+    facet_wrap( ~ Int_i, ncol = 5)+
+    ylab('CPE - SPE') +
+    ylim(range(df2$Value,na.rm = T)[1]-.1, range(df2$Value,na.rm = T)[2]+.1)+
+    theme_bw(base_line_size = .1)+
+    theme(strip.text.x = element_text(size = 13),
+          axis.title.x = element_text(size = 20),
+          axis.title.y = element_text(size = 20),
+          panel.grid.major = element_line(color = "black"),
+    panel.grid.minor = element_line(color = "black"))
+  ggsave(filename = paste0('manuscript/Revised/sup_Fig/210Cor', i, '.png'), 
+         plot = p, width = 9, height = 13, 
+         dpi = 600, device = "png")
+}
+```
+
+
+## Fig S6-S8 UMAP
+
+```{r Fig S6-S8 UMAP}
+source('Functions.R')
+load('Data/Large_Scale_SARS2/SPE_CPE_time.RData')
+palette_Dark2 <- colorRampPalette(brewer.pal(28, "Dark2"))
+#---------------------------------------------
+# ----------SPE
+dis <- as.matrix(proxy::dist(df_SPE[,-c(1:4)], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 150,
+            min_dist = 0.1,
+            input="dist")
+ump <- ump$layout
+ump_df <- data.frame(family=df_SPE$sars_proteom, 
+                  UMAP1=ump[,1],
+                  UMAP2=ump[,2])
+
+p_SPE <- ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
+  geom_point(size = 3,alpha=.7) +
+  scale_fill_manual(values = palette_Dark2(14)) +
+  mytheme()+
+  ggtitle('SPE')+
+  theme(legend.position = "bottom",
+        legend.text = element_text(size=13,color = 'black'),
+        axis.text.x = element_text(size = 25,face = 'bold',color = 'black'),
+        axis.text.y = element_text(size = 25,face = 'bold',color = 'black'),
+        axis.title.x = element_text(size =25,face = 'bold',color = 'black'),
+        axis.title.y = element_text(size =25,face = 'bold',color = 'black'),
+        title = element_text(size =25,face = 'bold',color = 'black'))
+# save SARS_Proteom_SPE.pdf 13x17
+# ------------------------------------
+# ------------CPE
+dis <- as.matrix(proxy::dist(df_CPE[,-c(1:4)], method = manhat))
+ump <- umap(d = dis,
+            n_neighbors = 150,
+            min_dist = 0.1,
+            input="dist")
+ump <- ump$layout
+ump_df <- data.frame(family=df_CPE$sars_proteom, 
+                  UMAP1=ump[,1],
+                  UMAP2=ump[,2])
+
+p_CPE <- ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
+  geom_point(size = 3,alpha=.7) +
+  scale_fill_manual(values = palette_Dark2(14)) +
+  mytheme()+
+  ggtitle('CPE')+
+  theme(legend.position = "bottom",
+        legend.text = element_text(size=13,color = 'black'),
+        axis.text.x = element_text(size = 25,face = 'bold',color = 'black'),
+        axis.text.y = element_text(size = 25,face = 'bold',color = 'black'),
+        axis.title.x = element_text(size =25,face = 'bold',color = 'black'),
+        axis.title.y = element_text(size =25,face = 'bold',color = 'black'),
+        title = element_text(size =25,face = 'bold',color = 'black'))
+# save SARS_Proteom_CPE.pdf 13x17
+# ------------------------------------
+# ------------TM-vec
+# ----------- load from google drive ---------------
+drive_deauth()
+drive_user()
+public_file <- drive_get(as_id("1QUAqdkypCPHraNESF11arxg29tDUp521"))
+drive_download(public_file, overwrite = TRUE)
+tm <- read.csv('disTM_vec_sars_proteom.csv')
+file.remove('disTM_vec_sars_proteom.csv')
+tm <- 1 - tm
+ump <- umap(d = tm,
+            n_neighbors = 150,
+            min_dist = 0.1,
+            input="dist")
+ump <- ump$layout
+ump_df <- data.frame(family=df_CPE$sars_proteom, 
+                  UMAP1=ump[,1],
+                  UMAP2=ump[,2])
+
+p_tm <- ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
+  geom_point(size = 3,alpha=.7) +
+  scale_fill_manual(values = palette_Dark2(14)) +
+  mytheme()+
+  ggtitle('TM-Vec')+
+  theme(legend.position = "bottom",
+        legend.text = element_text(size=13,color = 'black'),
+        axis.text.x = element_text(size = 25,face = 'bold',color = 'black'),
+        axis.text.y = element_text(size = 25,face = 'bold',color = 'black'),
+        axis.title.x = element_text(size =25,face = 'bold',color = 'black'),
+        axis.title.y = element_text(size =25,face = 'bold',color = 'black'),
+        title = element_text(size =25,face = 'bold',color = 'black'))
+# save SARS_Proteom_TM_Vec.pdf 13x17
+# -------------------------
+#ggarrange(p_SPE,p_CPE,p_tm,common.legend = T,ncol = 1, legend = 'bottom')
+```
+
 
 #Tables
 
@@ -1737,6 +2282,24 @@ p1 <- ggplot(df,aes(sAB,my_sAB))+
 ```{r Table 1 CT_Ho}
 source('Functions.R')
 # ----------------------------------------------------
+# ---------------- SPE -------------------
+df <- readRDS('Data/rds/E210_CT_Ho.rds')
+dis <- as.matrix(df[,-c(1:9)] %>% proxy::dist(method = manhat))
+diag(dis) <- NA
+im <- apply(dis,1, FUN = which.min)
+res <- data.frame(source=df$cathID, target=df$cathID[im])
+## ----------
+twoSF <- unique(df$cathID)
+cm <- matrix(0,2,2)
+colnames(cm) <- rownames(cm) <- twoSF
+for (sf in twoSF) {
+  x <- res[res$source%in%sf,]
+  z <- table(x$target)
+  cm[sf,names(z)]<-z
+}
+ac <- round(sum(diag(cm))/sum(cm),2)*100
+res_final <- data.frame(Method='SPE', Accuracy=ac, Time='187 sec') 
+# -------------------------------------------------
 # ------------------------------------------
 # ------------ CPE ---------------------------
 # -----------------------------------
@@ -1745,7 +2308,6 @@ df <- df[!is.na(df$FF),]
 twoSF <- unique(df$cathID)
 dis <- as.matrix(dist(df[,-c(1:9)], method = manhat))
 diag(dis) <- NA
-
 # ---------- 1NN --------------------
 im <- apply(dis,1, FUN = which.min)
 res <- data.frame(source=df$cathID, target=df$cathID[im])
@@ -1762,7 +2324,7 @@ ac<-round(sum(diag(cm))/sum(cm),2)*100
 # -------- Note: --------------
 # the time was obtaind from the `C-terminal_Homing_CPE` chunck in `Profile_Energy.Rmd` script.
 # ---------------------------------------------------------------
-res_final <- data.frame(Method='CPE', Accuracy=ac, Time='1 sec') 
+res_final <- rbind(res_final, c('CPE', ac, '1 sec'))
 # ------------------------------------------
 # ------------- TM-vec -----------------------------
 # ---------------------------------------------
@@ -1826,32 +2388,37 @@ F1 <- (2 * Precision * Recall) /(Precision + Recall)
 
 res1NN_CPE<-data.frame(t(round(c(Accuracy,F1),2)))
 # ----------------------------------------
-# ---------- 10 fold cross validation Random forest ----------------
-# ---------------------------------------
-set.seed(12345)
-df5[,-c(1:9)] <- df5[,-c(1:9)]/df5$length
-df5$superfamily <- factor(df5$superfamily)
-kfolds <- createFolds(df5$superfamily, k = 10)
-res<-c()
-for (i in 1:10) {
-  print(i)
-  x <- kfolds[[i]]
-  tr <- df5[-x,c(7, 10:219)]
-  te <- df5[x,c(7, 10:219)]
-  rf = randomForest(superfamily~.,data = tr)
-  p2 <- predict(rf, te)
-  cm2 <- confusionMatrix(p2, te$superfamily)
-  Accuracy <- c(cm2$overall['Accuracy'], F1=cm2$byClass[,'F1'])
-  res<-rbind(res,Accuracy)
-}
-res <- rbind(res,colMeans(res))
-res <- round(res,2)
-rownames(res) <- c(paste0("Fold_",1:length(kfolds)),'Average')
-colnames(res)[-1] <- gsub('.Class','',colnames(res)[-1])
-resRF_CPE <- res[11,]
 # -----------------
-res_final <- rbind(res1NN_CPE, resRF_CPE)
+res_final <- res1NN_CPE
 colnames(res_final)<-colnames(res)
+# -------------------------------------------------
+# ----------------------SPE------------------------------
+df5 <- readRDS('Data/rds/E210_fiveSF.rds')
+df5 <- df5[!is.na(df5$FF),]
+# ----------------------------------------
+# ---------- 1NN ----------------
+# ---------------------------------------
+dis <- as.matrix(proxy::dist(df5[,-c(1:9)], method = manhat))
+diag(dis) <- NA
+
+im <- apply(dis, 1, FUN = which.min)
+res <- data.frame(source=df5$superfamily, target=df5$superfamily[im])
+cm <- matrix(0,5,5)
+colnames(cm) <- rownames(cm) <- fiveSF
+for (sf in fiveSF) {
+  x <- res[res$source%in%sf,]
+  z <- table(x$target)
+  cm[sf,names(z)]<-z
+}
+Accuracy<-sum(diag(cm))/sum(cm)
+Precision <- diag(cm)/colSums(cm)
+Recall <- diag(cm)/rowSums(cm)
+F1 <- (2 * Precision * Recall) /(Precision + Recall)
+
+res1NN_SPE<-data.frame(t(round(c(Accuracy,F1),2)))
+# ----------------------------------------
+# -----------------
+res_final <- rbind(res_final, res1NN_SPE)
 # ----------------------------------------------------------------
 # ----------------------------------------
 # ---------- TM-Vec ----------------
@@ -1882,12 +2449,77 @@ F1 <- (2 * Precision * Recall) /(Precision + Recall)
 
 res1nn_TM_Vec<-data.frame(t(c(Accuracy,F1)))
 colnames(res1nn_TM_Vec) <- colnames(res_final)
-# -----------------
+# ------------------------
 res_final <- rbind(res_final, res1nn_TM_Vec)
-res_final <- data.frame(method=c('CPE (1NN)','CPE (RF)','TM_Vec (1NN)'),res_final)
+# --------------------------------------
+tCPE <- 103
+tSPE <- 3524
+tTM <- 955
+ts <- c(tCPE,tSPE,tTM)
+res_final <- data.frame(method=c('CPE (1NN)',
+                                 'SPE (1NN)',
+                                 'TM_Vec (1NN)'),
+                        Time=ts,
+                        res_final)
 res_final
 ```
 
+## Table 3 Rho Spearman Rank
+
+```{r Table 3 Rho Spearman Rank}
+rm(list=ls())
+get_ranks <- function(order, reference_order) {
+  ranks <- match(order, reference_order)
+  ranks[is.na(ranks)] <- NA 
+  return(ranks)
+}
+# ----------------------------
+# ----  a.25.1.1 family
+# Define tree orders
+reference_order <- c("R", "F", "B", "D")
+SPE_order <- c("R", "F", "B", "D")
+CPE_order <- c("R", "F", "D", "B")
+TM_order <- c("R", "D", "B", "F")
+
+# Compute ranks
+reference_ranks <- get_ranks(reference_order, reference_order)
+SPE_ranks <- get_ranks(SPE_order, reference_order)
+CPE_ranks <- get_ranks(CPE_order, reference_order)
+TM_ranks <- get_ranks(TM_order, reference_order)
+
+# Calculate Spearman's rank correlation coefficient
+SPE <- cor(reference_ranks, SPE_ranks, 
+           method = "spearman", use = "complete.obs")
+CPE <- cor(reference_ranks, CPE_ranks, 
+           method = "spearman", use = "complete.obs")
+TM <- cor(reference_ranks, TM_ranks, 
+          method = "spearman", use = "complete.obs")
+a.25.1.1 <- c(SPE, CPE, TM)
+# -------------------------------
+# ----  a.25.1.2 family
+# Define tree orders
+reference_order <- c("F", "R", "A", "B")
+SPE_order <- c("R", "F", "B", "A")
+CPE_order <- c("R", "F", "B", "A")
+TM_order <- c("B", "R", "F", "A")
+
+reference_ranks <- get_ranks(reference_order, reference_order)
+SPE_ranks <- get_ranks(SPE_order, reference_order)
+CPE_ranks <- get_ranks(CPE_order, reference_order)
+TM_ranks <- get_ranks(TM_order, reference_order)
+
+# Calculate Spearman's rank correlation coefficient
+SPE <- cor(reference_ranks, SPE_ranks, 
+           method = "spearman", use = "complete.obs")
+CPE <- cor(reference_ranks, CPE_ranks, 
+           method = "spearman", use = "complete.obs")
+TM <- cor(reference_ranks, TM_ranks, 
+          method = "spearman", use = "complete.obs")
+a.25.1.2 <- c(SPE, CPE, TM)
+
+cbind(Method=c('SPE', 'CPE', 'TM'),
+      a.25.1.1, a.25.1.2)
+```
 
 
 ## Table 4 and Table S1 ARI covid
@@ -1990,3 +2622,61 @@ colnames(ARI_final) <- paste0('cut_tree_', 3:6)
 ARI_final
 ```
 
+
+## Table 5 and Table S3-S5 performance
+
+```{r Table 5 performance}
+source('Functions.R')
+load('Data/Large_Scale_SARS2/SPE_CPE_time.RData')
+dff <- df_CPE[,-c(1:4)]/as.numeric(df_CPE$length)
+dis_CPE <- as.matrix(dff %>% proxy::dist(method = manhat))
+dff = df_SPE[,-c(1:4)]/as.numeric(df_SPE$length)
+dis_SPE <- as.matrix(dff %>% proxy::dist(method = manhat))
+# ----------- load from google drive ---------------
+drive_deauth()
+drive_user()
+public_file <- drive_get(as_id("1QUAqdkypCPHraNESF11arxg29tDUp521"))
+drive_download(public_file, overwrite = TRUE)
+tm <- read.csv('disTM_vec_sars_proteom.csv')
+file.remove('disTM_vec_sars_proteom.csv')
+tm <- 1 - tm
+# -----------------------
+# ----- from run 'Data/Large_Scale_SARS2/tm_vec_sars_proteom.py'
+t_tm <- 685 
+# ------------------
+summary_1NN <- function(dist, group){
+  diag(dist) <- NA
+  sprot <- unique(group)
+  # ---------- 1NN --------------------
+  im <- apply(dist,1, FUN = which.min)
+  res <- data.frame(source=group, target=group[im])
+  ## ----------
+  cm <- matrix(0,28,28)
+  colnames(cm) <- rownames(cm) <- sprot
+  for (sf in sprot) {
+    x <- res[res$source%in%sf,]
+    z <- table(x$target)
+    cm[sf, names(z)]<-z
+  }
+  ac <- round(sum(diag(cm))/sum(cm), 4)*100
+  pr <- round(diag(cm)/colSums(cm) , 4)*100
+  re <- round(diag(cm)/rowSums(cm) , 4)*100
+  f1 <- round((2*pr*re)/(pr+re))
+  summ <- data.frame(t(rbind(ac,pr,re,f1)))
+  summ <- rbind(colMeans(summ), summ)
+  rownames(summ)[1]<-'Average'
+  return(summ)
+}
+
+dis <- list(tm, dis_CPE, dis_SPE)
+
+summ <- lapply(dis, summary_1NN, df_CPE$sars_proteom)
+names(summ) <- c('TM', 'CPE', 'SPE')
+
+
+cbind(Method=c('TM', 'CPE', 'SPE'),
+      rbind(summ[['TM']][1,],
+            summ[['CPE']][1,],
+            summ[['SPE']][1,]),
+      Time=c(t_tm, t_CPE, t_SPE))
+```

@@ -290,6 +290,28 @@ save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95,
      file = 'manuscript/Revised/fig_data/UMPs.RData')
 ```
 
+# Length_Vs_Energy
+
+```{r Length_Vs_Energy}
+source('Functions.R')
+# ----------------------------------------------------
+df_seq <- readRDS("Data/rds/E210.seq_astral_40.rds") 
+df_str <- readRDS("Data/rds/E210.astral_40.rds") 
+
+res <- data.frame(scopeID=df_seq$scopeID,
+                     length = df_seq$length,
+                     disTot=(rowSums(df_seq[,-c(1:8)])/2000)-
+                       (rowSums(df_str[,-c(1:8)])/1000))
+
+
+disDim <- df_seq[,-c(1:8)]/2000 - df_str[,-c(1:8)]/1000
+
+
+colnames(disDim) <- colnames(df_seq)[-c(1:8)]
+res <- data.frame(res, disDim)
+#saveRDS(res, 'Data/rds/Length_Vs_Energy.rds')
+```
+
 
 # Drug Target
 ## --- Drug similarity 
