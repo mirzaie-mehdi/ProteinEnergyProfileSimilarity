@@ -19,7 +19,7 @@ This repository contains all the necessary code and resource data to calculate t
 ## Datasets
 Below is a list of datasets used in this project:
 
-- [covidPDB folder](Data/covidPDB/)
+- Covid19 spike proteins data set [covidPDB folder](Data/covidPDB/)
 
 
       ### Example:
