@@ -21,15 +21,14 @@ Below is the list of datasets utilized in this project:
 
 - Training Set for Knowledge-Based Potential: [PDBIDs](Train_Energy/list_with_chainID_rm_Olaps.txt)
 - Protein Domains in [ASTRAL40](Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-40-2.08.fa) and [ASTRAL95](Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-95-2.08.fa).
-- The list of Bacteriocin proteins in [Bacteriocin](Data/csv/Bacteriocin.csv)
-- The list of proteinsin the superfamily [Ferritin](Data/csv/Ferritin_Like_seq.csv)
-- The list of [CT_HM](Data/csv/CT_Ho_cathID.csv)
-- The list of five superfamily [five superfamily](Data/csv/fiveSF.csv)
+- The list of [Bacteriocin Proteins](Data/csv/Bacteriocin.csv)
+- PDBIDs of [Ferritin Superfamily](Data/csv/Ferritin_Like_seq.csv)
+- The list of [C_terminal and Homing endonucleases](Data/csv/CT_Ho_cathID.csv)
+- The list of [five superfamily](Data/csv/fiveSF.csv) winged helix, PH domain-like, NTF-like, Ubiquitin-like, and Immunoglobulins
 - Covid19 spike proteins data set [covidPDBIDs](Data/covidPDB/)
 - The list of Drug-target in [target](Data/csv/41467_2019_9186_MOESM4_ESM.xlsx)
 - The list of protein in Globin [Globin](Data/Globin/Globin.csv)
 - The list of proteins utilized for the large_scale proteome analysis (The protein modesl can be find in the [Large_Scale_SARS2](Data/Large_Scale_SARS2) folder according to the sars_proteom column [SARS_Proteom](Data/Large_Scale_SARS2/sars_proteom.csv).
-- 
 
  ## Example:
 The `Example.R` file is a simple script developed to compute SPE and CPE for four alpha-globin proteins across four different species. Additionally, it demonstrates the correlation between the Total Energy calculated using SPE and CPE, as outlined below.
