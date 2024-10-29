@@ -20,6 +20,6 @@ This repository contains all the necessary code and resource data to calculate t
 Below is a list of datasets used in this project:
 - Covid19 spike proteins data set [covidPDB folder](Data/covidPDB/)
 
-      ### Example:
+ ## Example:
 The `Example.R` file is a simple script developed to compute SPE and CPE for four alpha-globin proteins across four different species. Additionally, it demonstrates the correlation between the Total Energy calculated using SPE and CPE, as outlined below.
 <img src="https://github.com/user-attachments/assets/6229e59f-8869-43f3-b864-94e6ddb8f740" width="400" height="300">
