@@ -57,6 +57,8 @@ library(readxl)
 library(ggh4x)
 library(mclust)
 library(googledrive)
+library(Biostrings)
+library(msa)
 ```
 
 # Figures
