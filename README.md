@@ -16,10 +16,11 @@ This repository contains all the necessary code and resource data to calculate t
 
 5. The file `Results_Figures_Tables.Rmd` contains all chunks used to generate results, figures and tables for every dataset referenced in the manuscript. All necessary files for running the `Results_Figures_Tables.Rmd` file have already been created and saved using the `Profile_Energy.Rmd` file.
 
- ## Datasets
-Below is a list of datasets used in this project:
-- The list of PDB.IDs for training set for Knowledge-based potential [PDBIDs](Train_Energy/list_with_chainID_rm_Olaps.txt)
-- The list of protein domains in [ASTRAL40](Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-40-2.08.fa) and [ASTRAL95](Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-95-2.08.fa).
+ ## Datasets Used in This Project
+Below is the list of datasets utilized in this project:
+
+- Training Set for Knowledge-Based Potential: [PDBIDs](Train_Energy/list_with_chainID_rm_Olaps.txt)
+- Protein Domains in [ASTRAL40](Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-40-2.08.fa) and [ASTRAL95](Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-95-2.08.fa).
 - The list of Bacteriocin proteins in [Bacteriocin](Data/csv/Bacteriocin.csv)
 - The list of proteinsin the superfamily [Ferritin](Data/csv/Ferritin_Like_seq.csv)
 - The list of [CT_HM](Data/csv/CT_Ho_cathID.csv)
