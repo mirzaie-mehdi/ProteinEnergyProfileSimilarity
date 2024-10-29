@@ -16,8 +16,9 @@ This repository contains all the necessary code and resource data to calculate t
 
 5. The file `Results_Figures_Tables.Rmd` contains all chunks used to generate results, figures and tables for every dataset referenced in the manuscript. All necessary files for running the `Results_Figures_Tables.Rmd` file have already been created and saved using the `Profile_Energy.Rmd` file.
 
-Below is a list of datasets used in this project:
 ## Datasets
+Below is a list of datasets used in this project:
+
 - [covidPDB folder](Data/covidPDB/)
 
 
