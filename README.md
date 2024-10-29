@@ -18,7 +18,9 @@ This repository contains all the necessary code and resource data to calculate t
 
  ## Datasets
 Below is a list of datasets used in this project:
+- The list of PDB.IDs for training set for Knowledge-based potential [(Train_Energy/list_with_chainID_rm_Olaps.txt)]
 - Covid19 spike proteins data set [covidPDB folder](Data/covidPDB/)
+- 
 
  ## Example:
 The `Example.R` file is a simple script developed to compute SPE and CPE for four alpha-globin proteins across four different species. Additionally, it demonstrates the correlation between the Total Energy calculated using SPE and CPE, as outlined below.
