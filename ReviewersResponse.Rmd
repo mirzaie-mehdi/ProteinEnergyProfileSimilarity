@@ -1137,9 +1137,9 @@ print(paste0('Accuracy = ', ac, '; RunningTime = ', rt$toc - rt$tic))
 # time  = 187 Sec
 ```
 
-## --- Fig 6 regenerat
+## --- Fig 7 regenerat
 
-```{r Fig 6 regenerat}
+```{r Fig 7 regenerat}
 source('Functions.R')
 # -----------------------------------
 # time_for_SPE  = 187 Sec
@@ -1180,7 +1180,7 @@ p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
   ylim(0,100)
 
 p200s <- p12h+xlim(c('CPE','TM-Vec','GR-Align','SPE'))+
-  ylim(0,.465)+ #3.0*12*3.6 = 200sec
+  ylim(0,.465)+ #4.65*12*3.6 = 200sec
   theme(legend.text = element_text(face = 'bold',size = 15))
 
 df2 <- df
