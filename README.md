@@ -27,7 +27,7 @@ Below is the list of datasets utilized in this project:
 - The list of protein domains of [five superfamily](Data/csv/fiveSF.csv) winged helix, PH domain-like, NTF-like, Ubiquitin-like, and Immunoglobulins.
 - Covid19 spike proteins data set [covidPDBIDs](Data/covidPDB/).
 - The list of [Drug-Targets](Data/csv/41467_2019_9186_MOESM4_ESM.xlsx).
-- The list of protein in [Globin](Data/Globin/Globin.csv) family.
+- The list of proteins in [Globin](Data/Globin/Globin.csv) family.
 - Large-Scale Proteome Analysis. The protein modesl can be find in the [Large_Scale_SARS2](Data/Large_Scale_SARS2) folder according to the sars_proteom column [SARS_Proteom](Data/Large_Scale_SARS2/sars_proteom.csv).
 
  ## Example:
