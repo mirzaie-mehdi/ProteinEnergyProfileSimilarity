@@ -21,17 +21,17 @@ Below is the list of datasets utilized in this project:
 
 - Training Set for Knowledge-Based Potential: [PDBIDs](Train_Energy/list_with_chainID_rm_Olaps.txt).
 - Protein Domains in [ASTRAL40](Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-40-2.08.fa) and [ASTRAL95](Data/csv/astral-scopedom-seqres-gd-sel-gs-bib-95-2.08.fa).
-- The list of [Bacteriocin Proteins](Data/csv/Bacteriocin.csv).
-- PDBIDs of [Ferritin Superfamily](Data/csv/Ferritin_Like_seq.csv).
-- The list of [C_terminal and Homing endonucleases](Data/csv/CT_Ho_cathID.csv).
-- The list of protein domains of [five superfamily](Data/csv/fiveSF.csv) winged helix, PH domain-like, NTF-like, Ubiquitin-like, and Immunoglobulins.
+- The list of [Bacteriocin Proteins family](Data/csv/Bacteriocin.csv) available in the BAGEL database that includes 690 proteins.
+- PDBIDs of [Ferritin Superfamily](Data/csv/Ferritin_Like_seq.csv) (SCOP ID: a.25.1) .
+- The list of [C_terminal and Homing endonucleases](Data/csv/CT_Ho_cathID.csv) (CATH Code: 1.10.8.10 and 3.10.28.10).
+- The list of protein domains of [five superfamily](Data/csv/fiveSF.csv) winged helix(SCOP ID: a.4.5), PH domain-like(SCOP ID: a.55.1), NTF-like(SCOP ID: d.17.4), Ubiquitin-like(SCOP ID: d.15.1), and Immunoglobulins(SCOP ID: b.1.1).
 - Covid19 spike proteins data set [covidPDBIDs](Data/covidPDB/).
-- The list of [Drug-Targets](Data/csv/41467_2019_9186_MOESM4_ESM.xlsx).
-- The list of proteins in [Globin](Data/Globin/Globin.csv) family.
-- Large-Scale Proteome Analysis. The protein modesl can be find in the [Large_Scale_SARS2](Data/Large_Scale_SARS2) folder according to the sars_proteom column [SARS_Proteom](Data/Large_Scale_SARS2/sars_proteom.csv).
+- The list of [Drug-Targets](Data/csv/41467_2019_9186_MOESM4_ESM.xlsx) including 65 antihypertensive drugs and their protein targets IDs.
+- The list of 21 mammalian hemoglobins proteins in [Globin](Data/Globin/Globin.csv) family.
+- Large-Scale SARS-CoV-2 Proteome Analysis across 28 families. The protein modesl can be find in the [Large_Scale_SARS2](Data/Large_Scale_SARS2) folder according to the sars_proteom column [SARS_Proteom](Data/Large_Scale_SARS2/sars_proteom.csv).
 
  ## Example:
-The `SPE.R` and `CPE.R` files are simple scripts developed to compute SPE and CPE for Alpha-globin and Beta-globin proteins across different species. Additionally, they demonstrate the UMAP  SPE and CPE, as outlined below.
+The `SPE.R` and `CPE.R` scripts are developed to compute SPE and CPE for Alpha-globin and Beta-globin proteins across different species. Additionally, they demonstrate the UMAP of SPE and CPE representaions, as outlined below.
 
 <img src="https://github.com/user-attachments/assets/ac22e365-eff8-4bbb-9456-a3dcd63fac65" width="400" height="300">
 <img src="https://github.com/user-attachments/assets/019e55bd-d082-4a32-86d4-ee01c701899e" width="400" height="300">
