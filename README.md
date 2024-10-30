@@ -31,5 +31,8 @@ Below is the list of datasets utilized in this project:
 - Large-Scale Proteome Analysis. The protein modesl can be find in the [Large_Scale_SARS2](Data/Large_Scale_SARS2) folder according to the sars_proteom column [SARS_Proteom](Data/Large_Scale_SARS2/sars_proteom.csv).
 
  ## Example:
-The `Example.R` file is a simple script developed to compute SPE and CPE for four alpha-globin proteins across four different species. Additionally, it demonstrates the correlation between the Total Energy calculated using SPE and CPE, as outlined below.
-<img src="https://github.com/user-attachments/assets/6229e59f-8869-43f3-b864-94e6ddb8f740" width="400" height="300">
+The `SPE.R` and `CPE.R` files are simple scripts developed to compute SPE and CPE for Alpha-globin and Beta-globin proteins across different species. Additionally, they demonstrate the UMAP  SPE and CPE, as outlined below.
+
+<img src="https://github.com/user-attachments/assets/ac22e365-eff8-4bbb-9456-a3dcd63fac65" width="400" height="300">
+<img src="https://github.com/user-attachments/assets/019e55bd-d082-4a32-86d4-ee01c701899e" width="400" height="300">
+
