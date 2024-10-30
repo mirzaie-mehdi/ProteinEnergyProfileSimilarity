@@ -1,5 +1,5 @@
-# This script generates the SPE and CPE based on PDBIDs from PDBIDs_Example.csv file.
-# Th outputs are stored in the SPE and CPE data frames.
+# This script generates the SPE based on PDBIDs from PDBIDs_Example.csv file.
+# Th output is stored in the SPE data frame.
 # ------------------------------------------------------------
 # ---------- load requirement functions -------------
 # All required functions are available at Functions.R script
@@ -15,13 +15,11 @@ SPE <- data.frame(exData,
 
 colnames(SPE)[-c(1:2)] <- pair_inter
 
-CPE <- SPE
-
 
 for (i in 1:Nprotein){
   print(i)
   pdbname <- substr(SPE$pdbID[i],1,4)
-  ch <- substr(SPE$pdbID[i],5,5)
+  ch <- substr(SPE$pdbID[i],6,6)
   # ----------------------------------
   # ----- read pdb file ------------
   pdb0 <- read.pdb(pdbname,verbose = FALSE)
@@ -39,37 +37,21 @@ for (i in 1:Nprotein){
   # ----- SPE -----------
   energy210 <- Energy_SPE210(Net_Frame, energy_dell_dunbrack)
   SPE[i,-c(1:2)] <- energy210
-  # ---------------------------------------
-  # ----------------------------------
-  # ----- extract protein sequence from PDB file ------------
-  seq <- new_pdb$seqres
-  seq <- seq[names(seq)==ch]
-  seq <- paste0(aa321(seq), collapse = '')
-  # ----------------------------------
-  # ----- CPE ------------
-  aa210_p <- Energy_CPE210(seq)
-  CPE[i,-c(1:2)] <- aa210_p
 }
-
 # -------------------------------------------------
-# ------- visual total energy ---------
+dis <- as.matrix(proxy::dist(SPE[,-c(1:2)], method = manhat))
+
+ump <- umap(d = dis,
+            n_neighbors = 13,
+            min_dist = 0.1,
+            input="dist")
+
+ump <- data.frame(exData,
+                  UMAP1=ump$layout[,1],
+                  UMAP2=ump$layout[,2])
+
 library(ggplot2)
-library(ggpubr)
-
-df <- data.frame(exData,
-                 SPE=rowSums(SPE[,-c(1:3)]),
-                 CPE=rowSums(CPE[,-c(1:3)])/2)
-
-ggplot(df, aes(SPE, CPE, col=species))+
-  geom_point(size=3, show.legend = F)+
-  geom_text(aes(label = species), size=4, 
-            hjust=ifelse(df$species=='Rat', .5, -.2),
-            vjust=ifelse(df$species=='Rat', 1.5, .2), show.legend = F)+
-  geom_smooth(method = 'glm', col='skyblue3', linewidth = .7, se = F)+
-  stat_cor(method = "pearson", size=5,
-           r.accuracy = 1e-2,
-           color = "red", geom = "label")+
-  theme_bw(base_line_size = .3)+
-  ggtitle('Total Energy based on SPE and CPE')+
-  xlab('Structural Profile of Energy (SPE)')+
-  ylab('Compositional Profile of Energies (CPE)')
+ggplot(ump, aes(UMAP1, UMAP2, color= globin)) +
+  geom_point(alpha=.7,size=3) +
+  theme_bw() +
+  ggtitle('SPE')
