@@ -69,6 +69,7 @@ library(googledrive)
 # ASTRAL 95/40 SPE_CPE
 
 This chunk calculate the profile of energy for protein domains in ASTRAL95/40 based on sequence and structure.
+astral_95.rds already generated in the support_analysis.Rmd file # Parse Scope 2.08 chunk.
 
 ```{r Astrals_CPE_SPE}
 source('Functions.R')
@@ -197,7 +198,7 @@ saveRDS(E210.seq_astral_40,file = "Data/rds/E210.seq_astral_40.rds")
 
 # C-terminal & Homing CPE
 This chunk calculates the CPE of proteins from two superfamilies: the C-terminal domain in the DNA helicase RuvA subunit and the Homing endonucleases.
-this chunk has run on win 10 with 2.4 GHz cpu and 8 GB RAM.
+this chunk run on a system with 2.4 GHz cpu and 8 GB RAM.
 ```{r C-terminal_Homing_CPE}
 source('Functions.R')
 # ----------------------------------------------------
@@ -230,7 +231,8 @@ saveRDS(E210.seq_CT_Ho,'Data/rds/E210.seq_CT_Ho.rds')
 
 
 # C-terminal & Homing SPE
-this chunk has run on win 10 with 2.4 GHz cpu and 8 GB RAM.
+This chunk calculates the CPE of proteins from two superfamilies: the C-terminal domain in the DNA helicase RuvA subunit and the Homing endonucleases.
+this chunk run on a system with 2.4 GHz cpu and 8 GB RAM.
 ```{r C-terminal & Homing SPE}
 source('Functions.R')
 # ----------------------------------------------------
@@ -261,7 +263,7 @@ for (NP in 1:nrow(E210_CT_Ho)) {
     sele <- combine.select(sele2, sele4, operator="AND")
     new_pdb <- trim.pdb(pdb0, sele,verbose = FALSE)
     Net_Frame <- NetworkFrame(PDB = new_pdb)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    energy210 <- Energy_SPE210(Net_Frame,energy_dell_dunbrack)
     E210_CT_Ho[NP,-c(1:9)] <- energy210
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
@@ -309,6 +311,7 @@ saveRDS(E210.seq_df5,file = "Data/rds/E210.seq_fiveSF.rds")
 ```
 
 # Five superfamily SPE
+This chunk calculates the energy profile (SPE) for five distinct SCOP superfamilies: winged helix (a.4.5), PH domain-like (b.55.1), NTF-like (d.17.4), Ubiquitin-like (d.15.1), and Immunoglobulins (b.1.1).
 
 ```{r Five superfamily SPE}
 source('Functions.R')
@@ -350,7 +353,7 @@ for (NP in 1:Nprotein) {
       }
     }
     Net_Frame <- NetworkFrame(PDB = new_pdb)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    energy210 <- Energy_SPE210(Net_Frame,energy_dell_dunbrack)
     E210_df5[NP,-c(1:9)] <- energy210
     }, error = function(e) {
      cat("Error downloading file:", e$message, "\n")
@@ -367,6 +370,8 @@ tictoc::toc()
 
 # Globin SPE_CPE
 
+Calculate the CPE and SPE for α and β globin proteins from the hemoglobin biological unit including 21 mammalian hemoglobins, divided into α-globins and β-globins.
+
 ```{r Globin AlphaBeta SPE_CPE}
 source('Functions.R')
 E210.SPE <- function(pdb){
@@ -381,7 +386,7 @@ E210.SPE <- function(pdb){
     pdbx <- pdbx[!duplicated(pdbx$resno),]
     seq <- paste0(aa321(pdbx$resid),collapse = '')
     Net_Frame <- NetworkFrame(PDB = new_pdb)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    energy210 <- Energy_SPE210(Net_Frame,energy_dell_dunbrack)
     return(c(seq,energy210))
   }, error = function(e) {
     cat("Error downloading file:", e$message, "\n")
@@ -435,7 +440,7 @@ save(t_SPE, t_CPE, dis_CPE, dis_SPE,
 ```
 
 # Ferritin CPE
-
+This chunk computes the CPE for proteins belonging to the Ferritin-like superfamily. The PDB IDs of these proteins are located in the `Data\csv\Ferritin_Like.csv` file.
 ```{r Ferritin CPE}
 source('Functions.R')
 ferritin <- read.csv("Data/csv/Ferritin_Like_seq.csv",sep = ",")
@@ -456,7 +461,7 @@ saveRDS(E210.seq_ferritin,file = "Data/rds/E210.seq_ferritin.rds")
 ```
 # Ferritin SPE
 
-This segment computes the SPE for proteins belonging to the Ferritin-like superfamily. The PDB IDs of these proteins are located in the `Data\csv\Ferritin_Like.csv` file.
+This chunk computes the SPE for proteins belonging to the Ferritin-like superfamily. The PDB IDs of these proteins are located in the `Data\csv\Ferritin_Like.csv` file.
 
 ```{r Ferritin SPE}
 source('Functions.R')
@@ -506,7 +511,7 @@ saveRDS(E210_ferritin,file = "Data/rds/E210_ferritin.rds")
 
 # Covid Spike SPE_CPE
 
-This segment computes the SPE and CPE for spike glycoprotein proteins. The PDB IDs of these proteins are located in the 'Data/csv/spike.csv' file. 
+This chunk computes the SPE and CPE for spike glycoprotein proteins. The PDB IDs of these proteins are located in the 'Data/csv/spike.csv' file. 
 
 ```{r Covid_Spike_Proteins}
 source('Functions.R')
@@ -653,6 +658,8 @@ for (NP in 1:nrow(df_seq)) {
 
 # SARS_Proteom Large Scale
 
+calculate CPE and SPE for SARS-CoV-2 Proteome across 28 families, encompassing 4,405 proteins. 
+
 ```{r SARS_Proteom Large Scale}
 source('Functions.R')
 E210.SPE <- function(pdb){
@@ -667,7 +674,7 @@ E210.SPE <- function(pdb){
     pdbx <- pdbx[!duplicated(pdbx$resno),]
     seq <- paste0(aa321(pdbx$resid),collapse = '')
     Net_Frame <- NetworkFrame(PDB = new_pdb)
-    energy210 <- Energy_PC210(Net_Frame,energy_dell_dunbrack)
+    energy210 <- Energy_SPE210(Net_Frame,energy_dell_dunbrack)
     return(c(nchar(seq), seq, energy210))
   }, error = function(e) {
     cat("Error downloading file:", e$message, "\n")
@@ -714,12 +721,13 @@ for (NP in 1:nrow(df)) {
 dis_CPE <- as.matrix(df[,-c(1:4)] %>% proxy::dist(method = manhat))
 t_CPE <- tictoc::toc()
 
-save(df_SPE, df_CPE, t_SPE, t_CPE,
-     file='Data/Large_Scale_SARS2/SPE_CPE_time.RData')
+#save(df_SPE, df_CPE, t_SPE, t_CPE,
+#     file='Data/Large_Scale_SARS2/SPE_CPE_time.RData')
 ```
 
 
 # Scalability (ASTRAL 95)
+Calculates CPE and extract Processing time per amino acid for subsets from the ASTRAL95 dataset, ranging in size from 1,000 to 30,000 proteins.
 
 ```{r Scalability}
 source('Functions.R')
