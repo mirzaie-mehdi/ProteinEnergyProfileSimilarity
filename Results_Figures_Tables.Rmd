@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r libraries, include=FALSE}
 #library(kableExtra)
 options(knitr.table.format = "latex")
+set.seed(123)
 library(readr)
 library(data.table)
 library(MASS)
@@ -61,6 +62,8 @@ library(Biostrings)
 library(msa)
 library(binom)
 library(lsa)
+library(xlsx)
+library(openxlsx)
 ```
 
 # Figures
@@ -70,71 +73,122 @@ library(lsa)
 source('Functions.R')
 # ----------------------------------------------------
 # ************** total energy 40 and 95
-df_tot <- readRDS('Fig_Manuscript/Revised/fig_data/df_total_energy.rds')
+df_tot <- readRDS('Fig_Manuscript/fig_data/df_total_energy.rds')
 df_tot$data <- ifelse(df_tot$data=='Astral 40','ASTRAL40','ASTRAL95')
-A <- ggplot(df_tot[df_tot$data=='ASTRAL40',], aes(seq/2000,str/1000))+
-       geom_pointdensity(adjust = .1,alpha=.3,show.legend = T)+
-       geom_smooth(method = 'glm',col='red')+
-       stat_cor(method = "pearson", size=5, color = "red", geom = "label") +
-       scale_color_viridis()+
-  facet_wrap(vars(data))+
-       theme_bw(base_line_size = .3)+
-       xlab('Total energy (sequence)')+ylab('Total energy (structure)')+
-  mytheme()+
-  theme(strip.text.x = element_text(size = 20))
 
-B <- ggplot(df_tot[df_tot$data=='ASTRAL95',], aes(seq/2000,str/1000))+
-       geom_pointdensity(adjust = .1,alpha=.3,show.legend = T)+
-       geom_smooth(method = 'glm',col='red')+
-       stat_cor(method = "pearson", size=5, color = "red", geom = "label") +
+A <- ggplot(df_tot[df_tot$data=='ASTRAL40',], aes(seq/2000, str/1000))+
+       geom_pointdensity(adjust = .1,alpha=.3,show.legend = T,size = .5)+
+       geom_smooth(method = 'glm',col='red',linewidth = .5)+
+       stat_cor(method = "pearson", size=1.7, color = "red", geom = "label") +
        scale_color_viridis()+
   facet_wrap(vars(data))+
        theme_bw(base_line_size = .3)+
        xlab('Total energy (sequence)')+ylab('Total energy (structure)')+
   mytheme()+
-  theme(strip.text.x = element_text(size = 20))
+  guides(color = guide_colorbar(barwidth = .5, barheight = 2))+
+  theme(axis.text.x = element_text(size=5, face = "bold"),
+        axis.text.y = element_text(size=5, face = "bold"),
+        legend.text = element_text(size = 5, colour = "black"),
+        strip.text.x = element_text(size = 5),
+        axis.title.x = element_text(size = 5),
+        axis.title.y = element_text(size = 5))
+
+B <- ggplot(df_tot[df_tot$data=='ASTRAL95',], aes(seq/2000, str/1000))+
+       geom_pointdensity(adjust = .1,alpha=.3,show.legend = T,size = .5)+
+       geom_smooth(method = 'glm',col='red',linewidth = .5)+
+       stat_cor(method = "pearson", size=1.7, color = "red", geom = "label") +
+       scale_color_viridis()+
+  facet_wrap(vars(data))+
+       theme_bw(base_line_size = .3)+
+       xlab('Total energy (sequence)')+ylab('Total energy (structure)')+
+  mytheme()+
+  guides(color = guide_colorbar(barwidth = .5, barheight = 2))+
+  theme(axis.text.x = element_text(size=5, face = "bold"),
+        axis.text.y = element_text(size=5, face = "bold"),
+        legend.text = element_text(size = 5, colour = "black"),
+        strip.text.x = element_text(size = 5),
+        axis.title.x = element_text(size = 5),
+        axis.title.y = element_text(size = 5))
+
+# ----------SourceData---------------
+df_tot$cpe <- df_tot$seq/2000
+df_tot$spe <- df_tot$str/1000
+MYwriteData(data=df_tot[,-c(2:5)],
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 2 A-B",
+            row.Names = TRUE)
 # ************** distance 40 and 95
-df_dis40<-readRDS('Fig_Manuscript/Revised/fig_data/dis_40_manhat.rds')
-df_dis95<-readRDS('Fig_Manuscript/Revised/fig_data/dis_95_manhat.rds')
+df_dis40<-readRDS('Fig_Manuscript/fig_data/dis_40_manhat.rds')
+df_dis95<-readRDS('Fig_Manuscript/fig_data/dis_95_manhat.rds')
 df_dis <- rbind(df_dis40, df_dis95)
 df_dis$data <- ifelse(df_dis$data=='Astral 40','ASTRAL40','ASTRAL95')
 
 C <- ggplot(df_dis[df_dis$data=='ASTRAL40',], aes(dis_seq,dis_str))+
-       geom_pointdensity(adjust = .1,alpha=.3,show.legend = T)+
-       geom_smooth(method = 'glm',col='red')+
-       stat_cor(method = "pearson", size=5, color = "red", geom = "label") +
+       geom_pointdensity(adjust = .1,alpha=.3,show.legend = T,size = .5)+
+       geom_smooth(method = 'glm',col='red',linewidth = .5)+
+       stat_cor(method = "pearson", size=1.7, color = "red", geom = "label") +
        scale_color_viridis()+facet_wrap(vars(data))+
        theme_bw(base_line_size = .3)+
        xlab('Distance (CPE)')+ylab('Distance (SPE)')+
        mytheme()+
-  theme(strip.text.x = element_text(size = 20))
+  guides(color = guide_colorbar(barwidth = .5, barheight = 2))+
+  theme(axis.text.x = element_text(size=5, face = "bold"),
+        axis.text.y = element_text(size=5, face = "bold"),
+        legend.text = element_text(size = 5, colour = "black"),
+        strip.text.x = element_text(size = 5),
+        axis.title.x = element_text(size = 5),
+        axis.title.y = element_text(size = 5))
 
 D <- ggplot(df_dis[df_dis$data=='ASTRAL95',], aes(dis_seq,dis_str))+
-       geom_pointdensity(adjust = .1,alpha=.3,show.legend = T)+
-       geom_smooth(method = 'glm',col='red')+
-       stat_cor(method = "pearson", size=5, color = "red", geom = "label") +
+       geom_pointdensity(adjust = .1,alpha=.3,show.legend = T,size = .5)+
+       geom_smooth(method = 'glm',col='red',linewidth = .5)+
+       stat_cor(method = "pearson", size=1.7, color = "red", geom = "label") +
        scale_color_viridis()+facet_wrap(vars(data))+
        theme_bw(base_line_size = .3)+
        xlab('Distance (CPE)')+ylab('Distance (SPE)')+
        mytheme()+
-  theme(strip.text.x = element_text(size = 20))
+  guides(color = guide_colorbar(barwidth = .5, barheight = 2))+
+  theme(axis.text.x = element_text(size=5, face = "bold"),
+        axis.text.y = element_text(size=5, face = "bold"),
+        legend.text = element_text(size = 5, colour = "black"),
+        strip.text.x = element_text(size = 5),
+        axis.title.x = element_text(size = 5),
+        axis.title.y = element_text(size = 5))
+
+# ----------SourceData---------------
+colnames(df_dis)[-1] <- c('dis_spe','dis_cpe')
+MYwriteData(data=df_dis,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 2 D-E",
+            row.Names = TRUE)
 # ----------------------------------------
 res <- readRDS('Data/rds/Length_Vs_Energy.rds')
 res <- res[!is.na(res$length),]
 p1 <- ggplot(res, aes(length, disTot))+
   #geom_point(alpha=.3)+
-  geom_pointdensity(adjust = .1,alpha=.3,show.legend = T
-                    )+
+  geom_pointdensity(adjust = .1,alpha=.3,show.legend = T,size = .5)+
   scale_color_viridis()+
-  geom_smooth(method = 'glm',col='red')+
-  stat_cor(method = "pearson", size=5,
+  geom_smooth(method = 'glm',col='red',linewidth = .5)+
+  stat_cor(method = "pearson", size=1.7,
            color = "red", geom = "label") +
   theme_bw(base_line_size = .3)+
   mytheme()+
   ylab('Distance of Totoal Energy')+
   xlab('Length')+
   #xlim(0,1000)+
-  ylim(-.5,.5)
+  ylim(-.5,.5)+
+  guides(color = guide_colorbar(barwidth = .5, barheight = 2))+
+  theme(axis.text.x = element_text(size=5, face = "bold"),
+        axis.text.y = element_text(size=5, face = "bold"),
+        legend.text = element_text(size = 5, colour = "black"),
+        strip.text.x = element_text(size = 5),
+        axis.title.x = element_text(size = 5),
+        axis.title.y = element_text(size = 5))
+# ----------SourceData---------------
+MYwriteData(data=res[res$disTot>-.5&res$disTot<.5,1:3],
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 2 C",
+            row.Names = TRUE)
 # -------------------------
 length_var <- res$length
 other_vars <- res[, 4:213]
@@ -156,8 +210,20 @@ p2 <- ggplot(cor_results, aes(x = Correlation)) +
   labs(#title = "Histogram of Correlation Values",
        x = "Correlation Coefficient",
        y = "Count") +
-  mytheme()
-
+  mytheme()+
+  theme(legend.key.width = unit(.3, "cm"),
+        legend.key.height = unit(0.2, "cm"),
+        axis.text.x = element_text(size=5, face = "bold"),
+        axis.text.y = element_text(size=5, face = "bold"),
+        legend.text = element_text(size = 5, colour = "black"),
+        strip.text.x = element_text(size = 5),
+        axis.title.x = element_text(size = 5),
+        axis.title.y = element_text(size = 5))
+# ----------SourceData---------------
+MYwriteData(data=cor_results,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 2 F",
+            row.Names = TRUE)
 # --------------------------
 p<-ggarrange(NULL,NULL,NULL,NULL,NULL,
              A,NULL,B,NULL,p1,
@@ -170,126 +236,19 @@ p<-ggarrange(NULL,NULL,NULL,NULL,NULL,
                         'A', '', 'B', '', 'C',
                         '', '', '', '', '',
                         'D', '', 'E', '', 'F'),
-             font.label = list(size = 30),    # color = "red"
+             font.label = list(size = 15),    # color = "red"
              hjust = -.5, vjust = 0
              )
-
+#ggsave(filename = "Fig2.pdf", plot = p,
+#       width = 180, height = 100, units = "mm")
 # save FIG2.pdf 16x9
 ```
 
-## Fig 3
-
-```{r Fig 3}
-source('Functions.R')
-# ----------------------------------------------------
-df_tot <- readRDS('Fig_Manuscript/Revised/fig_data/df_total_energy.rds')
-df_tot <- df_tot[df_tot$class%in%c('a','b','c','d'),]
-df_tot$class[df_tot$class=='a']<-'All_alpha'
-df_tot$class[df_tot$class=='b']<-'All_beta'
-df_tot$class[df_tot$class=='c']<-'alpha/beta'
-df_tot$class[df_tot$class=='d']<-'alpha+beta'
-df_tot$data <- ifelse(df_tot$data=='Astral 40','ASTRAL40','ASTRAL95')
-
-AB <- ggplot(df_tot,aes(class,str/length,fill=class))+
-  geom_boxplot(outlier.alpha = .01)+
-  facet_wrap(vars(data))+
-  xlab('')+ylab('Total energy (structure)')+
-  coord_cartesian(ylim = c(-15, -4))+
-  mytheme()+theme(legend.title = element_blank(),
-               axis.text.x = element_blank(),
-               strip.text = element_text(size = 23))
-
-CD <- ggplot(df_tot,aes(class,seq/(2*length),fill=class))+
-  geom_boxplot(outlier.alpha = .1)+
-  facet_wrap(vars(data))+
-  xlab('')+ylab('Total energy (sequence)')+
-  coord_cartesian(ylim = c(-15, -6))+
-  mytheme()+theme(legend.title = element_blank(),
-               axis.text.x = element_blank(),
-               strip.text = element_text(size = 23))
 
 
-p <- ggarrange(NULL,
-              AB, NULL,CD, ncol = 1,
-              heights = c(0.09, 1, 0.09, 1),
-              labels = c('',"A", "", "B"),
-              common.legend = T, legend = 'bottom',
-              font.label = list(size = 30),    # color = "red"
-              hjust = -.5,vjust = 0
-              )
-# save FIG3.pdf 10x9
-```
+## Fig 3 A
 
-## Fig 4
-
-```{r Fig 4}
-source('Functions.R')
-# ----------------------------------------------------
-load('Fig_Manuscript/Revised/fig_data/UMPs.RData')
-ump_df_seq40$class <- gsub('-',' ', ump_df_seq40$class)
-ump_df_str40$class <- gsub('-',' ', ump_df_str40$class)
-ump_df_seq95$class <- gsub('-',' ', ump_df_seq95$class)
-ump_df_str95$class <- gsub('-',' ', ump_df_str95$class)
-
-p1<-ggplot(ump_df_seq40,aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7,size=.5) + 
-  facet_grid(~type)+xlab('')+
-  mytheme()+scale_color_manual(values = c('green','magenta'))+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(size = 18),
-        strip.text = element_text(size = 23))+
-  guides(color = guide_legend(override.aes = list(size = 5)))
-
-p2<-ggplot(ump_df_str40,aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7,size=.5) +
-  facet_grid(data ~ type)+xlab('')+ylab('')+
-  mytheme()+scale_color_manual(values = c('green','magenta'))+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(size = 18),
-        strip.text = element_text(size = 23))+
-  guides(color = guide_legend(override.aes = list(size = 5)))
-
-p3<-ggplot(ump_df_seq95,aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7,size=.5) +
-  #facet_grid(cols = vars(type))+
-  mytheme()+scale_color_manual(values = c('green','magenta'))+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(size = 18),
-        strip.text = element_text(size = 23))+
-  guides(color = guide_legend(override.aes = list(size = 5)))
-
-
-p4<-ggplot(ump_df_str95,aes(UMAP1, UMAP2, color= class)) +
-  geom_point(alpha=.7,size=.5) + 
-  facet_grid(rows = vars(data))+ylab('')+
-  mytheme()+scale_color_manual(values = c('green','magenta'))+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(size = 18),
-        strip.text = element_text(size = 23))+
-  guides(color = guide_legend(override.aes = list(size = 5)))
-
-# ********
-p <- ggarrange(NULL,NULL,NULL,
-          p1,NULL,p2,
-          NULL,NULL,NULL,
-          p3,NULL,p4,ncol = 3,nrow = 4,
-          common.legend = T,
-          labels = c('','','',
-                     "", "", "",
-                     '','','',
-                     '','',''),
-          font.label = list(size = 30),
-          widths = c(1, 0.01, 1),
-          heights = c(0, 1, 0.1, 1),
-          hjust = -.5,vjust = 0,legend = 'bottom')
-
-
-# save FIG4.pdf 10x10
-```
-
-## Fig 5 A
-
-```{r Fig 5 A}
+```{r Fig 3 A}
 source('Functions.R')
 # ----------------------------------------------------
 # ******** str40
@@ -326,17 +285,19 @@ ump_df_seq <- data.frame(data='Astral 40',type='CPE',
 z <- rbind(ump_df_str,ump_df_seq)
 z$data <- 'ASTRAL40'
 z$class <- ifelse(z$class=='a.100', 'a.100    ','a.104')
+z40 <- z
 
-p1 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
-    geom_point(alpha=.7) + 
-    facet_nested(~ data+type,independent = T,scales = T)+
+p1 <- ggplot(z,aes(UMAP1, UMAP2, fill= class)) +
+  geom_point(alpha=.7, size=3, stroke = 1, colour = "black",shape = 21) +
+  facet_nested(~ data+type,independent = T,scales = T)+
   ylab('')+xlab('')+
   mytheme()+
   theme(axis.text.y = element_blank(),
         axis.text.x = element_blank(),
         legend.title = element_blank(),
         legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 3)))
+  guides(color = guide_legend(override.aes = list(size = 3)))+
+  scale_fill_manual(values = c('green', 'purple'))
 # ---------------------
 # ******** str95
 df <- readRDS("Data/rds/E210.astral_95.rds")
@@ -372,18 +333,19 @@ ump_df_seq <- data.frame(data='Astral 95',type='CPE',
 z <- rbind(ump_df_str,ump_df_seq)
 z$data <- 'ASTRAL95'
 z$class <- ifelse(z$class=='a.100', 'a.100    ','a.104')
+z95 <- z
 
-
-p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
-    geom_point(alpha=.7) + 
-    facet_nested(~ data+type,independent = T,scales = T)+
+p2 <- ggplot(z,aes(UMAP1, UMAP2, fill= class)) +
+  geom_point(alpha=.7, size=3, stroke = 1, colour = "black",shape = 21) +
+  facet_nested(~ data+type,independent = T,scales = T)+
   ylab('')+xlab('')+
   mytheme()+
   theme(axis.text.y = element_blank(),
         axis.text.x = element_blank(),
         legend.title = element_blank(),
         legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 3)))
+  guides(color = guide_legend(override.aes = list(size = 3)))+
+  scale_fill_manual(values = c('green', 'purple'))
 
 A<-ggarrange(NULL,NULL,NULL,NULL,
              NULL,p1,NULL,p2,nrow = 2,ncol = 4,
@@ -395,12 +357,18 @@ A<-ggarrange(NULL,NULL,NULL,NULL,
   font.label = list(size = 30),
   hjust = .2,vjust = 0)
 #saveRDS(A,'Fig_Manuscript/Old_Figures/Fig4A.rds')
-saveRDS(A,'Fig_Manuscript/Revised/fig_data/Fig5A.rds')
+saveRDS(A,'Fig_Manuscript/fig_data/Fig3A.rds')
+# ----------SourceData---------------
+ump <- rbind(z40,z95)
+MYwriteData(data=ump,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 3 A",
+            row.Names = TRUE)
 ```
 
-## Fig 5 B
+## Fig 3 B
 
-```{r Fig 5 B}
+```{r Fig 3 B}
 source('Functions.R')
 # ----------------------------------------------------
 # ******** str40
@@ -437,9 +405,10 @@ ump_df_seq <- data.frame(data='Astral 40',type='CPE',
 z <- rbind(ump_df_str,ump_df_seq)
 z$data <- 'ASTRAL40'
 z$class <- ifelse(z$class=='a.29.2', 'a.29.2   ','a.29.3')
+z40 <- z
 
-p1 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
-    geom_point(alpha=.7) + 
+p1 <- ggplot(z,aes(UMAP1, UMAP2, fill= class)) +
+  geom_point(alpha=.7, size=3, stroke = 1, colour = "black",shape = 21) +
     facet_nested(~ data+type,independent = T,scales = T)+
   ylab('')+xlab('')+
   mytheme()+
@@ -447,7 +416,8 @@ p1 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
         axis.text.x = element_blank(),
         legend.title = element_blank(),
         legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 3)))
+  guides(color = guide_legend(override.aes = list(size = 3)))+
+  scale_fill_manual(values = c('green', 'purple'))
 # ---------------------
 # ******** str95
 df <- readRDS("Data/rds/E210.astral_95.rds")
@@ -483,9 +453,10 @@ ump_df_seq <- data.frame(data='Astral 95',type='CPE',
 z <- rbind(ump_df_str,ump_df_seq)
 z$data <- 'ASTRAL95'
 z$class <- ifelse(z$class=='a.29.2', 'a.29.2   ','a.29.3')
+z95 <- z
 
-p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
-    geom_point(alpha=.7) + 
+p2 <- ggplot(z,aes(UMAP1, UMAP2, fill= class)) +
+  geom_point(alpha=.7, size=3, stroke = 1, colour = "black",shape = 21) +
     facet_nested(~ data+type,independent = T,scales = T)+
   ylab('')+xlab('')+
   mytheme()+
@@ -493,7 +464,8 @@ p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
         axis.text.x = element_blank(),
         legend.title = element_blank(),
         legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 3)))
+  guides(color = guide_legend(override.aes = list(size = 3)))+
+  scale_fill_manual(values = c('green', 'purple'))
 
 B <- ggarrange(NULL,NULL,NULL,NULL,
              NULL,p1,NULL,p2,nrow = 2,ncol = 4,
@@ -504,12 +476,18 @@ B <- ggarrange(NULL,NULL,NULL,NULL,
                      '',"B", "", ""),
   font.label = list(size = 30),
   hjust = .2,vjust = 0)
-saveRDS(B,'Fig_Manuscript/Revised/fig_data/Fig5B.rds')
+saveRDS(B,'Fig_Manuscript/fig_data/Fig3B.rds')
+# ----------SourceData---------------
+ump <- rbind(z40,z95)
+MYwriteData(data=ump,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 3 B",
+            row.Names = TRUE)
 ```
 
-## Fig 5 C
+## Fig 3 C
 
-```{r Fig 5 C}
+```{r Fig 3 C}
 source('Functions.R')
 # ----------------------------------------------------
 # ******** str40
@@ -544,10 +522,11 @@ ump_df_seq <- data.frame(data='Astral 40',type='CPE',
                            UMAP1 = ump$layout[, 1],
                            UMAP2 = ump$layout[, 2])
 z <- rbind(ump_df_str,ump_df_seq)
-z$data <- 'ASTRAl40'
+z$data <- 'ASTRAL40'
+z40 <- z
 
-p1 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
-    geom_point(alpha=.7) + 
+p1 <- ggplot(z,aes(UMAP1, UMAP2, fill= class)) +
+  geom_point(alpha=.7, size=3, stroke = 1, colour = "black",shape = 21) +
     facet_nested(~ data+type,independent = T,scales = T)+
   ylab('')+xlab('')+
   mytheme()+
@@ -555,7 +534,8 @@ p1 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
         axis.text.x = element_blank(),
         legend.title = element_blank(),
         legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 3)))
+  guides(color = guide_legend(override.aes = list(size = 3)))+
+  scale_fill_manual(values = c('green', 'purple'))
 # ---------------------
 # ******** str95
 df <- readRDS("Data/rds/E210.astral_95.rds")
@@ -590,9 +570,10 @@ ump_df_seq <- data.frame(data='Astral 95',type='CPE',
                            UMAP2 = ump$layout[, 2])
 z <- rbind(ump_df_str,ump_df_seq)
 z$data <- 'ASTRAL95'
+z95 <- z
 
-p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
-    geom_point(alpha=.7) + 
+p2 <- ggplot(z,aes(UMAP1, UMAP2, fill= class)) +
+  geom_point(alpha=.7, size=3, stroke = 1, colour = "black",shape = 21) +
     facet_nested(~ data+type,independent = T,scales = T)+
   ylab('')+xlab('')+
   mytheme()+
@@ -600,7 +581,8 @@ p2 <- ggplot(z,aes(UMAP1, UMAP2, color= class)) +
         axis.text.x = element_blank(),
         legend.title = element_blank(),
         legend.text = element_text(size = 18))+
-  guides(color = guide_legend(override.aes = list(size = 3)))
+  guides(color = guide_legend(override.aes = list(size = 3)))+
+  scale_fill_manual(values = c('green', 'purple'))
 
 C <- ggarrange(NULL,NULL,NULL,NULL,
              NULL,p1,NULL,p2,nrow = 2,ncol = 4,
@@ -611,543 +593,35 @@ C <- ggarrange(NULL,NULL,NULL,NULL,
                      '',"C", "", ""),
   font.label = list(size = 30),
   hjust = .2,vjust = 0)
-saveRDS(C,'Fig_Manuscript/Revised/fig_data/Fig5C.rds')
+saveRDS(C,'Fig_Manuscript/fig_data/Fig3C.rds')
+# ----------SourceData---------------
+ump <- rbind(z40,z95)
+MYwriteData(data=ump,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 3 C",
+            row.Names = TRUE)
 ```
 
-##Fig 5 ABC
+##Fig 3 ABC
 
-```{r Fig 5 ABC}
+```{r Fig 3 ABC}
 rm(list = ls())
-A <- readRDS('Fig_Manuscript/Revised/fig_data/Fig5A.rds')
-B <- readRDS('Fig_Manuscript/Revised/fig_data/Fig5B.rds')
-C <- readRDS('Fig_Manuscript/Revised/fig_data/Fig5C.rds')
+A <- readRDS('Fig_Manuscript/fig_data/Fig3A.rds')
+B <- readRDS('Fig_Manuscript/fig_data/Fig3B.rds')
+C <- readRDS('Fig_Manuscript/fig_data/Fig3C.rds')
 # ------------------------
 p<-ggarrange(NULL,A,B,C,ncol = 1,
           heights = c(0.07,1,1,1))
-# save FIG5.pdf 10x10
+
+ggsave(filename = "Fig3.pdf", plot = p,
+       width = 180, height = 200, units = "mm")
+# save FIG3.pdf 10x10
 ```
 
-## Fig 6 EF
 
-```{r Fig 6 EF}
-source('Functions.R')
-# ----------------------------------------------------
-# ******** a.29.3
-# ****** structure40
-df <- readRDS("Data/rds/E210.astral_40.rds") 
-df = df[!is.na(df$FL),] 
-idx<- df$superfamily%in% 'a.29.3'
-dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
-dis <- data.frame(gr=df$family[idx], dis)
-fa<-unique(dis$gr)
+## Fig 4 AB 
 
-between<-c() 
-within<-c()
-for (i in 1:length(fa)) {  
-  print(i)   
-  x <- fa[i]  
-  idx <- which(dis$gr==x)
-  y <- dis[idx,(idx+1)]
-  within <- c(within, y[lower.tri(y)])
-  x <- dis[idx,-c(1,idx+1)]   
-  x <- as.vector(as.matrix(x))  
-  x <- x[!is.na(x)]   
-  between<-c(between,x) 
-}
-df_family_str <- data.frame(data='ASTRAL40-superfamily a.29.3',type='SPE',
-                            gr=rep(c('within','between'),
-                                   c(length(within),length(between))),
-                            distance=c(within,between)) 
-# ****** sequence40
-df <- readRDS("Data/rds/E210.seq_astral_40.rds") 
-df = df[!is.na(df$FL),] 
-idx<- df$superfamily%in% 'a.29.3'
-dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
-dis <- data.frame(gr=df$family[idx], dis)
-fa<-unique(dis$gr)
-
-between<-c() 
-within<-c()
-for (i in 1:length(fa)) {  
-  print(i)   
-  x <- fa[i]  
-  idx <- which(dis$gr==x)
-  y <- dis[idx,(idx+1)]
-  within <- c(within, y[lower.tri(y)])
-  x <- dis[idx,-c(1,idx+1)]   
-  x <- as.vector(as.matrix(x))  
-  x <- x[!is.na(x)]   
-  between<-c(between,x) 
-}
-df_family_seq <- data.frame(data='ASTRAL40-superfamily a.29.3',type='CPE',
-                            gr=rep(c('within','between'),
-                                   c(length(within),length(between))),
-                            distance=c(within,between)) 
-# **********
-df_family <- rbind(df_family_seq, df_family_str)
-
-E <- ggboxplot(df_family, x='gr',y='distance', 
-          fill = 'gr',alpha=.5,outlier.shape = NA)+
-  stat_summary(fun.y=mean, geom="point", shape=8,
-               size=2, color="red", fill="red")+xlab('')+
-  mytheme()+
-  theme(legend.position = 'none',
-        axis.text.x = element_blank(),
-    strip.text = element_text(size = 15))+
-  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
-  stat_compare_means(method = 't.test',size=5,label.y = 18,
-                     label.x = 1.4,
-                     aes(label = paste0("p = ", ..p.format..)))+
-  facet_nested(~ data + type)+
-  coord_cartesian(ylim = c(0, 20))
-
-mylegend <- get_legend(E+
-                           theme(legend.position = 'bottom',
-                                 legend.title = element_blank(),
-                                 legend.text = element_text(size = 20)))
-saveRDS(mylegend,'Fig_Manuscript/Revised/fig_data/Fig6mylegend.rds')
-# ******************************************
-# ****** structure95
-df <- readRDS("Data/rds/E210.astral_95.rds") 
-df = df[!is.na(df$FL),] 
-idx<- df$superfamily%in% 'a.29.3'
-dis <- as.matrix(dist(df[idx,-c(1:8)], method = manhat))
-dis <- data.frame(gr=df$family[idx], dis)
-fa<-unique(dis$gr)
-
-between<-c() 
-within<-c()
-for (i in 1:length(fa)) {  
-  print(i)   
-  x <- fa[i]  
-  idx <- which(dis$gr==x)
-  y <- dis[idx,(idx+1)]
-  within <- c(within, y[lower.tri(y)])
-  x <- dis[idx,-c(1,idx+1)]   
-  x <- as.vector(as.matrix(x))  
-  x <- x[!is.na(x)]   
-  between<-c(between,x) 
-}
-df_family_str <- data.frame(data='ASTRAL95-superfamily a.29.3',type='SPE',
-                            gr=rep(c('within','between'),
-                                   c(length(within),length(between))),
-                            distance=c(within,between)) 
-# ****** sequence95
-df <- readRDS("Data/rds/E210.seq_astral_95.rds") 
-df = df[!is.na(df$FL),] 
-idx<- df$superfamily%in% 'a.29.3'
-dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
-dis <- data.frame(gr=df$family[idx], dis)
-fa<-unique(dis$gr)
-
-between<-c() 
-within<-c()
-for (i in 1:length(fa)) {  
-  print(i)   
-  x <- fa[i]  
-  idx <- which(dis$gr==x)
-  y <- dis[idx,(idx+1)]
-  within <- c(within, y[lower.tri(y)])
-  x <- dis[idx,-c(1,idx+1)]   
-  x <- as.vector(as.matrix(x))  
-  x <- x[!is.na(x)]   
-  between<-c(between,x) 
-}
-df_family_seq <- data.frame(data='ASTRAL95-superfamily a.29.3',type='CPE',
-                            gr=rep(c('within','between'),
-                                   c(length(within),length(between))),
-                            distance=c(within,between)) 
-# **********
-df_family <- rbind(df_family_seq, df_family_str)
-
-FF <- ggboxplot(df_family, x='gr',y='distance', 
-          fill = 'gr',alpha=.5,outlier.shape = NA)+
-  stat_summary(fun.y=mean, geom="point", shape=8,
-               size=2, color="red", fill="red")+xlab('')+
-  mytheme()+
-  theme(legend.position = 'none',
-    axis.text.x = element_blank(),
-    strip.text = element_text(size = 15))+
-  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
-  stat_compare_means(method = 't.test',size=5,
-                     label.y = 18,
-                     label.x = 1.4,
-                     aes(label = paste0("p = ", ..p.format..)))+
-  facet_nested(~ data + type)+ylab('')+
-  coord_cartesian(ylim = c(0, 20))
-# ********
-E<-ggarrange(
-  NULL,E, ncol = 1,
-  heights = c(0.07, 1),
-  labels = c('', "E"),
-  font.label = list(size = 30), # color = "red"
-  hjust = -.5,vjust = 0
-)
-FF<-ggarrange(
-  NULL,FF, ncol = 1,
-  heights = c(0.07, 1),
-  labels = c('', "F"),
-  font.label = list(size = 30), # color = "red"
-  hjust = -.5,vjust = 0
-)
-EF<-ggarrange(
-    E, NULL,FF, nrow = 1,
-    widths = c(1, 0.3, 1),
-    labels = c("", "", "")
-    )
-
-saveRDS(EF,'Fig_Manuscript/Revised/fig_data/Fig6EF.rds')
-```
-
-## Fig 6 CD
-
-```{r Fig 6 CD}
-source('Functions.R')
-# ----------------------------------------------------
-# ******** a.29
-# ****** structure40
-df <- readRDS("Data/rds/E210.astral_40.rds") 
-df = df[!is.na(df$FL),] 
-idx<- df$fold%in% 'a.29'
-dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
-dis <- data.frame(gr=df$superfamily[idx], dis)
-sf<-unique(dis$gr)
-
-between<-c() 
-within<-c()
-for (i in 1:length(sf)) {  
-  print(i)   
-  x <- sf[i]  
-  idx <- which(dis$gr==x)
-  y <- dis[idx,(idx+1)]
-  within <- c(within, y[lower.tri(y)])
-  x <- dis[idx,-c(1,idx+1)]   
-  x <- as.vector(as.matrix(x))  
-  x <- x[!is.na(x)]   
-  between<-c(between,x) 
-}
-df_superfamily_str <- data.frame(data='ASTRAL40-fold a.29',type='SPE',
-                            gr=rep(c('within','between'),
-                                   c(length(within),length(between))),
-                            distance=c(within,between)) 
-# ****** sequence40
-df <- readRDS("Data/rds/E210.seq_astral_40.rds") 
-df = df[!is.na(df$FL),] 
-idx<- df$fold%in% 'a.29'
-dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
-dis <- data.frame(gr=df$superfamily[idx], dis)
-sf<-unique(dis$gr)
-
-between<-c() 
-within<-c()
-for (i in 1:length(sf)) {  
-  print(i)   
-  x <- sf[i]  
-  idx <- which(dis$gr==x)
-  y <- dis[idx,(idx+1)]
-  within <- c(within, y[lower.tri(y)])
-  x <- dis[idx,-c(1,idx+1)]   
-  x <- as.vector(as.matrix(x))  
-  x <- x[!is.na(x)]   
-  between<-c(between,x) 
-}
-df_superfamily_seq <- data.frame(data='ASTRAL40-fold a.29',type='CPE',
-                            gr=rep(c('within','between'),
-                                   c(length(within),length(between))),
-                            distance=c(within,between)) 
-# **********
-df_superfamily <- rbind(df_superfamily_seq, df_superfamily_str)
-my_comparisons<-list(c('within','between'))
-
-C <- ggboxplot(df_superfamily, x='gr',y='distance', 
-          fill = 'gr',alpha=.5,outlier.shape = NA)+
-  stat_summary(fun.y=mean, geom="point", shape=8,
-               size=2, color="red", fill="red")+xlab('')+
-  mytheme()+
-  theme(legend.position = 'none',
-        axis.text.x = element_blank(),
-    strip.text = element_text(size = 15))+
-  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
-  stat_compare_means(comparisons = my_comparisons, method = 't.test',
-                     size=5,label.y = 17,
-                     label.x = 1.4,bracket.size = NA,tip.length = NA)+
-  facet_nested(~ data + type)+
-  coord_cartesian(ylim = c(0, 20))
-# ******************************************
-# ****** structure95
-df <- readRDS("Data/rds/E210.astral_95.rds") 
-df = df[!is.na(df$FL),] 
-idx<- df$fold%in% 'a.29'
-dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
-dis <- data.frame(gr=df$superfamily[idx], dis)
-sf<-unique(dis$gr)
-
-between<-c() 
-within<-c()
-for (i in 1:length(sf)) {  
-  print(i)   
-  x <- sf[i]  
-  idx <- which(dis$gr==x)
-  y <- dis[idx,(idx+1)]
-  within <- c(within, y[lower.tri(y)])
-  x <- dis[idx,-c(1,idx+1)]   
-  x <- as.vector(as.matrix(x))  
-  x <- x[!is.na(x)]   
-  between<-c(between,x) 
-}
-df_superfamily_str <- data.frame(data='ASTRAL95-fold a.29',type='SPE',
-                            gr=rep(c('within','between'),
-                                   c(length(within),length(between))),
-                            distance=c(within,between)) 
-# ****** sequence95
-df <- readRDS("Data/rds/E210.seq_astral_95.rds") 
-df = df[!is.na(df$FL),] 
-idx<- df$fold%in% 'a.29'
-dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
-dis <- data.frame(gr=df$superfamily[idx], dis)
-sf <- unique(dis$gr)
-
-between<-c() 
-within<-c()
-for (i in 1:length(sf)) {  
-  print(i)   
-  x <- sf[i]  
-  idx <- which(dis$gr==x)
-  y <- dis[idx,(idx+1)]
-  within <- c(within, y[lower.tri(y)])
-  x <- dis[idx,-c(1,idx+1)]   
-  x <- as.vector(as.matrix(x))  
-  x <- x[!is.na(x)]   
-  between<-c(between,x) 
-}
-df_superfamily_seq <- data.frame(data='ASTRAL95-fold a.29',type='CPE',
-                            gr=rep(c('within','between'),
-                                   c(length(within),length(between))),
-                            distance=c(within,between)) 
-# **********
-df_superfamily <- rbind(df_superfamily_seq, df_superfamily_str)
-
-D <- ggboxplot(df_superfamily, x='gr',y='distance', 
-          fill = 'gr',alpha=.5,outlier.shape = NA)+
-  stat_summary(fun.y=mean, geom="point", shape=8,
-               size=2, color="red", fill="red")+xlab('')+
-  mytheme()+
-  theme(legend.position = 'none',
-        axis.text.x = element_blank(),
-    strip.text = element_text(size = 15))+
-  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
-  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=5,
-                     label.x = 1.4,label.y = 17,bracket.size = NA,tip.length = NA)+
-  facet_nested(~ data + type)+ylab('')+
-  coord_cartesian(ylim = c(0, 20))
-# ********
-C<-ggarrange(
-  NULL,C, ncol = 1,
-  heights = c(0.07, 1),
-  labels = c('', "C"),
-  font.label = list(size = 30), # color = "red"
-  hjust = -.5,vjust = 0
-)
-D<-ggarrange(
-  NULL,D, ncol = 1,
-  heights = c(0.07, 1),
-  labels = c('', "D"),
-  font.label = list(size = 30), # color = "red"
-  hjust = -.5,vjust = 0
-)
-CD<-ggarrange(
-    C, NULL,D, nrow = 1,
-    widths = c(1, 0.3, 1),
-    labels = c("", "", "")
-    )
-saveRDS(CD,'Fig_Manuscript/Revised/fig_data/Fig6CD.rds')
-```
-
-## Fig 6 AB
-
-```{r Fig 6 AB}
-source('Functions.R')
-# ----------------------------------------------------
-# ******** a
-# ****** structure40
-df <- readRDS("Data/rds/E210.astral_40.rds") 
-df = df[!is.na(df$FL),] 
-idx<- df$class%in% 'a'
-dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
-dis <- data.frame(gr=df$fold[idx], dis)
-fo<-unique(dis$gr)
-
-between<-c() 
-within<-c()
-for (i in 1:length(fo)) {  
-  print(i)   
-  x <- fo[i]  
-  idx <- which(dis$gr==x)
-  y <- dis[idx,(idx+1)]
-  within <- c(within, y[lower.tri(y)])
-  x <- dis[idx,-c(1,idx+1)]   
-  x <- as.vector(as.matrix(x))  
-  x <- x[!is.na(x)]   
-  between<-c(between,x) 
-}
-wit <- within[sample(length(within),1000)] 
-bet <- between[sample(length(between),1000)] 
-df_fold_str <- data.frame(data='ASTRAL40-class alpha',type='SPE',
-                            gr=rep(c('within','between'),c(1000,1000)),
-                            distance=c(wit,bet)) 
-# ****** sequence40
-df <- readRDS("Data/rds/E210.seq_astral_40.rds") 
-df = df[!is.na(df$FL),] 
-idx<- df$class%in% 'a'
-dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
-dis <- data.frame(gr=df$fold[idx], dis)
-fo <- unique(dis$gr)
-
-between<-c() 
-within<-c()
-for (i in 1:length(fo)) {  
-  print(i)   
-  x <- fo[i]  
-  idx <- which(dis$gr==x)
-  y <- dis[idx,(idx+1)]
-  within <- c(within, y[lower.tri(y)])
-  x <- dis[idx,-c(1,idx+1)]   
-  x <- as.vector(as.matrix(x))  
-  x <- x[!is.na(x)]   
-  between<-c(between,x) 
-}
-wit <- within[sample(length(within),1000)] 
-bet <- between[sample(length(between),1000)] 
-df_fold_seq <- data.frame(data='ASTRAL40-class alpha',type='CPE',
-                            gr=rep(c('within','between'),c(1000,1000)),
-                            distance=c(wit,bet))
-# **********
-df_fold <- rbind(df_fold_seq, df_fold_str)
-my_comparisons<-list(c('within','between'))
-
-A <- ggboxplot(df_fold, x='gr',y='distance', 
-          fill = 'gr',alpha=.5,outlier.shape = NA)+
-  stat_summary(fun.y=mean, geom="point", shape=8,
-               size=2, color="red", fill="red")+xlab('')+
-  mytheme()+
-  theme(legend.position = 'none',
-        axis.text.x = element_blank(),
-    strip.text = element_text(size = 15))+
-  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
-  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=5,
-                     label.y = 30,bracket.size = NA,tip.length = NA)+
-  facet_nested(~ data + type)+
-  coord_cartesian(ylim = c(0, 40))
-# ******************************************
-# ****** structure95
-df <- readRDS("Data/rds/E210.astral_95.rds") 
-df = df[!is.na(df$FL),] 
-idx<- df$class%in% 'a'
-dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
-dis <- data.frame(gr=df$fold[idx], dis)
-fo<-unique(dis$gr)
-
-between<-c() 
-within<-c()
-for (i in 1:length(fo)) {  
-  print(i)   
-  x <- fo[i]  
-  idx <- which(dis$gr==x)
-  y <- dis[idx,(idx+1)]
-  within <- c(within, y[lower.tri(y)])
-  x <- dis[idx,-c(1,idx+1)]   
-  x <- as.vector(as.matrix(x))  
-  x <- x[!is.na(x)]   
-  between<-c(between,x) 
-}
-wit <- within[sample(length(within),1000)]
-bet <- between[sample(length(between),1000)] 
-df_fold_str <- data.frame(data='ASTRAL95-class alpha',type='SPE',
-                            gr=rep(c('within','between'),c(1000,1000)),
-                            distance=c(wit,bet))
-# ****** sequence95
-df <- readRDS("Data/rds/E210.seq_astral_95.rds") 
-df = df[!is.na(df$FL),] 
-idx<- df$class%in% 'a'
-dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
-dis <- data.frame(gr=df$fold[idx], dis)
-fo<-unique(dis$gr)
-
-between<-c() 
-within<-c()
-for (i in 1:length(fo)) {  
-  print(i)   
-  x <- fo[i]  
-  idx <- which(dis$gr==x)
-  y <- dis[idx,(idx+1)]
-  within <- c(within, y[lower.tri(y)])
-  x <- dis[idx,-c(1,idx+1)]   
-  x <- as.vector(as.matrix(x))  
-  x <- x[!is.na(x)]   
-  between<-c(between,x) 
-}
-wit <- within[sample(length(within),1000)] 
-bet <- between[sample(length(between),1000)] 
-df_fold_seq <- data.frame(data='ASTRAL95-class alpha',type='CPE',
-                            gr=rep(c('within','between'),c(1000,1000)),
-                            distance=c(wit,bet)) 
-# **********
-df_fold <- rbind(df_fold_seq, df_fold_str)
-
-B <- ggboxplot(df_fold, x='gr',y='distance', 
-          fill = 'gr',alpha=.5,outlier.shape = NA)+
-  stat_summary(fun.y=mean, geom="point", shape=8,
-               size=3, color="red", fill="red")+xlab('')+
-  mytheme()+
-  theme(legend.position = 'none',
-        axis.text.x = element_blank(),
-    strip.text = element_text(size = 15))+
-  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
-  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=5,
-                     label.y = 30, bracket.size = NA,tip.length = NA)+
-  facet_nested(~ data + type)+ylab('')+
-  coord_cartesian(ylim = c(0, 40))
-# ********
-A<-ggarrange(
-  NULL,A, ncol = 1,
-  heights = c(0.07, 1),
-  labels = c('', "A"),
-  font.label = list(size = 30), # color = "red"
-  hjust = -.5,vjust = 0
-)
-B<-ggarrange(
-  NULL,B, ncol = 1,
-  heights = c(0.07, 1),
-  labels = c('', "B"),
-  font.label = list(size = 30), # color = "red"
-  hjust = -.5,vjust = 0
-)
-AB<-ggarrange(
-    A, NULL,B, nrow = 1,
-    widths = c(1, 0.3, 1),
-    labels = c("", "", "")
-    )
-saveRDS(AB,'Fig_Manuscript/Revised/fig_data/Fig6AB.rds')
-```
-
-##Fig 6 All
-
-```{r Fig 6 All}
-rm(list = ls())
-EF <- readRDS('Fig_Manuscript/Revised/fig_data/Fig6EF.rds')
-CD <- readRDS('Fig_Manuscript/Revised/fig_data/Fig6CD.rds')
-AB <- readRDS('Fig_Manuscript/Revised/fig_data/Fig6AB.rds')
-mylegend <-readRDS('Fig_Manuscript/Revised/fig_data/Fig6mylegend.rds')
-# ---------------------------------------------
-f6all <- ggarrange(NULL,AB,CD,EF,ncol = 1,
-          heights = c(0.1,1,1,1))
-p<-cowplot::plot_grid(f6all, mylegend, ncol = 1, rel_heights = c(1,.03))
-# save pdf 10x9
-```
-
-## Fig 7 CT_Ho (regenerat)
-
-```{r Fig 7 CT_Ho}
+```{r Fig 4 AB CT_Ho}
 source('Functions.R')
 # -----------------------------------
 # time_for_SPE  = 187 Sec
@@ -1171,7 +645,7 @@ df$ratio<-log10(df$Accuracy/df$Time+1)
 df <- df[order(df$ratio, decreasing = T),]
 df$method <- factor(df$method, 
                     levels = df$method)
-mycol <-c('magenta','orange','cyan','skyblue3','purple','red','yellow4','green')
+mycol <-c('magenta','orange','cyan','skyblue3','purple','blue','yellow4','green')
 
 
 p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
@@ -1193,7 +667,8 @@ p80s <- p12h+xlim(c('CPE','TM-Vec'))+
 
 df2 <- df
 df2$Time <- df2$TimeS+1
-p <- ggplot(df2,aes(Accuracy,Time,col=method,label=method))+
+
+p7 <- ggplot(df2,aes(Accuracy,Time,col=method,label=method))+
   geom_point(size=13,show.legend = F)+    
   geom_text(show.legend = F,vjust=.7,hjust=1.2,
             col='black',size=13, fontface='bold')+
@@ -1205,11 +680,16 @@ p <- ggplot(df2,aes(Accuracy,Time,col=method,label=method))+
         axis.title.x = element_text(face = 'bold',color = 'black',size = 40),
         axis.title.y = element_text(face = 'bold',color = 'black',size = 40))
 # ---------------------------------------------------------------
+# ----------SourceData---------------
+MYwriteData(data=df2[,1:3],
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 4 A-B",
+            row.Names = TRUE)
 ```
 
-## Fig 8 Globin
+## Fig 4 C 
 
-```{r Fig8_new}
+```{r Fig 4 C Globin}
 source('Functions.R')
 # ------------------------
 load('Data/Globin/dis_CPE_SPE_time.RData')
@@ -1262,14 +742,20 @@ p<-ggplot(ump_df, aes(UMAP1, UMAP2, color= globin)) +
   geom_point(alpha=.7,size=3) +
   facet_grid( ~ Method)+
   mytheme() +
-  theme(strip.text.x = element_text(size = 13, face = 'bold'))
+  theme(strip.text.x = element_text(size = 13, face = 'bold'),
+        axis.text.x = element_text(size = 10))+
+  scale_color_manual(values = c('darkorange3', 'purple'))
 # save Fig8_new.pdf 10x5
-
+# ----------SourceData---------------
+MYwriteData(data=ump_df[,-c(3,4)],
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 4 C",
+            row.Names = TRUE)
 ```
 
-## Fig 9B,D,F ferritin
+## Fig 5 B,D,F 
 
-```{r Fig 9 ferritin}
+```{r Fig 5 ferritin}
 source('Functions.R')
 # ----------------------------------------------------
 E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
@@ -1283,6 +769,11 @@ nnet <- neighborNet(dis)
 #                                color='blue')+
 #  ggexpand(.1) + ggexpand(.1, direction=-1)
 # write.nexus.networx(nnet,'Data/rds/E210_ferritin_manhat.nxs')
+# ----------SourceData---------------
+MYwriteData(data=as.matrix(dis),
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 5 B",
+            row.Names = TRUE)
 # --------------------------------------------------------------------
 # ----   the 'E210_ferritin_manhat.nxs' file 
 # -----      was load on SplitsTree4(v 4.19.2) to visualize
@@ -1293,6 +784,11 @@ dis <- 1 - dis
 colnames(dis) <- rownames(dis) <- df$pdbID
 nnet <- neighborNet(dis)
 # write.nexus.networx(nnet,'Data/rds/ferritin_TMvec.nxs')
+# ----------SourceData---------------
+MYwriteData(data=as.matrix(dis),
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 5 D",
+            row.Names = TRUE)
 # -----------------------------------------
 E210.seq_ferritin <- readRDS("Data/rds/E210.seq_ferritin.rds")
 df <- E210.seq_ferritin
@@ -1301,12 +797,17 @@ dis <- proxy::dist(df[,-c(1:4)], method = manhat)
 
 nnet <- neighborNet(dis)
 #write.nexus.networx(nnet,'Data/rds/E210.seq_ferritin.nxs')
+# ----------SourceData---------------
+MYwriteData(data=as.matrix(dis),
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 5 F",
+            row.Names = TRUE)
 ```
 
 
-## Fig 9C,E,G ferritin (mean distance)
+## Fig 5 C,E,G 
 
-```{r Fig 9C,E,G ferritin (mean distance)}
+```{r Fig 5C,E,G ferritin (mean distance)}
 source('Functions.R')
 # -----------------------
 mean_pairwise_dis <- function(dis, gr, gr_idx){
@@ -1350,6 +851,11 @@ t_SPE <- ggtree(tree_data, layout = 'unrooted',
                                  'magenta','purple2'
   ))+
   theme(legend.position = 'none')
+# ----------SourceData---------------
+MYwriteData(data=PWdisGroup,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 5 C",
+            row.Names = TRUE)
 # ------------------------------
 # ---------- CPE
 E210.seq_ferritin <- readRDS("Data/rds/E210.seq_ferritin.rds")
@@ -1371,6 +877,11 @@ t_CPE <- ggtree(tree_data, layout = 'unrooted',
                                  'magenta','purple2'
   ))+
   theme(legend.position = 'none')
+# ----------SourceData---------------
+MYwriteData(data=PWdisGroup,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 5 G",
+            row.Names = TRUE)
 # ----------------------
 # --------- TM
 df <- read.csv('Data/csv/Ferritin_Like_seq.csv')
@@ -1392,13 +903,17 @@ t_TM <- ggtree(tree_data, layout = 'unrooted',
                                  'magenta','purple2'
   ))+
   theme(legend.position = 'none')
+# ----------SourceData---------------
+MYwriteData(data=PWdisGroup,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 5 E",
+            row.Names = TRUE)
 ```
 
 
+## Fig 6 
 
-## Fig 10 covid
-
-```{r Fig 10 covid}
+```{r Fig 6 covid}
 source('Functions.R')
 bootFun <- function(e){
   as.phylo(hclust(proxy::dist(e,
@@ -1456,8 +971,13 @@ t_CPE <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
   geom_text2(aes(subset=edge%in%c('144_144','144_145'), label=ci),
              col='black', hjust=-.5, vjust=-.5)+
   scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
-                      type =  c('gray45',"blue","green","red" ))+
+                      type =  c('gray45',"blue","gold3","red3" ))+
   ggtitle('CPE')
+# ----------SourceData---------------
+MYwriteData(data=as.matrix(dis),
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 6 B",
+            row.Names = TRUE)
 # -----------------------------------------------------
 # ------------ SPE ----------------
 E210_spike <- readRDS("Data/rds/E210_spike.rds")
@@ -1482,6 +1002,7 @@ p_data <- ggtree(tree_data, layout = 'dendrogram',
                  #branch.length='none',
                  size = 2) 
 myBoots <- boot.phylo(tree_data, x, bootFun, B = 100)
+
 boot_ci <- data.frame(bootValues=myBoots, ci=NA)
 for (i in 1:nrow(boot_ci)) {
   if(!is.na(boot_ci$bootValues[i])){
@@ -1506,8 +1027,13 @@ t_SPE <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
   geom_text2(aes(subset=edge%in%c('144_144','144_146'), label=ci),
              col='black', hjust=-.5, vjust=-.5)+
   scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
-                      type =  c('gray45',"blue","green","red"  ))+
+                      type =  c('gray45',"blue","gold3","red3"  ))+
   ggtitle('SPE')
+# ----------SourceData---------------
+MYwriteData(data=as.matrix(dis),
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 6 D",
+            row.Names = TRUE)
 # -----------------------------------------------
 # ------------- RMSD --------------
 df <- E210.seq_spike
@@ -1528,14 +1054,19 @@ p_data <- ggtree(tree_data, layout = 'dendrogram',
                  size = 2) 
 
 
-t_RMSS <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
+t_RMSD <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
        theme(legend.position="none",
              plot.title = element_text(size = 50, face="bold",hjust = 0.5,vjust = 2))+
 #  geom_text2(aes(subset=!isTip, label=boots),
 #             col='black', hjust=-.2, vjust=-.5)+
        scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
-                            type =  c("blue","green","red" ))+
+                            type =  c("blue","gold3","red3" ))+
   ggtitle('RMSD')
+# ----------SourceData---------------
+MYwriteData(data=as.matrix(dis),
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 6 E",
+            row.Names = TRUE)
 # --------------------------------------------
 # ----------- TM-Vec -----------------
 df <- E210.seq_spike
@@ -1590,8 +1121,13 @@ t_tmVec <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
   geom_text2(aes(subset=edge%in%c('146_148','148_150'), label=ci),
              col='black', hjust=-.5, vjust=-.5)+
        scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
-                            type =  c("blue","green","red" ))+
+                            type =  c("blue","gold3","red3" ))+
   ggtitle('TM-Vec')
+# ----------SourceData---------------
+MYwriteData(data=as.matrix(dis),
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 6 C",
+            row.Names = TRUE)
 # --------------------------------------
 # --------------TM score-------------
 spike <- read.csv("Data/covidPDB/spike_seq.csv")
@@ -1608,8 +1144,8 @@ for (i in 1:nrow(tm_max)) {
   }
 }
 diag(tm_max) <- 1
-tm_max <- 1 - tm_max
-hc <- as.dist(tm_max)
+dis <- 1 - tm_max
+hc <- as.dist(dis)
 hc <- hc%>% hclust(method = "ward.D2")
 
 dend <- hc %>% as.dendrogram
@@ -1631,8 +1167,13 @@ t_tmScore<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
   #geom_tiplab2(aes(label=label,angle=angle),
   #              hjust=-.1,size=3.5,fontface="bold",align=F)+
   scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
-                       type =  c("blue","green","red" ))+
+                       type =  c("blue","gold3","red3" ))+
   ggtitle('TM-Score')
+# ----------SourceData---------------
+MYwriteData(data=as.matrix(dis),
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 6 F",
+            row.Names = TRUE)
 # -----------------------------------------
 # Covid-SequenceBased-Phylogenetic tree
 # ---------- MSA ClustalW
@@ -1706,8 +1247,15 @@ t_Sequence_upgma <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
   geom_text2(aes(subset=edge%in%c('144_146','146_148'), label=ci),
              col='black', hjust=-.5, vjust=-.5)+
   scale_color_discrete(breaks=c('MERS_Cov', 'SARS_Cov', 'SARS_Cov2'),
-                      type =  c('black',"blue","green","red" ))+
+                      type =  c('gray45',"blue","gold3","red3" ))+
   ggtitle('MSA (ClustalW)')
+# ----------SourceData---------------
+dis_seqid <- as.matrix(d)
+dis_seqid <- dis_seqid[df$pdbID, df$pdbID]
+MYwriteData(data=dis_seqid,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 6 A",
+            row.Names = TRUE)
 # ------------------------------------------
 mylegend <- get_legend(t_SPE+
                        theme(legend.position = 'bottom',
@@ -1718,7 +1266,7 @@ mylegend <- get_legend(t_SPE+
 AB<-ggarrange(NULL,NULL,
     t_Sequence_upgma,t_SPE, NULL,NULL,
     t_CPE,t_tmVec, NULL,NULL,
-    t_RMSS, t_tmScore,
+    t_RMSD, t_tmScore,
     ncol = 2,nrow = 6,
     heights = c(.15, 1.3, .2, 1.3),
     widths = c(1,1),
@@ -1746,7 +1294,7 @@ df$Time <- round((df$TimeS*100)/(12*3600), 5)
 df <- df[order(df$Time, decreasing = F),]
 df$method <- factor(df$method, 
                     levels = df$method)
-mycol <-c('magenta', 'blue','orange','cyan','red','green')
+mycol <-c('magenta', 'purple','orange','cyan','blue','green')
 
 
 p12h <- ggplot(df, aes(x = method, y = Time, fill= method)) +
@@ -1780,17 +1328,22 @@ p <- ggplot(df2, aes(variable,value, fill=method))+
         axis.text.y = element_text(size = 25, face = 'bold',color = 'black'),
         axis.title.x = element_text(size = 25, face = 'bold',color = 'black'),
         axis.title.y = element_text(size = 25, face = 'bold',color = 'black'))
+# ----------SourceData---------------
+MYwriteData(data=df,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 6 G-H",
+            row.Names = TRUE)
 # --------------------------------------------
 p12h
 p80s
 p
 ```
 
-## Fig 10i (Spike Inter-Similarity)
+## Fig 6i 
 
 This chunk calculates the minimum pairwise distance among the SARS2, SARS, and MERS groups to assess their inter-similarity
 
-```{r Spike Inter-Similarity}
+```{r Fig 6i Spike Inter-Similarity}
 source('Functions.R')
 # --------------------SPE-----------
 df <- readRDS("Data/rds/E210_spike.rds")
@@ -1895,15 +1448,18 @@ p0<-ggplot(group_dis,
                                    color = 'black'),
         axis.title.y = element_text(size = 25, face = 'bold',
                                    color = 'black'),)+
-  scale_fill_manual(values = c('magenta', 'blue','cyan','orange','red','green'))
-
+  scale_fill_manual(values = c('magenta', 'purple','cyan','orange','blue','green'))
+# ----------SourceData---------------
+MYwriteData(data=mean_pair_dist,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 6 I",
+            row.Names = TRUE)
 ```
 
 
+## Fig 7 AB
 
-## Fig 11 Bacteriocin Tm-Vec
-
-```{r Fig 11 Bacteriocin Tm-Vec}
+```{r Fig 7 AB Bacteriocin Tm-Vec}
 source('Functions.R')
 # ----------------------------------------------------
 tm <- readRDS('Data/rds/bacteriocin_tm_vec.rds')
@@ -1913,12 +1469,14 @@ tm2 <- rbind(tm[,-25],tm2)
 
 tm2 <- tm2[,c(5,20,21,6,23,24)] # 22~6 DeepBlast
 colnames(tm2)[-6] <- c('Alphafold2','Omegafold','ESMfold','TM_vec','CPE')
-tm2 <- melt(tm2,variable.name = 'method',value.name = 'score')
-tm2$method <- factor(tm2$method,levels = c('TM_vec','Alphafold2','Omegafold','ESMfold','CPE'))
-p1<-ggplot(tm2, aes(status,score,fill=method))+
+tm2$CPE[tm2$CPE<0] <- 0
+tm3 <- melt(tm2,variable.name = 'method',value.name = 'score')
+tm3$method <- factor(tm3$method,levels = c('TM_vec','Alphafold2','Omegafold','ESMfold','CPE'))
+
+p1<-ggplot(tm3, aes(status,score,fill=method))+
   geom_boxplot(outlier.shape = NA,
                color='black',
-               size=rep(c(rep(.2,4),1),3),
+               size=rep(c(rep(.2,4),.8),3),
                alpha=rep(c(rep(.5,4),1),3),
                width=.4
                )+
@@ -1929,13 +1487,19 @@ p1<-ggplot(tm2, aes(status,score,fill=method))+
   mytheme()+
   theme(legend.title = element_blank(),
         axis.text.y = element_text(size=13),
-        axis.text.x = element_text(color = 'black',size = 15, face = 'bold'),
+        axis.text.x = element_text(color = 'black',size = 13, face = 'bold'),
         axis.title.y = element_text(size = 20,vjust = 2, face = 'bold'),
         legend.text = element_text(size = 15))+
   scale_fill_discrete(labels=c('TM_vec','Alphafold2',
                                'Omegafold','ESMfold',
-                               expression(bold("CPE"))))
-
+                               expression(bold("CPE"))))+
+  scale_fill_manual(values = c('orange', 'skyblue3',
+                               'darkolivegreen','yellow3', 'magenta'))
+# ----------SourceData---------------
+MYwriteData(data=tm2,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 7 B",
+            row.Names = TRUE)
 # --------------------------------
 # -----  UMAP
 df <- readRDS('Data/rds/E210.seq_bacteriocin.rds')
@@ -1954,37 +1518,29 @@ p2<-ggplot(ump_df,
   geom_point(alpha=.7, size=2) + 
   mytheme()+
   theme(legend.title = element_blank(),
-        legend.position = 'bottom',
+        #legend.position = 'bottom',
         axis.title = element_text(size = 15),
-        axis.title.y = element_text(size = 15,vjust = 5),
+        axis.title.y = element_text(size = 15,vjust = 0),
         legend.text = element_text(size = 15))+
-  scale_color_manual(values = c('green','magenta','blue'))
+  scale_color_manual(values = c('skyblue3','orange4','blue'))
+
+# ----------SourceData---------------
+MYwriteData(data=ump_df,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 7 A",
+            row.Names = TRUE)
 
 
-p1 <- ggarrange(NULL,NULL,
-          NULL,p1,ncol = 2,nrow = 2,
-          labels = c('','B'),
-          heights = c(0.1,1),
-          widths = c(.1,1),
-          font.label = list(size = 50),
-          hjust = 0,vjust = 1.2)
-p2 <- ggarrange(NULL,NULL,
-          NULL,p2,ncol = 2,nrow = 2,
-          labels = c('','A'),
-          heights = c(0.1,1),
-          widths = c(.1,1),
-          font.label = list(size = 50),
-          hjust = .5,vjust = 1.2)
-
-ggarrange(p2,NULL,p1,ncol = 3,nrow = 1,
+p1_2 <- ggarrange(p2,NULL,p1,ncol = 3,nrow = 1,
           widths = c(.5,.05,1))
 
-# save FIG11.pdf 15x8
+# save FIG7AB.pdf 15x8
+
 ```
 
-##Fig 12 DrugTarget
+##Fig 7 D
 
-```{r Fig 12 DrugTarget}
+```{r Fig 7 D DrugTarget}
 source('Functions.R')
 # ----------------------------------------------------
 my_sab <- readRDS('Data/rds/my_sab.rds')
@@ -1999,16 +1555,24 @@ df <- left_join(sab,my_sab,c('d1','d2'))
 p1 <- ggplot(df,aes(sAB,my_sAB))+
   geom_point(alpha=.5)+geom_smooth(method = 'lm')+
   stat_cor(col='red',size=8)+mytheme()+
-    theme(axis.title = element_text(size=20),
-        axis.text.x = element_text(size = 13),
-        axis.text.y = element_text(size = 13),)+
+    theme(axis.title.x = element_text(size=30),
+          axis.title.y = element_text(size=30),
+        axis.text.x = element_text(size = 17),
+        axis.text.y = element_text(size = 17))+
   xlab('sAB (PPI)')+ylab('sAB (CPE)')
-# save FIG12.pdf 10x7
+# save FIG7C.pdf 10x7
+
+# ----------SourceData---------------
+colnames(df)[5:6] <- c('sAB(PPI)','sAB(CPE)')
+MYwriteData(data=df,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 7 D",
+            row.Names = TRUE)
 ```
 
-## Fig 13 (PLPRO)
+## Fig 7 C 
 
-```{r Fig 13 (PLPRO)}
+```{r Fig 7 C (PLPRO)}
 source('Functions.R')
 load('Data/Large_Scale_SARS2/SPE_CPE_time.RData')
 df_CPE$pdbID <- gsub('.pdb','',df_CPE$pdbID)
@@ -2093,12 +1657,19 @@ p<-ggplot(ump_df, aes(UMAP1, UMAP2, color= subClass)) +
   geom_point(alpha=.7,size=3) +
   facet_grid( ~ Method)+
   mytheme() +
-  theme(strip.text.x = element_text(size = 13, face = 'bold'))
-# save Fig13_new.pdf 10x5
+  theme(strip.text.x = element_text(size = 13, face = 'bold'))+
+  scale_color_manual(values = c('purple', 'skyblue3', 'yellow3', 'red4'))
+# save Fig7D.pdf 10x5
+# ----------SourceData---------------
+MYwriteData(data=ump_df[,-c(5,6)],
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 7 C",
+            row.Names = TRUE)
 ```
 
-## Fig 14  (Scalability)
-```{r Fig 14}
+## Fig 7 E  
+
+```{r Fig 7 E (Scalability)}
 source('Functions.R')
 # ---------------
 cpe <- read.csv('Data/csv/CPE_prfc_astral95.csv')
@@ -2108,24 +1679,25 @@ tm$method <- 'TM-Vec'
 
 df <- rbind(cpe, tm)
 
-p<-ggplot(df, aes(n_protein, time/sumAA, col=method)) +
+library(scales)
+p0<-ggplot(df, aes(n_protein, time/sumAA, col=method)) +
   geom_point(size=5, alpha=1) +
   geom_smooth(method = "lm", se = FALSE, alpha=1,linewidth = 1) +  
-    annotation_custom(
-    grob = textGrob(bquote(paste("T/AA = 1.04 × 10"^"-8",
-                                 " N + 1.36 × 10"^"-5")),
-                    gp = gpar(col = "magenta", fontsize = 15)),
-    xmin = 10000, xmax = 10000, ymin = 0.0003, ymax = 0.0003)+
-  annotation_custom(
-    grob = textGrob(bquote(paste("T/AA = 2.33 × 10"^"-8",
-                                 " N + 4.71 × 10"^"-4")),
-                    gp = gpar(col = "orange", fontsize = 15)),
-    xmin = 10000, xmax = 10000, ymin = 0.001, ymax = 0.001)+
+#  annotation_custom(
+#    grob = textGrob(bquote(paste("T/AA = 1.04 × 10"^"-8",
+#                                 " N + 1.36 × 10"^"-5")),
+#                    gp = gpar(col = "black", fontsize = 15)),
+#    xmin = 10000, xmax = 10000, ymin = 0.0003, ymax = 0.0003)+
+#  annotation_custom(
+#    grob = textGrob(bquote(paste("T/AA = 2.33 × 10"^"-8",
+#                                 " N + 4.71 × 10"^"-4")),
+#                    gp = gpar(col = "black", fontsize = 15)),
+#    xmin = 10000, xmax = 10000, ymin = 0.001, ymax = 0.001)+
   xlab('N Protein')+
   ylab('Time/AminoAcid (Sec/AA)') +
-  scale_color_manual(values = c('magenta', 'orange'))+
+  scale_color_manual(values = c('magenta', 'orange2'))+
   mytheme()+
-  theme(legend.position = c(.85,.13),
+  theme(legend.position = c(.85,.09),
         legend.text = element_text(face = 'bold'),
         axis.title.y = element_text(size = 13, vjust = 2),
         axis.title.x = element_text(size = 13, vjust = -.5))+
@@ -2133,63 +1705,753 @@ p<-ggplot(df, aes(n_protein, time/sumAA, col=method)) +
                      labels = label_number(scale = 1e-3))+
   scale_y_continuous(breaks = seq(0,1.2, .2)/1000,
                      labels = label_number(scale = 1e3))+
-  annotation_custom(
-  grob = textGrob(bquote("×10"^-3),
-                  gp = gpar(col = "blue", fontsize = 15),rot=90),
-  xmin = -3100, xmax = -3100, ymin = 0.00096, ymax = 0.00096) +
-  annotation_custom(
-  grob = textGrob(bquote("×10"^3),
-                  gp = gpar(col = "blue", fontsize = 15)),
-  xmin = 19000, xmax = 19000, ymin = -.00012, ymax = -.00012) +
+#  annotation_custom(
+#  grob = textGrob(bquote("×10"^-3),
+#                  gp = gpar(col = "black", fontsize = 15),rot=90),
+#  xmin = -3100, xmax = -3100, ymin = 0.0011, ymax = 0.0011) +
+#  annotation_custom(
+#  grob = textGrob(bquote("×10"^3),
+#                  gp = gpar(col = "black", fontsize = 15)),
+#  xmin = 19000, xmax = 19000, ymin = -.00015, ymax = -.00015) +
   coord_cartesian(clip = "off") 
 
-ggarrange(NULL,p,ncol = 2,widths = c(.01,1))
-# save Fig13_new.pdf 7x6
+p1<-ggarrange(NULL,p0,ncol = 2,widths = c(.01,1))
+# save Fig7E.pdf 7x4.5
+
+# ----------SourceData---------------
+MYwriteData(data=df,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure 7 E",
+            row.Names = TRUE)
 ```
 
-## Fig S1 210Cor
+## Fig S1 
 
 ```{r Fig S1 210Cor}
+source('Functions.R')
 res <- readRDS('Data/rds/Length_Vs_Energy.rds')
 res <- res[!is.na(res$length),-c(1,3:13)]
 res <- res[-4383,]
+# ----------SourceData---------------
+MYwriteData(data=res,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure S1",
+            row.Names = TRUE)
 # -- save plots
-st <- seq(1,210,35)
-en <- seq(35,210,35)
+#   st <- seq(1,210,35)
+#   en <- seq(35,210,35)
+#   
+#   for (i in 1:6) {
+#     print(i)
+#     s <- st[i]+1
+#     e <- en[i]+1
+#     df <- res[,c(1, s:e)]
+#     df2 <- df %>%
+#       gather(key = "Int_i", value = "Value", -length)
+#     p <- ggplot(df2, aes(length, Value))+
+#       geom_point()+
+#       stat_cor(aes(label = ..r.label..),
+#                method = 'spearman', col='red', geom = "label",
+#                label.x = 0, label.y = range(df2$Value,na.rm = #   T)[2]+.05)+
+#       facet_wrap( ~ Int_i, ncol = 5)+
+#       ylab('CPE - SPE') +
+#       ylim(range(df2$Value,na.rm = T)[1]-.1, range(df2$Value,na.rm = #   T)[2]+.1)+
+#       theme_bw(base_line_size = .1)+
+#       theme(strip.text.x = element_text(size = 13),
+#             axis.title.x = element_text(size = 20),
+#             axis.title.y = element_text(size = 20),
+#             panel.grid.major = element_line(color = "black"),
+#       panel.grid.minor = element_line(color = "black"))
+#     ggsave(filename = paste0('Fig_Manuscript/Revised/supp_Fig/210Cor', #   i, '.png'), 
+#            plot = p, width = 9, height = 13, 
+#            dpi = 600, device = "png")
+#   }
+```
 
-for (i in 1:6) {
-  print(i)
-  s <- st[i]+1
-  e <- en[i]+1
-  df <- res[,c(1, s:e)]
-  df2 <- df %>%
-    gather(key = "Int_i", value = "Value", -length)
-  p <- ggplot(df2, aes(length, Value))+
-    geom_point()+
-    stat_cor(aes(label = ..r.label..),
-             method = 'spearman', col='red', geom = "label",
-             label.x = 0, label.y = range(df2$Value,na.rm = T)[2]+.05)+
-    facet_wrap( ~ Int_i, ncol = 5)+
-    ylab('CPE - SPE') +
-    ylim(range(df2$Value,na.rm = T)[1]-.1, range(df2$Value,na.rm = T)[2]+.1)+
-    theme_bw(base_line_size = .1)+
-    theme(strip.text.x = element_text(size = 13),
-          axis.title.x = element_text(size = 20),
-          axis.title.y = element_text(size = 20),
-          panel.grid.major = element_line(color = "black"),
-    panel.grid.minor = element_line(color = "black"))
-  ggsave(filename = paste0('Fig_Manuscript/Revised/sup_Fig/210Cor', i, '.png'), 
-         plot = p, width = 9, height = 13, 
-         dpi = 600, device = "png")
+## Fig S2
+
+```{r Fig S2}
+source('Functions.R')
+# ----------------------------------------------------
+df_tot <- readRDS('Fig_Manuscript/fig_data/df_total_energy.rds')
+df_tot <- df_tot[df_tot$class%in%c('a','b','c','d'),]
+df_tot$class[df_tot$class=='a']<-'All_alpha'
+df_tot$class[df_tot$class=='b']<-'All_beta'
+df_tot$class[df_tot$class=='c']<-'alpha/beta'
+df_tot$class[df_tot$class=='d']<-'alpha+beta'
+df_tot$data <- ifelse(df_tot$data=='Astral 40','ASTRAL40','ASTRAL95')
+
+AB <- ggplot(df_tot,aes(class,str/length,fill=class))+
+  geom_boxplot(outlier.alpha = .01)+
+  facet_wrap(vars(data))+
+  xlab('')+ylab('Total energy (structure)')+
+  coord_cartesian(ylim = c(-15, -4))+
+  mytheme()+theme(legend.title = element_blank(),
+               axis.text.x = element_blank(),
+               strip.text = element_text(size = 23))+
+  scale_fill_manual(values = c('green', 'purple', 'gold3', 'magenta'))
+
+CD <- ggplot(df_tot,aes(class,seq/(2*length),fill=class))+
+  geom_boxplot(outlier.alpha = .1)+
+  facet_wrap(vars(data))+
+  xlab('')+ylab('Total energy (sequence)')+
+  coord_cartesian(ylim = c(-15, -6))+
+  mytheme()+theme(legend.title = element_blank(),
+               axis.text.x = element_blank(),
+               strip.text = element_text(size = 23))+
+  scale_fill_manual(values = c('green', 'purple', 'gold3', 'magenta'))
+
+
+p <- ggarrange(NULL,
+              AB, NULL,CD, ncol = 1,
+              heights = c(0.09, 1, 0.09, 1),
+              labels = c('',"A", "", "B"),
+              common.legend = T, legend = 'bottom',
+              font.label = list(size = 30),    # color = "red"
+              hjust = -.5,vjust = 0
+              )
+# save FIG3.pdf 10x9
+# ----------SourceData---------------
+df_tot$seq <- df_tot$seq/(2*df_tot$length)
+df_tot$str <- df_tot$str/(df_tot$length)
+MYwriteData(data=df_tot[,-3],
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure S2",
+            row.Names = TRUE)
+```
+
+## Fig S3
+
+```{r Fig S3}
+source('Functions.R')
+# ----------------------------------------------------
+load('Fig_Manuscript/fig_data/UMPs.RData')
+ump_df_seq40$class <- gsub('-',' ', ump_df_seq40$class)
+ump_df_str40$class <- gsub('-',' ', ump_df_str40$class)
+ump_df_seq95$class <- gsub('-',' ', ump_df_seq95$class)
+ump_df_str95$class <- gsub('-',' ', ump_df_str95$class)
+
+p1<-ggplot(ump_df_seq40,aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7,size=.5) + 
+  facet_grid(~type)+xlab('')+
+  mytheme()+scale_color_manual(values = c(rgb(244/255, 200/255, 0/255),'purple'))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 18),
+        strip.text = element_text(size = 23))+
+  guides(color = guide_legend(override.aes = list(size = 5)))
+
+p2<-ggplot(ump_df_str40,aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7,size=.5) +
+  facet_grid(data ~ type)+xlab('')+ylab('')+
+  mytheme()+scale_color_manual(values = c(rgb(244/255, 200/255, 0/255),'purple'))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 18),
+        strip.text = element_text(size = 23))+
+  guides(color = guide_legend(override.aes = list(size = 5)))
+
+p3<-ggplot(ump_df_seq95,aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7,size=.5) +
+  #facet_grid(cols = vars(type))+
+  mytheme()+scale_color_manual(values = c(rgb(244/255, 200/255, 0/255),'purple'))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 18),
+        strip.text = element_text(size = 23))+
+  guides(color = guide_legend(override.aes = list(size = 5)))
+
+
+p4<-ggplot(ump_df_str95,aes(UMAP1, UMAP2, color= class)) +
+  geom_point(alpha=.7,size=.5) + 
+  facet_grid(rows = vars(data))+ylab('')+
+  mytheme()+scale_color_manual(values = c(rgb(244/255, 200/255, 0/255),'purple'))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(size = 18),
+        strip.text = element_text(size = 23))+
+  guides(color = guide_legend(override.aes = list(size = 5)))
+# ----------SourceData---------------
+ump <- rbind(ump_df_seq40,ump_df_str40,
+             ump_df_seq95, ump_df_str95)
+MYwriteData(data=ump,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure S3",
+            row.Names = TRUE)
+# ********
+p <- ggarrange(NULL,NULL,NULL,
+          p1,NULL,p2,
+          NULL,NULL,NULL,
+          p3,NULL,p4,ncol = 3,nrow = 4,
+          common.legend = T,
+          labels = c('','','',
+                     "", "", "",
+                     '','','',
+                     '','',''),
+          font.label = list(size = 30),
+          widths = c(1, 0.01, 1),
+          heights = c(0, 1, 0.1, 1),
+          hjust = -.5,vjust = 0,legend = 'bottom')
+
+
+# save FIG4.pdf 10x10
+```
+
+## Fig S4 EF
+
+```{r Fig S4 EF}
+source('Functions.R')
+# ----------------------------------------------------
+# ******** a.29.3
+# ****** structure40
+df <- readRDS("Data/rds/E210.astral_40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$superfamily%in% 'a.29.3'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$family[idx], dis)
+fa<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fa)) {  
+  print(i)   
+  x <- fa[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
 }
+df_family_str <- data.frame(data='ASTRAL40-superfamily a.29.3',type='SPE',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# ****** sequence40
+df <- readRDS("Data/rds/E210.seq_astral_40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$superfamily%in% 'a.29.3'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$family[idx], dis)
+fa<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fa)) {  
+  print(i)   
+  x <- fa[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_family_seq <- data.frame(data='ASTRAL40-superfamily a.29.3',type='CPE',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# **********
+df_family <- rbind(df_family_seq, df_family_str)
+# ----------SourceData---------------
+MYwriteData(data=df_family,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure S4 E",
+            row.Names = TRUE)
+
+
+E <- ggboxplot(df_family, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  mytheme()+
+  theme(legend.position = 'none',
+        axis.text.x = element_blank(),
+    strip.text = element_text(size = 15))+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(method = 't.test',size=5,label.y = 18,
+                     label.x = 1.4,
+                     aes(label = paste0("p = ", ..p.format..)))+
+  facet_nested(~ data + type)+
+  coord_cartesian(ylim = c(0, 20))
+
+mylegend <- get_legend(E+
+                           theme(legend.position = 'bottom',
+                                 legend.title = element_blank(),
+                                 legend.text = element_text(size = 20)))
+saveRDS(mylegend,'Fig_Manuscript/fig_data/FigS4mylegend.rds')
+# ******************************************
+# ****** structure95
+df <- readRDS("Data/rds/E210.astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$superfamily%in% 'a.29.3'
+dis <- as.matrix(dist(df[idx,-c(1:8)], method = manhat))
+dis <- data.frame(gr=df$family[idx], dis)
+fa<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fa)) {  
+  print(i)   
+  x <- fa[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_family_str <- data.frame(data='ASTRAL95-superfamily a.29.3',type='SPE',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# ****** sequence95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$superfamily%in% 'a.29.3'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$family[idx], dis)
+fa<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fa)) {  
+  print(i)   
+  x <- fa[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_family_seq <- data.frame(data='ASTRAL95-superfamily a.29.3',type='CPE',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# **********
+df_family <- rbind(df_family_seq, df_family_str)
+# ----------SourceData---------------
+MYwriteData(data=df_family,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure S4 F",
+            row.Names = TRUE)
+
+FF <- ggboxplot(df_family, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  mytheme()+
+  theme(legend.position = 'none',
+    axis.text.x = element_blank(),
+    strip.text = element_text(size = 15))+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(method = 't.test',size=5,
+                     label.y = 18,
+                     label.x = 1.4,
+                     aes(label = paste0("p = ", ..p.format..)))+
+  facet_nested(~ data + type)+ylab('')+
+  coord_cartesian(ylim = c(0, 20))
+# ********
+E<-ggarrange(
+  NULL,E, ncol = 1,
+  heights = c(0.07, 1),
+  labels = c('', "E"),
+  font.label = list(size = 30), # color = "red"
+  hjust = -.5,vjust = 0
+)
+FF<-ggarrange(
+  NULL,FF, ncol = 1,
+  heights = c(0.07, 1),
+  labels = c('', "F"),
+  font.label = list(size = 30), # color = "red"
+  hjust = -.5,vjust = 0
+)
+EF<-ggarrange(
+    E, NULL,FF, nrow = 1,
+    widths = c(1, 0.3, 1),
+    labels = c("", "", "")
+    )
+
+#saveRDS(EF,'Fig_Manuscript/fig_data/FigS4EF.rds')
+```
+
+## Fig S4 CD
+
+```{r Fig S4 CD}
+source('Functions.R')
+# ----------------------------------------------------
+# ******** a.29
+# ****** structure40
+df <- readRDS("Data/rds/E210.astral_40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$fold%in% 'a.29'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$superfamily[idx], dis)
+sf<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(sf)) {  
+  print(i)   
+  x <- sf[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_superfamily_str <- data.frame(data='ASTRAL40-fold a.29',type='SPE',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# ****** sequence40
+df <- readRDS("Data/rds/E210.seq_astral_40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$fold%in% 'a.29'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$superfamily[idx], dis)
+sf<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(sf)) {  
+  print(i)   
+  x <- sf[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_superfamily_seq <- data.frame(data='ASTRAL40-fold a.29',type='CPE',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# **********
+df_superfamily <- rbind(df_superfamily_seq, df_superfamily_str)
+# ----------SourceData---------------
+MYwriteData(data=df_superfamily,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure S4 C",
+            row.Names = TRUE)
+
+
+my_comparisons<-list(c('within','between'))
+
+C <- ggboxplot(df_superfamily, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  mytheme()+
+  theme(legend.position = 'none',
+        axis.text.x = element_blank(),
+    strip.text = element_text(size = 15))+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',
+                     size=5,label.y = 17,
+                     label.x = 1.4,bracket.size = NA,tip.length = NA)+
+  facet_nested(~ data + type)+
+  coord_cartesian(ylim = c(0, 20))
+# ******************************************
+# ****** structure95
+df <- readRDS("Data/rds/E210.astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$fold%in% 'a.29'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$superfamily[idx], dis)
+sf<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(sf)) {  
+  print(i)   
+  x <- sf[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_superfamily_str <- data.frame(data='ASTRAL95-fold a.29',type='SPE',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# ****** sequence95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$fold%in% 'a.29'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$superfamily[idx], dis)
+sf <- unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(sf)) {  
+  print(i)   
+  x <- sf[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+df_superfamily_seq <- data.frame(data='ASTRAL95-fold a.29',type='CPE',
+                            gr=rep(c('within','between'),
+                                   c(length(within),length(between))),
+                            distance=c(within,between)) 
+# **********
+df_superfamily <- rbind(df_superfamily_seq, df_superfamily_str)
+# ----------SourceData---------------
+MYwriteData(data=df_superfamily,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure S4 D",
+            row.Names = TRUE)
+
+D <- ggboxplot(df_superfamily, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  mytheme()+
+  theme(legend.position = 'none',
+        axis.text.x = element_blank(),
+    strip.text = element_text(size = 15))+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=5,
+                     label.x = 1.4,label.y = 17,bracket.size = NA,tip.length = NA)+
+  facet_nested(~ data + type)+ylab('')+
+  coord_cartesian(ylim = c(0, 20))
+# ********
+C<-ggarrange(
+  NULL,C, ncol = 1,
+  heights = c(0.07, 1),
+  labels = c('', "C"),
+  font.label = list(size = 30), # color = "red"
+  hjust = -.5,vjust = 0
+)
+D<-ggarrange(
+  NULL,D, ncol = 1,
+  heights = c(0.07, 1),
+  labels = c('', "D"),
+  font.label = list(size = 30), # color = "red"
+  hjust = -.5,vjust = 0
+)
+CD<-ggarrange(
+    C, NULL,D, nrow = 1,
+    widths = c(1, 0.3, 1),
+    labels = c("", "", "")
+    )
+#saveRDS(CD,'Fig_Manuscript/fig_data/FigS4CD.rds')
+```
+
+## Fig S4 AB
+
+```{r Fig S4 AB}
+source('Functions.R')
+# ----------------------------------------------------
+# ******** a
+# ****** structure40
+df <- readRDS("Data/rds/E210.astral_40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$class%in% 'a'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$fold[idx], dis)
+fo<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fo)) {  
+  print(i)   
+  x <- fo[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+wit <- within[sample(length(within),1000)] 
+bet <- between[sample(length(between),1000)] 
+df_fold_str <- data.frame(data='ASTRAL40-class alpha',type='SPE',
+                            gr=rep(c('within','between'),c(1000,1000)),
+                            distance=c(wit,bet)) 
+# ****** sequence40
+df <- readRDS("Data/rds/E210.seq_astral_40.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$class%in% 'a'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$fold[idx], dis)
+fo <- unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fo)) {  
+  print(i)   
+  x <- fo[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+wit <- within[sample(length(within),1000)] 
+bet <- between[sample(length(between),1000)] 
+df_fold_seq <- data.frame(data='ASTRAL40-class alpha',type='CPE',
+                            gr=rep(c('within','between'),c(1000,1000)),
+                            distance=c(wit,bet))
+# **********
+df_fold <- rbind(df_fold_seq, df_fold_str)
+# ----------SourceData---------------
+MYwriteData(data=df_fold,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure S4 A",
+            row.Names = TRUE)
+
+my_comparisons<-list(c('within','between'))
+
+A <- ggboxplot(df_fold, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=2, color="red", fill="red")+xlab('')+
+  mytheme()+
+  theme(legend.position = 'none',
+        axis.text.x = element_blank(),
+    strip.text = element_text(size = 15))+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=5,
+                     label.y = 30,bracket.size = NA,tip.length = NA)+
+  facet_nested(~ data + type)+
+  coord_cartesian(ylim = c(0, 40))
+# ******************************************
+# ****** structure95
+df <- readRDS("Data/rds/E210.astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$class%in% 'a'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$fold[idx], dis)
+fo<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fo)) {  
+  print(i)   
+  x <- fo[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+wit <- within[sample(length(within),1000)]
+bet <- between[sample(length(between),1000)] 
+df_fold_str <- data.frame(data='ASTRAL95-class alpha',type='SPE',
+                            gr=rep(c('within','between'),c(1000,1000)),
+                            distance=c(wit,bet))
+# ****** sequence95
+df <- readRDS("Data/rds/E210.seq_astral_95.rds") 
+df = df[!is.na(df$FL),] 
+idx<- df$class%in% 'a'
+dis <- as.matrix(dist(df[idx,-c(1:8)],method = manhat))
+dis <- data.frame(gr=df$fold[idx], dis)
+fo<-unique(dis$gr)
+
+between<-c() 
+within<-c()
+for (i in 1:length(fo)) {  
+  print(i)   
+  x <- fo[i]  
+  idx <- which(dis$gr==x)
+  y <- dis[idx,(idx+1)]
+  within <- c(within, y[lower.tri(y)])
+  x <- dis[idx,-c(1,idx+1)]   
+  x <- as.vector(as.matrix(x))  
+  x <- x[!is.na(x)]   
+  between<-c(between,x) 
+}
+wit <- within[sample(length(within),1000)] 
+bet <- between[sample(length(between),1000)] 
+df_fold_seq <- data.frame(data='ASTRAL95-class alpha',type='CPE',
+                            gr=rep(c('within','between'),c(1000,1000)),
+                            distance=c(wit,bet)) 
+# **********
+df_fold <- rbind(df_fold_seq, df_fold_str)
+# ----------SourceData---------------
+MYwriteData(data=df_fold,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure S4 B",
+            row.Names = TRUE)
+
+B <- ggboxplot(df_fold, x='gr',y='distance', 
+          fill = 'gr',alpha=.5,outlier.shape = NA)+
+  stat_summary(fun.y=mean, geom="point", shape=8,
+               size=3, color="red", fill="red")+xlab('')+
+  mytheme()+
+  theme(legend.position = 'none',
+        axis.text.x = element_blank(),
+    strip.text = element_text(size = 15))+
+  scale_fill_viridis(discrete = TRUE, alpha=0.6)+
+  stat_compare_means(comparisons = my_comparisons, method = 't.test',size=5,
+                     label.y = 30, bracket.size = NA,tip.length = NA)+
+  facet_nested(~ data + type)+ylab('')+
+  coord_cartesian(ylim = c(0, 40))
+# ********
+A<-ggarrange(
+  NULL,A, ncol = 1,
+  heights = c(0.07, 1),
+  labels = c('', "A"),
+  font.label = list(size = 30), # color = "red"
+  hjust = -.5,vjust = 0
+)
+B<-ggarrange(
+  NULL,B, ncol = 1,
+  heights = c(0.07, 1),
+  labels = c('', "B"),
+  font.label = list(size = 30), # color = "red"
+  hjust = -.5,vjust = 0
+)
+AB<-ggarrange(
+    A, NULL,B, nrow = 1,
+    widths = c(1, 0.3, 1),
+    labels = c("", "", "")
+    )
+saveRDS(AB,'Fig_Manuscript/fig_data/FigS4AB.rds')
+```
+
+##Fig S4 
+
+```{r Fig S4 All}
+rm(list = ls())
+EF <- readRDS('Fig_Manuscript/fig_data/FigS4EF.rds')
+CD <- readRDS('Fig_Manuscript/fig_data/FigS4CD.rds')
+AB <- readRDS('Fig_Manuscript/fig_data/FigS4AB.rds')
+mylegend <-readRDS('Fig_Manuscript/fig_data/FigS4mylegend.rds')
+# ---------------------------------------------
+f6all <- ggarrange(NULL,AB,CD,EF,ncol = 1,
+          heights = c(0.1,1,1,1))
+p<-cowplot::plot_grid(f6all, mylegend, ncol = 1, rel_heights = c(1,.03))
+# save pdf 10x9
 ```
 
 
-## Fig S6-S8 UMAP
+## Fig S9-S11 
 
-```{r Fig S6-S8 UMAP}
+```{r Fig S9-S11 UMAP}
 source('Functions.R')
 load('Data/Large_Scale_SARS2/SPE_CPE_time.RData')
+library(RColorBrewer)
 palette_Dark2 <- colorRampPalette(brewer.pal(28, "Dark2"))
 #---------------------------------------------
 # ----------SPE
@@ -2202,6 +2464,8 @@ ump <- ump$layout
 ump_df <- data.frame(family=df_SPE$sars_proteom, 
                   UMAP1=ump[,1],
                   UMAP2=ump[,2])
+spe <- ump_df
+spe$method <- 'SPE'
 
 p_SPE <- ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
   geom_point(size = 3,alpha=.7) +
@@ -2227,6 +2491,9 @@ ump <- ump$layout
 ump_df <- data.frame(family=df_CPE$sars_proteom, 
                   UMAP1=ump[,1],
                   UMAP2=ump[,2])
+
+cpe <- ump_df
+cpe$method <- 'CPE'
 
 p_CPE <- ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
   geom_point(size = 3,alpha=.7) +
@@ -2260,6 +2527,9 @@ ump_df <- data.frame(family=df_CPE$sars_proteom,
                   UMAP1=ump[,1],
                   UMAP2=ump[,2])
 
+tm <- ump_df
+tm$method <- 'TM-Vec'
+
 p_tm <- ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
   geom_point(size = 3,alpha=.7) +
   scale_fill_manual(values = palette_Dark2(14)) +
@@ -2275,12 +2545,19 @@ p_tm <- ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
 # save SARS_Proteom_TM_Vec.pdf 13x17
 # -------------------------
 #ggarrange(p_SPE,p_CPE,p_tm,common.legend = T,ncol = 1, legend = 'bottom')
+
+# ----------SourceData---------------
+ump <- rbind(cpe, spe, tm)
+MYwriteData(data=ump,
+            file="Fig_Manuscript/SourceData.xlsx", 
+            sheet="Figure S9-S11",
+            row.Names = TRUE)
 ```
 
 
 #Tables
 
-## Table 1 CT_Ho
+## Table 1 
 
 ```{r Table 1 CT_Ho}
 source('Functions.R')
@@ -2353,7 +2630,7 @@ res_final <- rbind(res_final, c('TM-Vec', ac, '67 sec'))
 res_final
 ```
 
-## Table 2 FiveSF
+## Table 2 
 
 ```{r Table 2 FiveSF}
 source('Functions.R')
@@ -2467,7 +2744,7 @@ res_final <- data.frame(method=c('CPE (1NN)',
 res_final
 ```
 
-## Table 3 Rho Spearman Rank
+## Table 3 
 
 ```{r Table 3 Rho Spearman Rank}
 rm(list=ls())
@@ -2525,7 +2802,7 @@ cbind(Method=c('SPE', 'CPE', 'TM'),
 ```
 
 
-## Table 4 and Table S1 ARI covid
+## Table 4,S1
 
 ```{r Table S1}
 source('Functions.R')
@@ -2626,14 +2903,14 @@ ARI_final
 ```
 
 
-## Table 5 and Table S3-S5 performance
+## Table 5,S3-S5 
 
 ```{r Table 5 performance}
 source('Functions.R')
 load('Data/Large_Scale_SARS2/SPE_CPE_time.RData')
-dff <- df_CPE[,-c(1:4)]/as.numeric(df_CPE$length)
+dff <- df_CPE[,-c(1:4)]
 dis_CPE <- as.matrix(dff %>% proxy::dist(method = manhat))
-dff = df_SPE[,-c(1:4)]/as.numeric(df_SPE$length)
+dff = df_SPE[,-c(1:4)]
 dis_SPE <- as.matrix(dff %>% proxy::dist(method = manhat))
 # ----------- load from google drive ---------------
 drive_deauth()
@@ -2661,12 +2938,18 @@ summary_1NN <- function(dist, group){
     z <- table(x$target)
     cm[sf, names(z)]<-z
   }
-  ac <- round(sum(diag(cm))/sum(cm), 4)*100
-  pr <- round(diag(cm)/colSums(cm) , 4)*100
-  re <- round(diag(cm)/rowSums(cm) , 4)*100
+  tp <- diag(cm)
+  fp <- colSums(cm)-tp
+  fn <- rowSums(cm)-tp
+  tn <- sum(cm)-(tp+fp+fn)
+  # -------------
+  AC <- round(sum(tp)/sum(cm), 4)*100
+  ac <- round((tp+tn)/sum(cm)*100, 4)
+  pr <- round(tp/(tp+fp) , 4)*100
+  re <- round(tp/(tp+fn) , 4)*100
   f1 <- round((2*pr*re)/(pr+re))
-  summ <- data.frame(t(rbind(ac,pr,re,f1)))
-  summ <- rbind(colMeans(summ), summ)
+  summ <- data.frame(t(rbind(AC,ac,pr,re,f1)))
+  summ <- rbind(round(colMeans(summ), 4), summ)
   rownames(summ)[1]<-'Average'
   return(summ)
 }
@@ -2682,4 +2965,11 @@ cbind(Method=c('TM', 'CPE', 'SPE'),
             summ[['CPE']][1,],
             summ[['SPE']][1,]),
       Time=c(t_tm, t_CPE, t_SPE))
+
+
+#for (sheet_name in names(summ)) {
+#  write.xlsx(summ[[sheet_name]][,-1], file='Table_S3_S5.xlsx',
+#             sheetName=paste0(sheet_name, '_TotalAccuracy=', #summ[[sheet_name]][1,1]), 
+#             append=TRUE, row.names=TRUE)
+#}
 ```
