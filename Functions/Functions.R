@@ -7,7 +7,7 @@ rm(list = ls())
 # --------------------------------------------
 # --------------------------------------------------------
 # -------------------------------------------------------------------------------------
-energy_dell_dunbrack <- read.csv("Data/csv/energy_rm_Olaps.csv",header = FALSE,sep ="," )
+energy_dell_dunbrack <- read.csv("Data/csv/energy.csv",header = FALSE,sep ="," )
 energy_dell_dunbrack <- energy_dell_dunbrack[,5:33]
 # ------Pairwise Amino Acid names-------------
 AA <- c("PHE","LEU","ILE","VAL","TRP","TYR","MET","CYS","HIS","THR",
@@ -21,7 +21,7 @@ for (i in 1:20) {
 } 
 # -----------------------------------
 # -----  Sequence Energy Estimator (predictor)
-aaenergy <- read.csv("Data/csv/Pij_rm_Olaps.csv", header = F,sep = ";")
+aaenergy <- read.csv("Data/csv/Pij.csv", header = F,sep = ";")
 aaenergy <- (aaenergy + t(aaenergy))/2
 colnames(aaenergy) <- rownames(aaenergy) <- letters_list
 # -------------------------------------------------------------

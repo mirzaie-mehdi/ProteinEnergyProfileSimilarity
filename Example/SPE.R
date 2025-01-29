@@ -3,7 +3,7 @@
 # ------------------------------------------------------------
 # ---------- load requirement functions -------------
 # All required functions are available at Functions.R script
-source('Functions.R')
+source('Functions/Functions.R')
 # ------------------------------------------------------------
 library(bio3d)
 library(geometry)
@@ -22,6 +22,7 @@ for (i in 1:Nprotein){
   ch <- substr(SPE$pdbID[i],6,6)
   # ----------------------------------
   # ----- read pdb file ------------
+
   pdb0 <- read.pdb(pdbname,verbose = FALSE)
   # ----------------------------------
   # ----- filter ------------

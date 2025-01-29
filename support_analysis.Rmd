@@ -174,7 +174,7 @@ df_dis95 <- data.frame(data='Astral 95',
                        dis_str=as.vector(dis_str)[idx],
                        dis_seq=as.vector(dis_seq)[idx])
 rm(dis_seq, dis_str)
-saveRDS(df_dis95,'Fig_Manuscript/Revised/fig_data/dis_95_manhat.rds')
+saveRDS(df_dis95,'Figures_Paper/Revised/fig_data/dis_95_manhat.rds')
 # ************************************************************
 # astral 40
 df_seq <- readRDS("Data/rds/E210.seq_astral_40.rds") 
@@ -206,12 +206,12 @@ df_dis40 <- data.frame(data='Astral 40',
                        dis_str=as.vector(dis_str)[idx],
                        dis_seq=as.vector(dis_seq)[idx])
 rm(dis_seq, dis_str)
-#saveRDS(df_dis40,'Fig_Manuscript/Old_Figures/dis_40_manhat.rds')
-saveRDS(df_dis40,'Fig_Manuscript/Revised/fig_data/dis_40_manhat.rds')
+#saveRDS(df_dis40,'Figures_Paper/Old_Figures/dis_40_manhat.rds')
+saveRDS(df_dis40,'Figures_Paper/Revised/fig_data/dis_40_manhat.rds')
 # **************************************
 df_tot <- rbind(df_tot40, df_tot95)
-#saveRDS(df_tot, 'Fig_Manuscript/Old_Figures/df_total_energy.rds')
-saveRDS(df_tot, 'Fig_Manuscript/Revised/fig_data/df_total_energy.rds')
+#saveRDS(df_tot, 'Figures_Paper/Old_Figures/df_total_energy.rds')
+saveRDS(df_tot, 'Figures_Paper/Revised/fig_data/df_total_energy.rds')
 ```
 
 
@@ -285,9 +285,9 @@ ump_df_seq95 <- ump_df_seq95[ump_df_seq95$UMAP2> -4 & ump_df_seq95$UMAP2< 4,]#(-
 ump_df_seq95$class <- ifelse(ump_df_seq95$class=='a','All-alpha','All-beta')
 # ----------------------------
 #save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95,
-#     file = 'Fig_Manuscript/Old_Figures/UMPs.RData')
+#     file = 'Figures_Paper/Old_Figures/UMPs.RData')
 save(ump_df_seq40,ump_df_seq95,ump_df_str40,ump_df_str95,
-     file = 'Fig_Manuscript/Revised/fig_data/UMPs.RData')
+     file = 'Figures_Paper/Revised/fig_data/UMPs.RData')
 ```
 
 # Length_Vs_Energy
@@ -366,56 +366,4 @@ colnames(my_sab)<-rownames(my_sab)<-drugs
 saveRDS(my_sab,'Data/rds/my_sab.rds')
 ```
 
-# Overlap PDBs
 
-```{r Overlap PDBs}
-test4 <- read.csv('Data/csv/fiveSF.csv')
-test3 <- read.csv('Data/csv/spike.csv')
-test2 <- read.csv('Data/csv/Ferritin_Like_seq.csv')
-test1 <- read.csv('Data/csv/CT_Ho_cathID_filtered.csv')
-train <- read.csv("Train_Energy/list_with_chainID.txt",header = F)
-# -------
-pdbs1 <- toupper(substr(test1$pdbID,1,5))
-pdbs2 <- toupper(substr(test2$pdbID,1,5))
-pdbs3 <- toupper(substr(test3$pdbID,1,5))
-pdbs4 <- toupper(paste0(test4$pdbID, substr(test4$position,1,1)))
-pdbs <- unique(c(pdbs1, pdbs2, pdbs3, pdbs4))
-m <- match(train$V1, pdbs)
-idx_rm <- which(!is.na(m))
-idx_rm <- data.frame(V1=idx_rm)
-write.csv(idx_rm,'Train_Energy/idx_rm.csv',row.names = F)
-```
-
-# Pij_old_new
-
-```{r Pij_old_new}
-Pij <- read.csv("Data/csv/Pij.csv", header = F,sep = ";")
-pij_old <- (Pij + t(Pij))/2
-
-Pij_rm_Olaps <- read.csv("Data/csv/Pij_rm_Olaps.csv",
-                         header = F,sep = ";")
-
-Pij_new <- (Pij_rm_Olaps + t(Pij_rm_Olaps))/2
-
-df <- data.frame(Pij_old = pij_old[upper.tri(pij_old,diag = T)],
-                 Pij_new = Pij_new[upper.tri(Pij_new,diag = T)])
-
-saveRDS(df, 'Data/rds/Pij_old_new.rds')
-```
-
-## --- PijVisual
-```{r PijVisual}
-source('Functions/Functions.R')
-df <- readRDS('Data/rds/Pij_old_new.rds')
-
-p<-ggplot(df, aes(Pij_old, Pij_new))+
-  geom_point(size=3, alpha=.5)+
-  geom_smooth(method = 'glm',col='skyblue2',linewidth = .2)+
-       stat_cor(method = "pearson", size=5,
-                r.accuracy = 1e-6,
-                color = "red", geom = "label") +
-       theme_bw(base_line_size = .3)+
-       xlab('Old predictor')+ylab('New predictor')+
-  mytheme()
-
-```

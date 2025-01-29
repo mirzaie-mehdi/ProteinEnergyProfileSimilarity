@@ -457,7 +457,7 @@ for (NP in 1:Nprotein) {
   E210.seq_ferritin[NP,5:214] <- aa210_p
 }
 
-saveRDS(E210.seq_ferritin,file = "Data/rds/E210.seq_ferritin.rds")
+#saveRDS(E210.seq_ferritin,file = "Data/rds/E210.seq_ferritin.rds")
 ```
 # Ferritin SPE
 

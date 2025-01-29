@@ -3,7 +3,7 @@
 # ------------------------------------------------------------
 # ---------- load requirement functions -------------
 # All required functions are available at Functions.R script
-source('Functions.R')
+source('Functions/Functions.R')
 # ------------------------------------------------------------
 library(bio3d)
 library(geometry)
@@ -24,7 +24,7 @@ for (i in 1:Nprotein){
 }
 # -------------------------------------------------
 dis <- as.matrix(proxy::dist(CPE[,-c(1:2)], method = manhat))
-
+library(umap)
 ump <- umap(d = dis,
             n_neighbors = 13,
             min_dist = 0.1,

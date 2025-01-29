@@ -73,7 +73,7 @@ library(openxlsx)
 source('Functions/Functions.R')
 # ----------------------------------------------------
 # ************** total energy 40 and 95
-df_tot <- readRDS('Fig_Manuscript/fig_data/df_total_energy.rds')
+df_tot <- readRDS('Figures_Paper/fig_data/df_total_energy.rds')
 df_tot$data <- ifelse(df_tot$data=='Astral 40','ASTRAL40','ASTRAL95')
 
 A <- ggplot(df_tot[df_tot$data=='ASTRAL40',], aes(seq/2000, str/1000))+
@@ -114,12 +114,12 @@ B <- ggplot(df_tot[df_tot$data=='ASTRAL95',], aes(seq/2000, str/1000))+
 df_tot$cpe <- df_tot$seq/2000
 df_tot$spe <- df_tot$str/1000
 MYwriteData(data=df_tot[,-c(2:5)],
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 2 A-B",
             row.Names = TRUE)
 # ************** distance 40 and 95
-df_dis40<-readRDS('Fig_Manuscript/fig_data/dis_40_manhat.rds')
-df_dis95<-readRDS('Fig_Manuscript/fig_data/dis_95_manhat.rds')
+df_dis40<-readRDS('Figures_Paper/fig_data/dis_40_manhat.rds')
+df_dis95<-readRDS('Figures_Paper/fig_data/dis_95_manhat.rds')
 df_dis <- rbind(df_dis40, df_dis95)
 df_dis$data <- ifelse(df_dis$data=='Astral 40','ASTRAL40','ASTRAL95')
 
@@ -158,7 +158,7 @@ D <- ggplot(df_dis[df_dis$data=='ASTRAL95',], aes(dis_seq,dis_str))+
 # ----------SourceData---------------
 colnames(df_dis)[-1] <- c('dis_spe','dis_cpe')
 MYwriteData(data=df_dis,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 2 D-E",
             row.Names = TRUE)
 # ----------------------------------------
@@ -186,7 +186,7 @@ p1 <- ggplot(res, aes(length, disTot))+
         axis.title.y = element_text(size = 5))
 # ----------SourceData---------------
 MYwriteData(data=res[res$disTot>-.5&res$disTot<.5,1:3],
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 2 C",
             row.Names = TRUE)
 # -------------------------
@@ -221,7 +221,7 @@ p2 <- ggplot(cor_results, aes(x = Correlation)) +
         axis.title.y = element_text(size = 5))
 # ----------SourceData---------------
 MYwriteData(data=cor_results,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 2 F",
             row.Names = TRUE)
 # --------------------------
@@ -356,12 +356,12 @@ A<-ggarrange(NULL,NULL,NULL,NULL,
                      '',"A", "", ""),
   font.label = list(size = 30),
   hjust = .2,vjust = 0)
-#saveRDS(A,'Fig_Manuscript/Old_Figures/Fig4A.rds')
-saveRDS(A,'Fig_Manuscript/fig_data/Fig3A.rds')
+#saveRDS(A,'Figures_Paper/Old_Figures/Fig4A.rds')
+saveRDS(A,'Figures_Paper/fig_data/Fig3A.rds')
 # ----------SourceData---------------
 ump <- rbind(z40,z95)
 MYwriteData(data=ump,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 3 A",
             row.Names = TRUE)
 ```
@@ -476,11 +476,11 @@ B <- ggarrange(NULL,NULL,NULL,NULL,
                      '',"B", "", ""),
   font.label = list(size = 30),
   hjust = .2,vjust = 0)
-saveRDS(B,'Fig_Manuscript/fig_data/Fig3B.rds')
+saveRDS(B,'Figures_Paper/fig_data/Fig3B.rds')
 # ----------SourceData---------------
 ump <- rbind(z40,z95)
 MYwriteData(data=ump,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 3 B",
             row.Names = TRUE)
 ```
@@ -593,11 +593,11 @@ C <- ggarrange(NULL,NULL,NULL,NULL,
                      '',"C", "", ""),
   font.label = list(size = 30),
   hjust = .2,vjust = 0)
-saveRDS(C,'Fig_Manuscript/fig_data/Fig3C.rds')
+saveRDS(C,'Figures_Paper/fig_data/Fig3C.rds')
 # ----------SourceData---------------
 ump <- rbind(z40,z95)
 MYwriteData(data=ump,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 3 C",
             row.Names = TRUE)
 ```
@@ -606,9 +606,9 @@ MYwriteData(data=ump,
 
 ```{r Fig 3 ABC}
 rm(list = ls())
-A <- readRDS('Fig_Manuscript/fig_data/Fig3A.rds')
-B <- readRDS('Fig_Manuscript/fig_data/Fig3B.rds')
-C <- readRDS('Fig_Manuscript/fig_data/Fig3C.rds')
+A <- readRDS('Figures_Paper/fig_data/Fig3A.rds')
+B <- readRDS('Figures_Paper/fig_data/Fig3B.rds')
+C <- readRDS('Figures_Paper/fig_data/Fig3C.rds')
 # ------------------------
 p<-ggarrange(NULL,A,B,C,ncol = 1,
           heights = c(0.07,1,1,1))
@@ -682,7 +682,7 @@ p7 <- ggplot(df2,aes(Accuracy,Time,col=method,label=method))+
 # ---------------------------------------------------------------
 # ----------SourceData---------------
 MYwriteData(data=df2[,1:3],
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 4 A-B",
             row.Names = TRUE)
 ```
@@ -748,7 +748,7 @@ p<-ggplot(ump_df, aes(UMAP1, UMAP2, color= globin)) +
 # save Fig8_new.pdf 10x5
 # ----------SourceData---------------
 MYwriteData(data=ump_df[,-c(3,4)],
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 4 C",
             row.Names = TRUE)
 ```
@@ -771,7 +771,7 @@ nnet <- neighborNet(dis)
 # write.nexus.networx(nnet,'Data/rds/E210_ferritin_manhat.nxs')
 # ----------SourceData---------------
 MYwriteData(data=as.matrix(dis),
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 5 B",
             row.Names = TRUE)
 # --------------------------------------------------------------------
@@ -786,7 +786,7 @@ nnet <- neighborNet(dis)
 # write.nexus.networx(nnet,'Data/rds/ferritin_TMvec.nxs')
 # ----------SourceData---------------
 MYwriteData(data=as.matrix(dis),
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 5 D",
             row.Names = TRUE)
 # -----------------------------------------
@@ -799,7 +799,7 @@ nnet <- neighborNet(dis)
 #write.nexus.networx(nnet,'Data/rds/E210.seq_ferritin.nxs')
 # ----------SourceData---------------
 MYwriteData(data=as.matrix(dis),
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 5 F",
             row.Names = TRUE)
 ```
@@ -853,7 +853,7 @@ t_SPE <- ggtree(tree_data, layout = 'unrooted',
   theme(legend.position = 'none')
 # ----------SourceData---------------
 MYwriteData(data=PWdisGroup,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 5 C",
             row.Names = TRUE)
 # ------------------------------
@@ -879,7 +879,7 @@ t_CPE <- ggtree(tree_data, layout = 'unrooted',
   theme(legend.position = 'none')
 # ----------SourceData---------------
 MYwriteData(data=PWdisGroup,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 5 G",
             row.Names = TRUE)
 # ----------------------
@@ -905,7 +905,7 @@ t_TM <- ggtree(tree_data, layout = 'unrooted',
   theme(legend.position = 'none')
 # ----------SourceData---------------
 MYwriteData(data=PWdisGroup,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 5 E",
             row.Names = TRUE)
 ```
@@ -975,7 +975,7 @@ t_CPE <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
   ggtitle('CPE')
 # ----------SourceData---------------
 MYwriteData(data=as.matrix(dis),
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 6 B",
             row.Names = TRUE)
 # -----------------------------------------------------
@@ -1031,7 +1031,7 @@ t_SPE <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
   ggtitle('SPE')
 # ----------SourceData---------------
 MYwriteData(data=as.matrix(dis),
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 6 D",
             row.Names = TRUE)
 # -----------------------------------------------
@@ -1064,7 +1064,7 @@ t_RMSD <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
   ggtitle('RMSD')
 # ----------SourceData---------------
 MYwriteData(data=as.matrix(dis),
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 6 E",
             row.Names = TRUE)
 # --------------------------------------------
@@ -1125,7 +1125,7 @@ t_tmVec <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
   ggtitle('TM-Vec')
 # ----------SourceData---------------
 MYwriteData(data=as.matrix(dis),
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 6 C",
             row.Names = TRUE)
 # --------------------------------------
@@ -1171,7 +1171,7 @@ t_tmScore<-groupOTU(p_data, grp, "groups") + aes(color=groups) +
   ggtitle('TM-Score')
 # ----------SourceData---------------
 MYwriteData(data=as.matrix(dis),
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 6 F",
             row.Names = TRUE)
 # -----------------------------------------
@@ -1253,7 +1253,7 @@ t_Sequence_upgma <- groupOTU(p_data, grp, "groups") + aes(color=groups) +
 dis_seqid <- as.matrix(d)
 dis_seqid <- dis_seqid[df$pdbID, df$pdbID]
 MYwriteData(data=dis_seqid,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 6 A",
             row.Names = TRUE)
 # ------------------------------------------
@@ -1330,7 +1330,7 @@ p <- ggplot(df2, aes(variable,value, fill=method))+
         axis.title.y = element_text(size = 25, face = 'bold',color = 'black'))
 # ----------SourceData---------------
 MYwriteData(data=df,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 6 G-H",
             row.Names = TRUE)
 # --------------------------------------------
@@ -1451,7 +1451,7 @@ p0<-ggplot(group_dis,
   scale_fill_manual(values = c('magenta', 'purple','cyan','orange','blue','green'))
 # ----------SourceData---------------
 MYwriteData(data=mean_pair_dist,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 6 I",
             row.Names = TRUE)
 ```
@@ -1497,7 +1497,7 @@ p1<-ggplot(tm3, aes(status,score,fill=method))+
                                'darkolivegreen','yellow3', 'magenta'))
 # ----------SourceData---------------
 MYwriteData(data=tm2,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 7 B",
             row.Names = TRUE)
 # --------------------------------
@@ -1526,7 +1526,7 @@ p2<-ggplot(ump_df,
 
 # ----------SourceData---------------
 MYwriteData(data=ump_df,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 7 A",
             row.Names = TRUE)
 
@@ -1565,7 +1565,7 @@ p1 <- ggplot(df,aes(sAB,my_sAB))+
 # ----------SourceData---------------
 colnames(df)[5:6] <- c('sAB(PPI)','sAB(CPE)')
 MYwriteData(data=df,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 7 D",
             row.Names = TRUE)
 ```
@@ -1662,7 +1662,7 @@ p<-ggplot(ump_df, aes(UMAP1, UMAP2, color= subClass)) +
 # save Fig7D.pdf 10x5
 # ----------SourceData---------------
 MYwriteData(data=ump_df[,-c(5,6)],
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 7 C",
             row.Names = TRUE)
 ```
@@ -1720,7 +1720,7 @@ p1<-ggarrange(NULL,p0,ncol = 2,widths = c(.01,1))
 
 # ----------SourceData---------------
 MYwriteData(data=df,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure 7 E",
             row.Names = TRUE)
 ```
@@ -1734,7 +1734,7 @@ res <- res[!is.na(res$length),-c(1,3:13)]
 res <- res[-4383,]
 # ----------SourceData---------------
 MYwriteData(data=res,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure S1",
             row.Names = TRUE)
 # -- save plots
@@ -1762,7 +1762,7 @@ MYwriteData(data=res,
 #             axis.title.y = element_text(size = 20),
 #             panel.grid.major = element_line(color = "black"),
 #       panel.grid.minor = element_line(color = "black"))
-#     ggsave(filename = paste0('Fig_Manuscript/Revised/supp_Fig/210Cor', #   i, '.png'), 
+#     ggsave(filename = paste0('Figures_Paper/Revised/supp_Fig/210Cor', #   i, '.png'), 
 #            plot = p, width = 9, height = 13, 
 #            dpi = 600, device = "png")
 #   }
@@ -1773,7 +1773,7 @@ MYwriteData(data=res,
 ```{r Fig S2}
 source('Functions/Functions.R')
 # ----------------------------------------------------
-df_tot <- readRDS('Fig_Manuscript/fig_data/df_total_energy.rds')
+df_tot <- readRDS('Figures_Paper/fig_data/df_total_energy.rds')
 df_tot <- df_tot[df_tot$class%in%c('a','b','c','d'),]
 df_tot$class[df_tot$class=='a']<-'All_alpha'
 df_tot$class[df_tot$class=='b']<-'All_beta'
@@ -1815,7 +1815,7 @@ p <- ggarrange(NULL,
 df_tot$seq <- df_tot$seq/(2*df_tot$length)
 df_tot$str <- df_tot$str/(df_tot$length)
 MYwriteData(data=df_tot[,-3],
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure S2",
             row.Names = TRUE)
 ```
@@ -1825,7 +1825,7 @@ MYwriteData(data=df_tot[,-3],
 ```{r Fig S3}
 source('Functions/Functions.R')
 # ----------------------------------------------------
-load('Fig_Manuscript/fig_data/UMPs.RData')
+load('Figures_Paper/fig_data/UMPs.RData')
 ump_df_seq40$class <- gsub('-',' ', ump_df_seq40$class)
 ump_df_str40$class <- gsub('-',' ', ump_df_str40$class)
 ump_df_seq95$class <- gsub('-',' ', ump_df_seq95$class)
@@ -1871,7 +1871,7 @@ p4<-ggplot(ump_df_str95,aes(UMAP1, UMAP2, color= class)) +
 ump <- rbind(ump_df_seq40,ump_df_str40,
              ump_df_seq95, ump_df_str95)
 MYwriteData(data=ump,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure S3",
             row.Names = TRUE)
 # ********
@@ -1953,7 +1953,7 @@ df_family_seq <- data.frame(data='ASTRAL40-superfamily a.29.3',type='CPE',
 df_family <- rbind(df_family_seq, df_family_str)
 # ----------SourceData---------------
 MYwriteData(data=df_family,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure S4 E",
             row.Names = TRUE)
 
@@ -1977,7 +1977,7 @@ mylegend <- get_legend(E+
                            theme(legend.position = 'bottom',
                                  legend.title = element_blank(),
                                  legend.text = element_text(size = 20)))
-saveRDS(mylegend,'Fig_Manuscript/fig_data/FigS4mylegend.rds')
+saveRDS(mylegend,'Figures_Paper/fig_data/FigS4mylegend.rds')
 # ******************************************
 # ****** structure95
 df <- readRDS("Data/rds/E210.astral_95.rds") 
@@ -2033,7 +2033,7 @@ df_family_seq <- data.frame(data='ASTRAL95-superfamily a.29.3',type='CPE',
 df_family <- rbind(df_family_seq, df_family_str)
 # ----------SourceData---------------
 MYwriteData(data=df_family,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure S4 F",
             row.Names = TRUE)
 
@@ -2073,7 +2073,7 @@ EF<-ggarrange(
     labels = c("", "", "")
     )
 
-#saveRDS(EF,'Fig_Manuscript/fig_data/FigS4EF.rds')
+#saveRDS(EF,'Figures_Paper/fig_data/FigS4EF.rds')
 ```
 
 ## Fig S4 CD
@@ -2136,7 +2136,7 @@ df_superfamily_seq <- data.frame(data='ASTRAL40-fold a.29',type='CPE',
 df_superfamily <- rbind(df_superfamily_seq, df_superfamily_str)
 # ----------SourceData---------------
 MYwriteData(data=df_superfamily,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure S4 C",
             row.Names = TRUE)
 
@@ -2212,7 +2212,7 @@ df_superfamily_seq <- data.frame(data='ASTRAL95-fold a.29',type='CPE',
 df_superfamily <- rbind(df_superfamily_seq, df_superfamily_str)
 # ----------SourceData---------------
 MYwriteData(data=df_superfamily,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure S4 D",
             row.Names = TRUE)
 
@@ -2249,7 +2249,7 @@ CD<-ggarrange(
     widths = c(1, 0.3, 1),
     labels = c("", "", "")
     )
-#saveRDS(CD,'Fig_Manuscript/fig_data/FigS4CD.rds')
+#saveRDS(CD,'Figures_Paper/fig_data/FigS4CD.rds')
 ```
 
 ## Fig S4 AB
@@ -2314,7 +2314,7 @@ df_fold_seq <- data.frame(data='ASTRAL40-class alpha',type='CPE',
 df_fold <- rbind(df_fold_seq, df_fold_str)
 # ----------SourceData---------------
 MYwriteData(data=df_fold,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure S4 A",
             row.Names = TRUE)
 
@@ -2390,7 +2390,7 @@ df_fold_seq <- data.frame(data='ASTRAL95-class alpha',type='CPE',
 df_fold <- rbind(df_fold_seq, df_fold_str)
 # ----------SourceData---------------
 MYwriteData(data=df_fold,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure S4 B",
             row.Names = TRUE)
 
@@ -2427,17 +2427,17 @@ AB<-ggarrange(
     widths = c(1, 0.3, 1),
     labels = c("", "", "")
     )
-saveRDS(AB,'Fig_Manuscript/fig_data/FigS4AB.rds')
+saveRDS(AB,'Figures_Paper/fig_data/FigS4AB.rds')
 ```
 
 ##Fig S4 
 
 ```{r Fig S4 All}
 rm(list = ls())
-EF <- readRDS('Fig_Manuscript/fig_data/FigS4EF.rds')
-CD <- readRDS('Fig_Manuscript/fig_data/FigS4CD.rds')
-AB <- readRDS('Fig_Manuscript/fig_data/FigS4AB.rds')
-mylegend <-readRDS('Fig_Manuscript/fig_data/FigS4mylegend.rds')
+EF <- readRDS('Figures_Paper/fig_data/FigS4EF.rds')
+CD <- readRDS('Figures_Paper/fig_data/FigS4CD.rds')
+AB <- readRDS('Figures_Paper/fig_data/FigS4AB.rds')
+mylegend <-readRDS('Figures_Paper/fig_data/FigS4mylegend.rds')
 # ---------------------------------------------
 f6all <- ggarrange(NULL,AB,CD,EF,ncol = 1,
           heights = c(0.1,1,1,1))
@@ -2549,7 +2549,7 @@ p_tm <- ggplot(ump_df, aes(UMAP1, UMAP2, color= family)) +
 # ----------SourceData---------------
 ump <- rbind(cpe, spe, tm)
 MYwriteData(data=ump,
-            file="Fig_Manuscript/SourceData.xlsx", 
+            file="Figures_Paper/SourceData.xlsx", 
             sheet="Figure S9-S11",
             row.Names = TRUE)
 ```
