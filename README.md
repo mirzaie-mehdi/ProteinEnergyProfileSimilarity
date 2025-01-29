@@ -36,4 +36,4 @@ The `Example/SPE.R` and `Example/CPE.R` scripts are developed to compute SPE and
 <img src="https://github.com/user-attachments/assets/ac22e365-eff8-4bbb-9456-a3dcd63fac65" width="400" height="300">
 <img src="https://github.com/user-attachments/assets/019e55bd-d082-4a32-86d4-ee01c701899e" width="400" height="300">
 
-Code and data sets can be found on Zenodo: (https://zenodo.org/records/14765519)
+Code and data sets can be found on Zenodo: https://zenodo.org/records/14765519
