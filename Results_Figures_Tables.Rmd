@@ -613,8 +613,8 @@ C <- readRDS('Fig_Manuscript/fig_data/Fig3C.rds')
 p<-ggarrange(NULL,A,B,C,ncol = 1,
           heights = c(0.07,1,1,1))
 
-ggsave(filename = "Fig3.pdf", plot = p,
-       width = 180, height = 200, units = "mm")
+#ggsave(filename = "Fig3.pdf", plot = p,
+#       width = 180, height = 200, units = "mm")
 # save FIG3.pdf 10x10
 ```
 
