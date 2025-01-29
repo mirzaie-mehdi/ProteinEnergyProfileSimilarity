@@ -1,3 +1,6 @@
+%  create the energy prediction matrix P
+%  author: "Peyman"
+% -----------------------------------------
 clear;clc
 load('../Train_Energy/zzi_rm_Olaps.mat');
 Pij = zeros(20,20);

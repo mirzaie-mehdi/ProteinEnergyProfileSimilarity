@@ -522,3 +522,14 @@ mytheme <- function(){
   return(mythem)
 }
 # --------------------------------
+# Create or append to the file
+MYwriteData <- function(file, sheet, data, row.Names = FALSE) {
+  if (file.exists(file)) {
+    wb <- loadWorkbook(file)
+  } else {
+    wb <- createWorkbook()
+  }
+  addWorksheet(wb, sheet)
+  writeData(wb, sheet, data,rowNames = row.Names)
+  saveWorkbook(wb, file, overwrite = TRUE)
+}

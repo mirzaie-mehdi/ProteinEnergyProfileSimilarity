@@ -1,3 +1,6 @@
+%  utilized as input to 'estimateP.m' to create predictor matrix P
+%  author: "Peyman"
+% -----------------------------------------
 clear;clc
 tic
 %rcsb = 'https://files.rcsb.org/download/';

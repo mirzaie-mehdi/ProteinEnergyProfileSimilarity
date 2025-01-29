@@ -31,7 +31,7 @@ Below is the list of datasets utilized in this project:
 - Large-Scale SARS-CoV-2 Proteome Analysis across 28 families. The protein modesl can be find in the [Large_Scale_SARS2](Data/Large_Scale_SARS2) folder according to the sars_proteom column [SARS_Proteom](Data/Large_Scale_SARS2/sars_proteom.csv).
 
  ## Example:
-The `SPE.R` and `CPE.R` scripts are developed to compute SPE and CPE for Alpha-globin and Beta-globin proteins across different species. Additionally, they demonstrate the UMAP of SPE and CPE representaions, as outlined below.
+The `Example/SPE.R` and `Example/CPE.R` scripts are developed to compute SPE and CPE for Alpha-globin and Beta-globin proteins across different species. Additionally, they demonstrate the UMAP of SPE and CPE representaions, as outlined below.
 
 <img src="https://github.com/user-attachments/assets/ac22e365-eff8-4bbb-9456-a3dcd63fac65" width="400" height="300">
 <img src="https://github.com/user-attachments/assets/019e55bd-d082-4a32-86d4-ee01c701899e" width="400" height="300">
