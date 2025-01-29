@@ -70,7 +70,7 @@ library(openxlsx)
 ## Fig 2
 
 ```{r Fig 2}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 # ************** total energy 40 and 95
 df_tot <- readRDS('Fig_Manuscript/fig_data/df_total_energy.rds')
@@ -249,7 +249,7 @@ p<-ggarrange(NULL,NULL,NULL,NULL,NULL,
 ## Fig 3 A
 
 ```{r Fig 3 A}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 # ******** str40
 df <- readRDS("Data/rds/E210.astral_40.rds")
@@ -369,7 +369,7 @@ MYwriteData(data=ump,
 ## Fig 3 B
 
 ```{r Fig 3 B}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 # ******** str40
 df <- readRDS("Data/rds/E210.astral_40.rds")
@@ -488,7 +488,7 @@ MYwriteData(data=ump,
 ## Fig 3 C
 
 ```{r Fig 3 C}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 # ******** str40
 df <- readRDS("Data/rds/E210.astral_40.rds")
@@ -622,7 +622,7 @@ p<-ggarrange(NULL,A,B,C,ncol = 1,
 ## Fig 4 AB 
 
 ```{r Fig 4 AB CT_Ho}
-source('Functions.R')
+source('Functions/Functions.R')
 # -----------------------------------
 # time_for_SPE  = 187 Sec
 # accuracy_for_SPE = 99
@@ -690,7 +690,7 @@ MYwriteData(data=df2[,1:3],
 ## Fig 4 C 
 
 ```{r Fig 4 C Globin}
-source('Functions.R')
+source('Functions/Functions.R')
 # ------------------------
 load('Data/Globin/dis_CPE_SPE_time.RData')
 df <- read.csv('Data/Globin/Globin.csv')
@@ -756,7 +756,7 @@ MYwriteData(data=ump_df[,-c(3,4)],
 ## Fig 5 B,D,F 
 
 ```{r Fig 5 ferritin}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 E210_ferritin <- readRDS("Data/rds/E210_ferritin.rds")
 df <- E210_ferritin
@@ -808,7 +808,7 @@ MYwriteData(data=as.matrix(dis),
 ## Fig 5 C,E,G 
 
 ```{r Fig 5C,E,G ferritin (mean distance)}
-source('Functions.R')
+source('Functions/Functions.R')
 # -----------------------
 mean_pairwise_dis <- function(dis, gr, gr_idx){
   n <- length(unique(gr))
@@ -914,7 +914,7 @@ MYwriteData(data=PWdisGroup,
 ## Fig 6 
 
 ```{r Fig 6 covid}
-source('Functions.R')
+source('Functions/Functions.R')
 bootFun <- function(e){
   as.phylo(hclust(proxy::dist(e,
                               method = manhat),
@@ -1344,7 +1344,7 @@ p
 This chunk calculates the minimum pairwise distance among the SARS2, SARS, and MERS groups to assess their inter-similarity
 
 ```{r Fig 6i Spike Inter-Similarity}
-source('Functions.R')
+source('Functions/Functions.R')
 # --------------------SPE-----------
 df <- readRDS("Data/rds/E210_spike.rds")
 rownames(df) <- df$pdbID
@@ -1460,7 +1460,7 @@ MYwriteData(data=mean_pair_dist,
 ## Fig 7 AB
 
 ```{r Fig 7 AB Bacteriocin Tm-Vec}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 tm <- readRDS('Data/rds/bacteriocin_tm_vec.rds')
 tm2 <- tm[!is.na(tm$status2),-24]
@@ -1541,7 +1541,7 @@ p1_2 <- ggarrange(p2,NULL,p1,ncol = 3,nrow = 1,
 ##Fig 7 D
 
 ```{r Fig 7 D DrugTarget}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 my_sab <- readRDS('Data/rds/my_sab.rds')
 my_sab <- as.data.frame(as.table(my_sab)) 
@@ -1573,7 +1573,7 @@ MYwriteData(data=df,
 ## Fig 7 C 
 
 ```{r Fig 7 C (PLPRO)}
-source('Functions.R')
+source('Functions/Functions.R')
 load('Data/Large_Scale_SARS2/SPE_CPE_time.RData')
 df_CPE$pdbID <- gsub('.pdb','',df_CPE$pdbID)
 df_SPE$pdbID <- gsub('.pdb','',df_SPE$pdbID)
@@ -1670,7 +1670,7 @@ MYwriteData(data=ump_df[,-c(5,6)],
 ## Fig 7 E  
 
 ```{r Fig 7 E (Scalability)}
-source('Functions.R')
+source('Functions/Functions.R')
 # ---------------
 cpe <- read.csv('Data/csv/CPE_prfc_astral95.csv')
 tm <- read.csv('Data/csv/TM_prfc_astral95.csv')
@@ -1728,7 +1728,7 @@ MYwriteData(data=df,
 ## Fig S1 
 
 ```{r Fig S1 210Cor}
-source('Functions.R')
+source('Functions/Functions.R')
 res <- readRDS('Data/rds/Length_Vs_Energy.rds')
 res <- res[!is.na(res$length),-c(1,3:13)]
 res <- res[-4383,]
@@ -1771,7 +1771,7 @@ MYwriteData(data=res,
 ## Fig S2
 
 ```{r Fig S2}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 df_tot <- readRDS('Fig_Manuscript/fig_data/df_total_energy.rds')
 df_tot <- df_tot[df_tot$class%in%c('a','b','c','d'),]
@@ -1823,7 +1823,7 @@ MYwriteData(data=df_tot[,-3],
 ## Fig S3
 
 ```{r Fig S3}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 load('Fig_Manuscript/fig_data/UMPs.RData')
 ump_df_seq40$class <- gsub('-',' ', ump_df_seq40$class)
@@ -1896,7 +1896,7 @@ p <- ggarrange(NULL,NULL,NULL,
 ## Fig S4 EF
 
 ```{r Fig S4 EF}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 # ******** a.29.3
 # ****** structure40
@@ -2079,7 +2079,7 @@ EF<-ggarrange(
 ## Fig S4 CD
 
 ```{r Fig S4 CD}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 # ******** a.29
 # ****** structure40
@@ -2255,7 +2255,7 @@ CD<-ggarrange(
 ## Fig S4 AB
 
 ```{r Fig S4 AB}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 # ******** a
 # ****** structure40
@@ -2449,7 +2449,7 @@ p<-cowplot::plot_grid(f6all, mylegend, ncol = 1, rel_heights = c(1,.03))
 ## Fig S9-S11 
 
 ```{r Fig S9-S11 UMAP}
-source('Functions.R')
+source('Functions/Functions.R')
 load('Data/Large_Scale_SARS2/SPE_CPE_time.RData')
 library(RColorBrewer)
 palette_Dark2 <- colorRampPalette(brewer.pal(28, "Dark2"))
@@ -2560,7 +2560,7 @@ MYwriteData(data=ump,
 ## Table 1 
 
 ```{r Table 1 CT_Ho}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 # ---------------- SPE -------------------
 df <- readRDS('Data/rds/E210_CT_Ho.rds')
@@ -2633,7 +2633,7 @@ res_final
 ## Table 2 
 
 ```{r Table 2 FiveSF}
-source('Functions.R')
+source('Functions/Functions.R')
 # -----------------------------------------
 # ----------------------CPE------------------------------
 # -------- 5 sf
@@ -2805,7 +2805,7 @@ cbind(Method=c('SPE', 'CPE', 'TM'),
 ## Table 4,S1
 
 ```{r Table S1}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 # -----------------CPE------------------------
 df <- readRDS("Data/rds/E210.seq_spike.rds")
@@ -2906,7 +2906,7 @@ ARI_final
 ## Table 5,S3-S5 
 
 ```{r Table 5 performance}
-source('Functions.R')
+source('Functions/Functions.R')
 load('Data/Large_Scale_SARS2/SPE_CPE_time.RData')
 dff <- df_CPE[,-c(1:4)]
 dis_CPE <- as.matrix(dff %>% proxy::dist(method = manhat))

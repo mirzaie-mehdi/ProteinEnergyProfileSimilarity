@@ -72,7 +72,7 @@ This chunk calculate the profile of energy for protein domains in ASTRAL95/40 ba
 astral_95.rds already generated in the support_analysis.Rmd file # Parse Scope 2.08 chunk.
 
 ```{r Astrals_CPE_SPE}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 # ----------- astral 95 ------
 astral <- readRDS("Data/rds/astral_95.rds")
@@ -200,7 +200,7 @@ saveRDS(E210.seq_astral_40,file = "Data/rds/E210.seq_astral_40.rds")
 This chunk calculates the CPE of proteins from two superfamilies: the C-terminal domain in the DNA helicase RuvA subunit and the Homing endonucleases.
 this chunk run on a system with 2.4 GHz cpu and 8 GB RAM.
 ```{r C-terminal_Homing_CPE}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 df <- read.csv('Data/csv/CT_Ho_cathID_filtered.csv')
 
@@ -234,7 +234,7 @@ saveRDS(E210.seq_CT_Ho,'Data/rds/E210.seq_CT_Ho.rds')
 This chunk calculates the CPE of proteins from two superfamilies: the C-terminal domain in the DNA helicase RuvA subunit and the Homing endonucleases.
 this chunk run on a system with 2.4 GHz cpu and 8 GB RAM.
 ```{r C-terminal & Homing SPE}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 df <- read.csv('Data/csv/CT_Ho_cathID_filtered.csv')
 
@@ -283,7 +283,7 @@ saveRDS(E210_CT_Ho,'Data/rds/E210_CT_Ho.rds')
 This chunk calculates the energy profile (CPE) for five distinct SCOP superfamilies: winged helix (a.4.5), PH domain-like (b.55.1), NTF-like (d.17.4), Ubiquitin-like (d.15.1), and Immunoglobulins (b.1.1).
 
 ```{r Five superfamily_CPE}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 df5 <- read.csv('Data/csv/fiveSF.csv')
 Nprotein <- nrow(df5)
@@ -314,7 +314,7 @@ saveRDS(E210.seq_df5,file = "Data/rds/E210.seq_fiveSF.rds")
 This chunk calculates the energy profile (SPE) for five distinct SCOP superfamilies: winged helix (a.4.5), PH domain-like (b.55.1), NTF-like (d.17.4), Ubiquitin-like (d.15.1), and Immunoglobulins (b.1.1).
 
 ```{r Five superfamily SPE}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 df5 <- read.csv('Data/csv/fiveSF.csv')
 Nprotein <- nrow(df5)
@@ -373,7 +373,7 @@ tictoc::toc()
 Calculate the CPE and SPE for α and β globin proteins from the hemoglobin biological unit including 21 mammalian hemoglobins, divided into α-globins and β-globins.
 
 ```{r Globin AlphaBeta SPE_CPE}
-source('Functions.R')
+source('Functions/Functions.R')
 E210.SPE <- function(pdb){
   tryCatch({
     pdb0 <- pdb
@@ -442,7 +442,7 @@ save(t_SPE, t_CPE, dis_CPE, dis_SPE,
 # Ferritin CPE
 This chunk computes the CPE for proteins belonging to the Ferritin-like superfamily. The PDB IDs of these proteins are located in the `Data\csv\Ferritin_Like.csv` file.
 ```{r Ferritin CPE}
-source('Functions.R')
+source('Functions/Functions.R')
 ferritin <- read.csv("Data/csv/Ferritin_Like_seq.csv",sep = ",")
 Nprotein <- nrow(ferritin)
 E210.seq_ferritin <- data.frame(ferritin,
@@ -464,7 +464,7 @@ saveRDS(E210.seq_ferritin,file = "Data/rds/E210.seq_ferritin.rds")
 This chunk computes the SPE for proteins belonging to the Ferritin-like superfamily. The PDB IDs of these proteins are located in the `Data\csv\Ferritin_Like.csv` file.
 
 ```{r Ferritin SPE}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 ferritin <- read.csv("Data/csv/Ferritin_Like.csv",sep = ",")
 Nprotein <- nrow(ferritin)
@@ -514,7 +514,7 @@ saveRDS(E210_ferritin,file = "Data/rds/E210_ferritin.rds")
 This chunk computes the SPE and CPE for spike glycoprotein proteins. The PDB IDs of these proteins are located in the 'Data/csv/spike.csv' file. 
 
 ```{r Covid_Spike_Proteins}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 path <- 'Data/covidPDB/'
 spike <- read.csv(paste0(path,"spike_seq.csv"))
@@ -575,7 +575,7 @@ saveRDS(E210.seq_spike,file = "Data/rds/E210.seq_spike.rds")
 This section calculates the CPE and pairwise distances between Bacteriocin proteins. The file 'Data/csv/TM_vec_bac.csv' was obtained by requesting it from the authors of the paper 'Protein remote homology detection and structural alignment using deep learning'. This file contains results from AlphaFold2, OmegaFold, ESMFold, and TM-Vec software tools for comparison purposes. The 'bacteriocin_tm_vec' file includes their results along with those generated using the CPE method.
 
 ```{r Bacteriocin}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 tm <- read.csv('Data/csv/TM_vec_bac.csv') 
 # ---------------------------------------------------------
@@ -640,7 +640,7 @@ This section calculates the CPE of protein targets, using the sequences retrieve
 
 
 ```{r Protein_Targets_CPE}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------------------------------
 df_seq <- readRDS('Data/rds/DTI_df_seq.rds')
 
@@ -661,7 +661,7 @@ for (NP in 1:nrow(df_seq)) {
 calculate CPE and SPE for SARS-CoV-2 Proteome across 28 families, encompassing 4,405 proteins. 
 
 ```{r SARS_Proteom Large Scale}
-source('Functions.R')
+source('Functions/Functions.R')
 E210.SPE <- function(pdb){
   tryCatch({
     pdb0 <- pdb
@@ -730,7 +730,7 @@ t_CPE <- tictoc::toc()
 Calculates CPE and extract Processing time per amino acid for subsets from the ASTRAL95 dataset, ranging in size from 1,000 to 30,000 proteins.
 
 ```{r Scalability}
-source('Functions.R')
+source('Functions/Functions.R')
 # ----------------------------
 path <- 'Data/csv/'
 astral <- paste0(path,
